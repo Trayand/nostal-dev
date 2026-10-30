@@ -52,6 +52,7 @@ export function QuestionView({ q, onAnswered, onNext, nextLabel }: Props) {
   const [correct, setCorrect] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [backShown, setBackShown] = useState(false);
+  const [cardNote, setCardNote] = useState("");
   const [code, setCode] = useState(isCode(q) ? q.data.starter : "");
   const [run, setRun] = useState<TestRun | null>(null);
   const [running, setRunning] = useState(false);
@@ -130,9 +131,31 @@ export function QuestionView({ q, onAnswered, onNext, nextLabel }: Props) {
       case "fill-blank": return <FillBlank q={q} {...common} />;
       case "parsons": return <Parsons q={q} {...common} />;
       case "flashcard":
-        return backShown ? (
-          <div className="rounded-2xl border-2 border-accent bg-surface p-4"><Markdown html={q.html.back ?? ""} /></div>
-        ) : null;
+        // Self-graded: recall (optionally type) the answer, reveal, then rate yourself.
+        return (
+          <div className="flex flex-col gap-3">
+            {!backShown && <p className="text-sm text-muted">{t("q.cardHelp")}</p>}
+            {(!backShown || cardNote.trim()) && (
+              <label className="flex flex-col gap-1.5">
+                <span className="text-sm text-muted">{t("q.yourAnswer")}</span>
+                <textarea
+                  value={cardNote}
+                  onChange={(e) => setCardNote(e.target.value)}
+                  readOnly={backShown}
+                  rows={3}
+                  placeholder={t("q.cardPlaceholder")}
+                  className="rounded-xl border border-border bg-surface p-3 text-base"
+                />
+              </label>
+            )}
+            {backShown && (
+              <>
+                <div className="rounded-2xl border-2 border-accent bg-surface p-4"><Markdown html={q.html.back ?? ""} /></div>
+                {!done && <p className="text-sm text-muted">{t("q.gradeHelp")}</p>}
+              </>
+            )}
+          </div>
+        );
       case "code-short":
       case "code-full":
         return (
