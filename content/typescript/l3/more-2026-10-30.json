@@ -1,0 +1,317 @@
+[
+  {
+    "id": "ts-functions-003",
+    "track": "typescript",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "functions",
+    "tags": [
+      "overloads",
+      "implementation-signature",
+      "union"
+    ],
+    "title": "Overload dan argumen union",
+    "prompt": "Dengan `strict: true`, pemanggilan mana yang menyebabkan **compile error**?",
+    "data": {
+      "language": "typescript",
+      "code": "function parse(input: string): number;\nfunction parse(input: number): string;\nfunction parse(input: string | number): number | string {\n  return typeof input === \"string\" ? Number(input) : String(input);\n}\n\ndeclare const raw: string | number;",
+      "options": [
+        "`const a: number = parse(\"42\");`",
+        "`const b: string = parse(42);`",
+        "`const c = parse(raw);`",
+        "`const d = parse(\"7\") + 1;`"
+      ]
+    },
+    "answer": {
+      "index": 2
+    },
+    "hints": [
+      "Dari luar, hanya **overload signature** yang terlihat; signature implementasi tidak bisa dipanggil langsung.",
+      "Adakah overload yang parameternya menerima `string | number` sekaligus?"
+    ],
+    "explanation": "TypeScript mencocokkan argumen dengan setiap overload **satu per satu**. `raw` bertipe `string | number`: tidak cocok dengan overload `string` saja maupun `number` saja, dan signature implementasi `(input: string | number)` tidak ikut dipertimbangkan, sehingga muncul *No overload matches this call*. Opsi lain valid: `parse(\"42\")` memilih overload pertama (`number`), `parse(42)` overload kedua (`string`), dan `parse(\"7\") + 1` adalah `number + number`. Perbaikannya: tambahkan overload ketiga `function parse(input: string | number): number | string;`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-satisfies-001",
+    "track": "typescript",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "satisfies",
+    "tags": [
+      "satisfies",
+      "type-annotation",
+      "record",
+      "inference"
+    ],
+    "title": "satisfies vs anotasi tipe",
+    "prompt": "Dengan `strict: true`, baris mana yang menyebabkan **compile error** jika ditulis setelah deklarasi `routes`?",
+    "data": {
+      "language": "typescript",
+      "code": "type Route = { path: string; auth?: boolean };\n\nconst routes = {\n  home: { path: \"/\" },\n  admin: { path: \"/admin\", auth: true },\n} satisfies Record<string, Route>;",
+      "options": [
+        "`routes.home.path.toUpperCase();`",
+        "`routes.profile.path;`",
+        "`const r: Route = routes.admin;`",
+        "`Object.keys(routes).length;`"
+      ]
+    },
+    "answer": {
+      "index": 1
+    },
+    "hints": [
+      "`satisfies` **memeriksa** nilai terhadap tipe, tetapi tidak **mengganti** tipe hasil inferensinya.",
+      "Key apa saja yang dimiliki tipe `routes` hasil inferensi?"
+    ],
+    "explanation": "`satisfies Record<string, Route>` memastikan setiap property cocok dengan `Route`, tetapi tipe `routes` tetap hasil inferensi, yang hanya punya key `home` dan `admin` (dan `home` bahkan tidak punya `auth`). Karena itu `routes.profile` error (*Property 'profile' does not exist*). Opsi lain aman: `path` bertipe `string`, `routes.admin` assignable ke `Route`, dan `Object.keys` menerima objek apa pun. Bandingkan dengan anotasi `const routes: Record<string, Route> = {...}`: `routes.profile.path` justru **lolos** compile (tipe index signature) lalu crash saat runtime. Sementara `as Record<string, Route>` adalah *type assertion* yang juga menghapus informasi key dan lebih longgar dalam memeriksa nilai.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-narrowing-002",
+    "track": "typescript",
+    "level": 3,
+    "format": "code-short",
+    "topic": "narrowing",
+    "tags": [
+      "in-operator",
+      "union",
+      "string-formatting"
+    ],
+    "title": "Deskripsi pembayaran dengan in",
+    "prompt": "Lengkapi `describePayment(p)` memakai narrowing dengan operator `in`:\n\n- `Card` → `\"Kartu ****\"` + 4 digit terakhir `cardNumber` (abaikan spasi).\n- `Transfer` → `\"Transfer \" + bank (huruf besar) + \" \" + account`.\n- `Wallet` → `\"E-wallet \" + provider`.\n\nContoh: `{ cardNumber: \"4111 1111 1111 1234\" }` → `\"Kartu ****1234\"`, `{ bank: \"bca\", account: \"123\" }` → `\"Transfer BCA 123\"`.",
+    "data": {
+      "language": "typescript",
+      "starter": "type Card = { cardNumber: string };\ntype Transfer = { bank: string; account: string };\ntype Wallet = { provider: string; phone: string };\ntype Payment = Card | Transfer | Wallet;\n\nfunction describePayment(p: Payment): string {\n  return \"\";\n}",
+      "entry": "describePayment"
+    },
+    "tests": [
+      {
+        "name": "kartu dengan spasi",
+        "input": [
+          {
+            "cardNumber": "4111 1111 1111 1234"
+          }
+        ],
+        "expected": "Kartu ****1234"
+      },
+      {
+        "name": "kartu tanpa spasi",
+        "input": [
+          {
+            "cardNumber": "5500000000009876"
+          }
+        ],
+        "expected": "Kartu ****9876"
+      },
+      {
+        "name": "kartu spasi di akhir",
+        "input": [
+          {
+            "cardNumber": "1234 5678 "
+          }
+        ],
+        "expected": "Kartu ****5678"
+      },
+      {
+        "name": "transfer",
+        "input": [
+          {
+            "bank": "bca",
+            "account": "1234567890"
+          }
+        ],
+        "expected": "Transfer BCA 1234567890"
+      },
+      {
+        "name": "e-wallet",
+        "input": [
+          {
+            "provider": "GoPay",
+            "phone": "081234567890"
+          }
+        ],
+        "expected": "E-wallet GoPay"
+      }
+    ],
+    "referenceSolution": "type Card = { cardNumber: string };\ntype Transfer = { bank: string; account: string };\ntype Wallet = { provider: string; phone: string };\ntype Payment = Card | Transfer | Wallet;\n\nfunction describePayment(p: Payment): string {\n  if (\"cardNumber\" in p) {\n    const digits = p.cardNumber.replace(/\\s/g, \"\");\n    return `Kartu ****${digits.slice(-4)}`;\n  }\n  if (\"bank\" in p) {\n    return `Transfer ${p.bank.toUpperCase()} ${p.account}`;\n  }\n  return `E-wallet ${p.provider}`;\n}",
+    "hints": [
+      "`\"cardNumber\" in p` mempersempit `p` menjadi `Card`; setelah `return`, sisa tipenya `Transfer | Wallet`.",
+      "Hapus semua spasi dengan `replace(/\\s/g, \"\")` sebelum `slice(-4)`."
+    ],
+    "explanation": "Union ini tidak punya property diskriminan bersama, jadi `p.cardNumber` langsung ditolak (`cardNumber` tidak ada di `Transfer`/`Wallet`). Operator `in` adalah type guard: di cabang `\"cardNumber\" in p`, tipe `p` menjadi `Card`; setelah cabang itu dan cabang `\"bank\" in p`, yang tersisa hanya `Wallet` sehingga `p.provider` aman. Spasi harus dihapus **sebelum** mengambil 4 karakter terakhir; kalau tidak, input dengan spasi di akhir menghasilkan digit yang salah.",
+    "estimatedMinutes": 4,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-keyof-002",
+    "track": "typescript",
+    "level": 3,
+    "format": "code-short",
+    "topic": "keyof",
+    "tags": [
+      "generic-constraint",
+      "keyof",
+      "pick"
+    ],
+    "title": "Fungsi pick dengan K extends keyof T",
+    "prompt": "Implementasikan `pick(obj, keys)` yang mengembalikan objek baru berisi **hanya** key di `keys` beserta nilainya dari `obj`.\n\n- Key yang tidak ada di `obj` (property opsional yang kosong) dilewati.\n- Nilai *falsy* seperti `0` atau `false` tetap disalin.\n- Jangan mengubah `obj`.\n\nContoh: `pick({ id: 1, name: \"Ani\", email: \"a@x.id\" }, [\"id\", \"name\"])` → `{ id: 1, name: \"Ani\" }`.",
+    "data": {
+      "language": "typescript",
+      "starter": "function pick<T extends object, K extends keyof T>(obj: T, keys: K[]): Pick<T, K> {\n  const result = {} as Pick<T, K>;\n  return result;\n}",
+      "entry": "pick"
+    },
+    "tests": [
+      {
+        "name": "dua key",
+        "input": [
+          {
+            "id": 1,
+            "name": "Ani",
+            "email": "a@x.id"
+          },
+          [
+            "id",
+            "name"
+          ]
+        ],
+        "expected": {
+          "id": 1,
+          "name": "Ani"
+        }
+      },
+      {
+        "name": "keys kosong",
+        "input": [
+          {
+            "id": 1,
+            "name": "Ani"
+          },
+          []
+        ],
+        "expected": {}
+      },
+      {
+        "name": "key duplikat",
+        "input": [
+          {
+            "id": 1,
+            "name": "Ani"
+          },
+          [
+            "name",
+            "name"
+          ]
+        ],
+        "expected": {
+          "name": "Ani"
+        }
+      },
+      {
+        "name": "key opsional tidak ada",
+        "input": [
+          {
+            "id": 7
+          },
+          [
+            "id",
+            "nickname"
+          ]
+        ],
+        "expected": {
+          "id": 7
+        }
+      },
+      {
+        "name": "nilai falsy",
+        "input": [
+          {
+            "active": false,
+            "count": 0,
+            "label": ""
+          },
+          [
+            "active",
+            "count",
+            "label"
+          ]
+        ],
+        "expected": {
+          "active": false,
+          "count": 0,
+          "label": ""
+        }
+      }
+    ],
+    "referenceSolution": "function pick<T extends object, K extends keyof T>(obj: T, keys: K[]): Pick<T, K> {\n  const result = {} as Pick<T, K>;\n  for (const key of keys) {\n    if (key in obj) {\n      result[key] = obj[key];\n    }\n  }\n  return result;\n}",
+    "hints": [
+      "Loop setiap `key` di `keys`; karena `K extends keyof T`, `obj[key]` bertipe `T[K]` dan boleh di-assign ke `result[key]`.",
+      "Cek keberadaan dengan `key in obj`, bukan `if (obj[key])`, agar `0`/`false`/`\"\"` tidak terlewat."
+    ],
+    "explanation": "Constraint `K extends keyof T` membuat pemanggilan seperti `pick(user, [\"emial\"])` ditolak saat compile, dan `Pick<T, K>` memberi tipe hasil yang tepat (`{ id: number; name: string }`). Di dalam loop, `result[key] = obj[key]` aman karena `Pick<T, K>[K]` sama dengan `T[K]`. Pengecekan `key in obj` melewati property opsional yang tidak ada tanpa membuang nilai *falsy*; memakai `if (obj[key])` adalah bug klasik yang membuang `0`, `false`, dan `\"\"`.",
+    "estimatedMinutes": 4,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-classes-003",
+    "track": "typescript",
+    "level": 3,
+    "format": "find-bug",
+    "topic": "classes",
+    "tags": [
+      "abstract-class",
+      "implements",
+      "interface"
+    ],
+    "title": "Membuat instance abstract class",
+    "prompt": "Dengan `strict: true`, baris mana yang menyebabkan **compile error**?",
+    "data": {
+      "language": "typescript",
+      "code": "interface Logger {\n  log(message: string): void;\n}\n\nabstract class BaseLogger implements Logger {\n  abstract format(message: string): string;\n  log(message: string): void {\n    console.log(this.format(message));\n  }\n}\n\nclass JsonLogger extends BaseLogger {\n  format(message: string): string {\n    return JSON.stringify({ message });\n  }\n}\n\nconst loggers: Logger[] = [new JsonLogger(), new BaseLogger()];\nloggers.forEach((logger) => logger.log(\"halo\"));"
+    },
+    "answer": {
+      "line": 18,
+      "fixedLine": "const loggers: Logger[] = [new JsonLogger()];"
+    },
+    "hints": [
+      "`BaseLogger` boleh `implements Logger` walau punya member abstract; cek di mana class itu **dipakai**.",
+      "Class `abstract` tidak boleh dibuat langsung dengan `new`."
+    ],
+    "explanation": "Baris 18 error: *Cannot create an instance of an abstract class*. Abstract class hanya kerangka: `BaseLogger` sudah memenuhi `Logger` lewat `log`, tetapi `format` baru diimplementasikan subclass seperti `JsonLogger`. Menarik: `abstract` dihapus saat transpile, jadi tanpa type check `new BaseLogger()` tetap jalan, lalu `log` crash karena `this.format` bernilai `undefined` (*TypeError: this.format is not a function*). Compile error ini mencegah bug runtime tersebut. Baris lain valid: abstract class boleh `implements` interface, dan `JsonLogger` mengimplementasikan semua member abstract.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

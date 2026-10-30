@@ -1,0 +1,297 @@
+[
+  {
+    "id": "js-references-002",
+    "track": "javascript",
+    "level": 3,
+    "format": "predict-output",
+    "topic": "references",
+    "tags": [
+      "spread",
+      "shallow-copy",
+      "mutation"
+    ],
+    "title": "Spread hanya menyalin satu tingkat",
+    "prompt": "Objek disalin dengan spread, lalu salinannya diubah. Apa output kode berikut?",
+    "data": {
+      "language": "javascript",
+      "code": "const original = { name: 'Rina', tags: ['admin'] };\nconst copy = { ...original };\n\ncopy.name = 'Budi';\ncopy.tags.push('editor');\n\nconsole.log(original.name, original.tags.length);\nconsole.log(copy.tags === original.tags);",
+      "options": [
+        "Rina 1\nfalse",
+        "Rina 2\ntrue",
+        "Budi 2\ntrue",
+        "Rina 2\nfalse"
+      ]
+    },
+    "answer": {
+      "output": "Rina 2\ntrue"
+    },
+    "hints": [
+      "Spread membuat objek baru, tapi nilai propertinya disalin apa adanya. Apa \"nilai\" dari properti `tags`?",
+      "`name` adalah string (primitif), sedangkan `tags` adalah referensi ke array yang sama."
+    ],
+    "explanation": "`{ ...original }` adalah **shallow copy**: objek luar baru, tetapi properti yang berisi objek/array hanya disalin **referensinya**. Mengganti `copy.name` membuat binding baru di objek salinan, jadi `original.name` tetap `Rina`. Sebaliknya `copy.tags.push(...)` memutasi array yang **sama** dengan `original.tags`, sehingga panjangnya menjadi 2 dan `copy.tags === original.tags` bernilai `true`. Untuk salinan dalam, salin juga array-nya (`{ ...original, tags: [...original.tags] }`) atau pakai `structuredClone(original)`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-json-001",
+    "track": "javascript",
+    "level": 3,
+    "format": "predict-output",
+    "topic": "json",
+    "tags": [
+      "stringify",
+      "undefined",
+      "nan"
+    ],
+    "title": "Nilai yang hilang di JSON.stringify",
+    "prompt": "Apa output kode berikut? Perhatikan perbedaan perlakuan di dalam **objek** dan di dalam **array**.",
+    "data": {
+      "language": "javascript",
+      "code": "const data = {\n  a: undefined,\n  b: NaN,\n  c: [undefined, () => 1],\n  d: 'ok',\n};\nconsole.log(JSON.stringify(data));",
+      "options": [
+        "{\"a\":null,\"b\":null,\"c\":[null,null],\"d\":\"ok\"}",
+        "{\"b\":null,\"c\":[null,null],\"d\":\"ok\"}",
+        "{\"b\":NaN,\"c\":[],\"d\":\"ok\"}",
+        "{\"b\":null,\"c\":[],\"d\":\"ok\"}"
+      ]
+    },
+    "answer": {
+      "output": "{\"b\":null,\"c\":[null,null],\"d\":\"ok\"}"
+    },
+    "hints": [
+      "JSON tidak punya `undefined`, fungsi, maupun `NaN`. `JSON.stringify` harus memilih: buang atau ganti dengan `null`.",
+      "Di objek, properti bernilai `undefined`/fungsi **dibuang**. Di array, elemen seperti itu diganti `null` agar index tidak bergeser. `NaN` selalu menjadi `null`."
+    ],
+    "explanation": "Aturan `JSON.stringify`:\n\n- Properti objek bernilai `undefined` atau fungsi **dihilangkan** → `a` tidak muncul.\n- `NaN` dan `Infinity` menjadi `null` → `\"b\":null`.\n- Di dalam array, `undefined` dan fungsi menjadi `null` (bukan dibuang), karena membuangnya akan menggeser index → `[null,null]`.\n\nAkibatnya, `JSON.parse(JSON.stringify(x))` bukan cara aman untuk *deep clone*: properti bisa hilang dan `NaN` berubah menjadi `null`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-classes-001",
+    "track": "javascript",
+    "level": 3,
+    "format": "find-bug",
+    "topic": "classes",
+    "tags": [
+      "inheritance",
+      "super",
+      "constructor"
+    ],
+    "title": "Memanggil constructor parent di subclass",
+    "prompt": "Kode ini seharusnya mencetak `Bobi bersuara, guk!`, tetapi malah melempar `TypeError: Class constructor Animal cannot be invoked without 'new'`. Baris mana yang salah?",
+    "data": {
+      "language": "javascript",
+      "code": "class Animal {\n  constructor(name) {\n    this.name = name;\n  }\n  speak() {\n    return this.name + ' bersuara';\n  }\n}\n\nclass Dog extends Animal {\n  constructor(name, breed) {\n    Animal(name);\n    this.breed = breed;\n  }\n  speak() {\n    return super.speak() + ', guk!';\n  }\n}\n\nconsole.log(new Dog('Bobi', 'kampung').speak());"
+    },
+    "answer": {
+      "line": 12,
+      "fixedLine": "    super(name);"
+    },
+    "hints": [
+      "Di subclass, constructor parent tidak dipanggil seperti fungsi biasa.",
+      "Gunakan `super(...)` — dan harus dipanggil sebelum mengakses `this`."
+    ],
+    "explanation": "Class tidak bisa dipanggil tanpa `new`, jadi `Animal(name)` langsung melempar `TypeError`. Di constructor subclass, constructor parent dipanggil dengan **`super(name)`**, yang sekaligus membuat dan menginisialisasi `this`. Aturan penting lainnya: di class turunan, mengakses `this` sebelum `super()` dipanggil melempar `ReferenceError`. Baris 16 (`super.speak()`) sudah benar — itu cara memanggil *method* parent, berbeda dengan `super(...)` untuk constructor.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-classes-002",
+    "track": "javascript",
+    "level": 3,
+    "format": "fill-blank",
+    "topic": "classes",
+    "tags": [
+      "getter",
+      "setter",
+      "accessor"
+    ],
+    "title": "Getter dan setter suhu Fahrenheit",
+    "prompt": "Class `Temperature` menyimpan suhu dalam Celsius di `_c`. Lengkapi agar `t.fahrenheit` bisa **dibaca** seperti properti biasa dan **diisi** (`t.fahrenheit = 212`) yang otomatis memperbarui `_c`.\n\nFungsi `convert` dipakai untuk pengujian.",
+    "data": {
+      "language": "javascript",
+      "template": "class Temperature {\n  constructor(celsius) {\n    this._c = celsius;\n  }\n  {{blank}} fahrenheit() {\n    return this._c * 9 / 5 + 32;\n  }\n  {{blank}} fahrenheit(f) {\n    this._c = (f - 32) * 5 / 9;\n  }\n}\n\nfunction convert(celsius, newF) {\n  const t = new Temperature(celsius);\n  const before = t.fahrenheit;\n  t.fahrenheit = newF;\n  return [before, t._c];\n}",
+      "choices": [
+        "get",
+        "set",
+        "static",
+        "function",
+        "async"
+      ],
+      "entry": "convert"
+    },
+    "answer": {
+      "blanks": [
+        [
+          "get"
+        ],
+        [
+          "set"
+        ]
+      ]
+    },
+    "tests": [
+      {
+        "name": "didih ke beku",
+        "input": [
+          100,
+          32
+        ],
+        "expected": [
+          212,
+          0
+        ]
+      },
+      {
+        "name": "beku ke didih",
+        "input": [
+          0,
+          212
+        ],
+        "expected": [
+          32,
+          100
+        ]
+      },
+      {
+        "name": "-40 sama di kedua skala",
+        "input": [
+          -40,
+          -40
+        ],
+        "expected": [
+          -40,
+          -40
+        ]
+      },
+      {
+        "name": "suhu tubuh",
+        "input": [
+          37,
+          50
+        ],
+        "expected": [
+          98.6,
+          10
+        ]
+      }
+    ],
+    "hints": [
+      "Method yang diawali kata kunci tertentu bisa diakses tanpa tanda kurung `()`.",
+      "`get` untuk membaca (`t.fahrenheit`), `set` untuk menulis (`t.fahrenheit = ...`)."
+    ],
+    "explanation": "`get fahrenheit()` membuat **accessor property**: `t.fahrenheit` menjalankan fungsi itu dan mengembalikan nilainya, tanpa `()`. `set fahrenheit(f)` dijalankan saat ada assignment `t.fahrenheit = 212`, menerima nilai di kanan sebagai `f`. Getter dan setter boleh memakai nama yang sama. Tanpa `get`/`set`, kedua definisi menjadi method biasa (yang kedua menimpa yang pertama), sehingga `t.fahrenheit` bernilai **fungsi** dan assignment justru mengganti method itu dengan angka — `_c` tidak pernah berubah.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-iterators-001",
+    "track": "javascript",
+    "level": 3,
+    "format": "parsons",
+    "topic": "iterators",
+    "tags": [
+      "symbol-iterator",
+      "spread",
+      "protocol"
+    ],
+    "title": "Objek range yang bisa di-spread",
+    "prompt": "Susun baris-baris berikut menjadi `rangeArray(from, to)` yang membuat objek **iterable** (lewat `Symbol.iterator`) berisi bilangan `from` sampai `to` (inklusif), lalu mengubahnya menjadi array dengan spread.\n\nContoh: `rangeArray(1, 4)` → `[1, 2, 3, 4]`; jika `from > to` → `[]`.",
+    "data": {
+      "language": "javascript",
+      "entry": "rangeArray"
+    },
+    "answer": {
+      "lines": [
+        "function rangeArray(from, to) {",
+        "  const range = {",
+        "    [Symbol.iterator]() {",
+        "      let current = from;",
+        "      return {",
+        "        next: () => (current <= to ? { value: current++, done: false } : { value: undefined, done: true }),",
+        "      };",
+        "    },",
+        "  };",
+        "  return [...range];",
+        "}"
+      ]
+    },
+    "tests": [
+      {
+        "name": "1 sampai 4",
+        "input": [
+          1,
+          4
+        ],
+        "expected": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      {
+        "name": "satu angka",
+        "input": [
+          5,
+          5
+        ],
+        "expected": [
+          5
+        ]
+      },
+      {
+        "name": "from > to",
+        "input": [
+          3,
+          1
+        ],
+        "expected": []
+      },
+      {
+        "name": "negatif",
+        "input": [
+          -1,
+          1
+        ],
+        "expected": [
+          -1,
+          0,
+          1
+        ]
+      }
+    ],
+    "hints": [
+      "Objek iterable punya method `[Symbol.iterator]()` yang mengembalikan **iterator**: objek dengan method `next()`.",
+      "`current` dideklarasikan di dalam `[Symbol.iterator]()` (sebelum `return { next }`) agar setiap iterasi baru mulai dari `from`. Spread `[...range]` ada di akhir, di luar objek."
+    ],
+    "explanation": "Protokol iterasi JavaScript: sebuah objek **iterable** jika punya method `[Symbol.iterator]()` yang mengembalikan iterator — objek dengan `next()` yang mengembalikan `{ value, done }`. Spread `[...range]` (juga `for...of`, `Array.from`) memanggil `next()` berulang kali sampai `done: true`. Menaruh `let current = from` di dalam `[Symbol.iterator]()` membuat setiap spread baru mulai dari awal; jika diletakkan di luar, iterable hanya bisa dipakai sekali. Arrow function di `next` menutup (closure) variabel `current` dan `to`.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

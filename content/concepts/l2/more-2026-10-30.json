@@ -1,0 +1,167 @@
+[
+  {
+    "id": "concepts-databases-007",
+    "track": "concepts",
+    "level": 2,
+    "format": "flashcard",
+    "topic": "databases",
+    "tags": [
+      "sql",
+      "nosql",
+      "data-modeling"
+    ],
+    "title": "SQL vs NoSQL: kapan pilih yang mana",
+    "prompt": "Apa beda database **relasional (SQL)** dengan jenis-jenis **NoSQL** (document, key-value, wide-column), dan kapan memilih masing-masing?",
+    "answer": {
+      "back": "- **Relasional** (PostgreSQL, MySQL) — tabel dengan skema tetap, `JOIN`, constraint, transaksi ACID. Pilihan default untuk data yang saling berelasi dan query yang beragam.\n- **Document** (MongoDB) — dokumen mirip JSON, boleh bersarang, skema fleksibel. Cocok jika data biasanya dibaca utuh per entitas (profil, katalog produk).\n- **Key-value** (Redis, DynamoDB) — `get`/`put` berdasarkan key, sangat cepat. Cocok untuk cache, session, counter.\n- **Wide-column** (Cassandra, HBase) — data dipartisi per key, kolom per baris bisa berbeda; dirancang untuk volume tulis sangat besar lintas banyak node. Tabel dirancang **berdasarkan query** yang akan dijalankan.\n\nPrinsip: mulai dari relasional, pindah ke NoSQL jika pola akses atau skala memang menuntut."
+    },
+    "hints": [
+      "Tanyakan dulu: bagaimana data akan dibaca (pola query), bukan sekadar bentuk datanya."
+    ],
+    "explanation": "NoSQL bukan \"lebih cepat\" secara umum — ia mengorbankan fleksibilitas query (mis. `JOIN` atau query ad-hoc) demi pola akses tertentu atau skala horizontal. Batasnya juga makin kabur: PostgreSQL punya `JSONB`, MongoDB mendukung transaksi multi-dokumen. Kesalahan umum: memilih NoSQL karena \"tanpa skema\", lalu skemanya pindah diam-diam ke kode aplikasi.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-concurrency-001",
+    "track": "concepts",
+    "level": 2,
+    "format": "flashcard",
+    "topic": "concurrency",
+    "tags": [
+      "process",
+      "thread",
+      "goroutine",
+      "async"
+    ],
+    "title": "Process vs thread vs goroutine/async task",
+    "prompt": "Apa beda **process**, **thread**, **goroutine**, dan **async task** (mis. `async`/`await` di JavaScript)?",
+    "answer": {
+      "back": "- **Process** — program yang berjalan dengan ruang memori sendiri, terisolasi dari process lain. Paling berat; komunikasi lewat IPC (pipe, socket).\n- **Thread** — jalur eksekusi di dalam process; antar-thread **berbagi memori** process itu. Dijadwalkan oleh OS; tiap thread punya stack sendiri (umumnya ukuran MB).\n- **Goroutine** — \"thread ringan\" yang dijadwalkan **runtime Go** di atas sedikit thread OS (M:N). Stack awal hanya beberapa KB dan bisa tumbuh, jadi ribuan hingga jutaan goroutine itu wajar.\n- **Async task** — fungsi yang berjalan di **event loop** (biasanya satu thread). Bersifat kooperatif: task lain baru jalan saat task ini menunggu (`await`)."
+    },
+    "hints": [
+      "Bandingkan dari dua sisi: siapa yang menjadwalkan, dan apakah memorinya dibagi."
+    ],
+    "explanation": "Berbagi memori (thread, goroutine) membuat komunikasi murah tapi rawan race condition, sehingga perlu mutex atau channel. Async task di satu thread tidak berjalan paralel: kode CPU-berat tanpa `await` akan memblokir semua task lain. Kesalahan umum: mengira `async` otomatis membuat kode berjalan di thread terpisah.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-memory-001",
+    "track": "concepts",
+    "level": 2,
+    "format": "flashcard",
+    "topic": "memory",
+    "tags": [
+      "stack",
+      "heap",
+      "recursion"
+    ],
+    "title": "Memori stack vs heap",
+    "prompt": "Apa beda memori **stack** dan **heap**?",
+    "answer": {
+      "back": "- **Stack** — satu per thread, LIFO. Setiap pemanggilan fungsi mendorong satu *frame* (variabel lokal, alamat kembali) yang otomatis dibuang saat fungsi selesai. Alokasi sangat cepat, tapi ukurannya terbatas → rekursi terlalu dalam menyebabkan **stack overflow**.\n- **Heap** — area untuk data yang ukurannya dinamis atau harus hidup lebih lama dari fungsi pembuatnya (objek, array). Lebih lambat dialokasikan, dan dibebaskan oleh **garbage collector** atau secara manual (`free` di C)."
+    },
+    "hints": [
+      "Pikirkan umur data: apakah ia ikut hilang saat fungsi `return`?"
+    ],
+    "explanation": "Di bahasa tingkat tinggi kita jarang memilih langsung: di JavaScript/Java objek umumnya di heap, sedangkan di Go compiler menentukan lewat *escape analysis* (variabel yang \"lolos\" dari fungsi dipindah ke heap). Kesalahan umum: mengira stack overflow karena kehabisan RAM — sebenarnya karena batas ukuran stack thread, biasanya akibat rekursi tanpa base case.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-devops-001",
+    "track": "concepts",
+    "level": 2,
+    "format": "flashcard",
+    "topic": "devops",
+    "tags": [
+      "containers",
+      "docker",
+      "virtual-machine"
+    ],
+    "title": "Container vs virtual machine",
+    "prompt": "Apa beda **container** (mis. Docker) dengan **virtual machine (VM)**?",
+    "answer": {
+      "back": "- **VM** — menjalankan **OS tamu lengkap** (dengan kernel sendiri) di atas *hypervisor*. Isolasi kuat, tapi image berukuran GB dan booting butuh waktu.\n- **Container** — process biasa di host yang **berbagi kernel host**, diisolasi dengan fitur kernel (di Linux: *namespaces* dan *cgroups*). Image cukup berisi aplikasi + dependensinya, sering hanya puluhan–ratusan MB, start dalam hitungan detik atau kurang.\n\nTrade-off: container lebih ringan dan padat; VM memberi batas keamanan yang lebih kuat."
+    },
+    "hints": [
+      "Kuncinya ada pada kernel: punya sendiri atau berbagi?"
+    ],
+    "explanation": "Karena berbagi kernel, container Linux butuh kernel Linux — di macOS/Windows, Docker Desktop menjalankannya di dalam VM Linux ringan. Keduanya sering dipakai bersama: di cloud, container biasanya berjalan di dalam VM. Kesalahan umum: menganggap container sama amannya dengan VM; celah di kernel bersama bisa berdampak ke semua container.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-versioning-001",
+    "track": "concepts",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "versioning",
+    "tags": [
+      "semver",
+      "dependencies",
+      "npm"
+    ],
+    "title": "Versi berikutnya setelah breaking change",
+    "prompt": "Library kamu saat ini versi `2.3.1` dan mengikuti **semantic versioning**. Rilis berikutnya **menghapus sebuah fungsi publik** dan sekaligus memperbaiki satu bug. Nomor versi yang tepat adalah…",
+    "data": {
+      "options": [
+        "`2.3.2`",
+        "`2.4.0`",
+        "`3.0.0`",
+        "`3.0.1`"
+      ]
+    },
+    "answer": {
+      "index": 2
+    },
+    "hints": [
+      "Format semver: `MAJOR.MINOR.PATCH`. Menghapus API publik merusak kode pengguna lama.",
+      "Perubahan yang tidak kompatibel menaikkan MAJOR, dan MINOR serta PATCH di-reset ke 0."
+    ],
+    "explanation": "Semver: **PATCH** untuk bug fix yang kompatibel, **MINOR** untuk fitur baru yang kompatibel, **MAJOR** untuk perubahan yang tidak kompatibel (breaking). Satu rilis memakai kenaikan tertinggi yang terkandung di dalamnya, lalu angka di kanannya di-reset: `3.0.0`. Ini penting karena range seperti `^2.3.1` di npm menerima `<3.0.0` — pengguna tidak akan menerima breaking change tanpa sengaja. Catatan: untuk versi `0.y.z`, API dianggap belum stabil.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

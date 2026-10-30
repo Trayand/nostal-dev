@@ -1,0 +1,382 @@
+[
+  {
+    "id": "react-selectors-001",
+    "track": "react",
+    "level": 3,
+    "format": "code-short",
+    "topic": "selectors",
+    "tags": [
+      "derived-state",
+      "filter"
+    ],
+    "title": "Selector todo yang terlihat dan sisa tugas",
+    "prompt": "Daripada menyimpan list yang sudah difilter di state (data ganda), hitung **derived data** dari state saat render. Tulis `selectTodoView(todos, filter)` yang mengembalikan `{ visible, remaining }`:\n\n- `visible`: array **teks** todo sesuai filter: `'all'` (semua), `'active'` (`done: false`), `'done'` (`done: true`). Filter tak dikenal diperlakukan seperti `'all'`.\n- `remaining`: jumlah todo yang belum selesai dari **seluruh** list (tidak tergantung filter).\n\nUrutan `visible` sama dengan urutan asli.",
+    "data": {
+      "language": "javascript",
+      "starter": "function selectTodoView(todos, filter) {\n  // tulis kodemu di sini\n  return { visible: todos.map((t) => t.text), remaining: 0 };\n}",
+      "entry": "selectTodoView"
+    },
+    "tests": [
+      {
+        "name": "filter active",
+        "input": [
+          [
+            {
+              "text": "a",
+              "done": false
+            },
+            {
+              "text": "b",
+              "done": true
+            },
+            {
+              "text": "c",
+              "done": false
+            }
+          ],
+          "active"
+        ],
+        "expected": {
+          "visible": [
+            "a",
+            "c"
+          ],
+          "remaining": 2
+        }
+      },
+      {
+        "name": "filter done, remaining tetap dari semua",
+        "input": [
+          [
+            {
+              "text": "a",
+              "done": false
+            },
+            {
+              "text": "b",
+              "done": true
+            },
+            {
+              "text": "c",
+              "done": false
+            }
+          ],
+          "done"
+        ],
+        "expected": {
+          "visible": [
+            "b"
+          ],
+          "remaining": 2
+        }
+      },
+      {
+        "name": "filter all",
+        "input": [
+          [
+            {
+              "text": "a",
+              "done": true
+            },
+            {
+              "text": "b",
+              "done": false
+            }
+          ],
+          "all"
+        ],
+        "expected": {
+          "visible": [
+            "a",
+            "b"
+          ],
+          "remaining": 1
+        }
+      },
+      {
+        "name": "filter tidak dikenal",
+        "input": [
+          [
+            {
+              "text": "a",
+              "done": true
+            }
+          ],
+          "archived"
+        ],
+        "expected": {
+          "visible": [
+            "a"
+          ],
+          "remaining": 0
+        }
+      },
+      {
+        "name": "list kosong",
+        "input": [
+          [],
+          "active"
+        ],
+        "expected": {
+          "visible": [],
+          "remaining": 0
+        }
+      }
+    ],
+    "referenceSolution": "function selectTodoView(todos, filter) {\n  const visible = todos\n    .filter((t) => (filter === 'active' ? !t.done : filter === 'done' ? t.done : true))\n    .map((t) => t.text);\n  const remaining = todos.filter((t) => !t.done).length;\n  return { visible, remaining };\n}",
+    "hints": [
+      "Hitung `remaining` dari `todos` asli, bukan dari hasil filter.",
+      "`filter` dengan kondisi per mode, lalu `map((t) => t.text)`."
+    ],
+    "explanation": "Data turunan sebaiknya **dihitung** dari sumber kebenaran (state `todos` + `filter`), bukan disimpan di state terpisah lewat `useEffect`. State terpisah mudah tidak sinkron dan menambah render ekstra. Kesalahan umum di soal ini: menghitung `remaining` dari list yang sudah difilter. Jika perhitungannya mahal, bungkus dengan `useMemo(() => selectTodoView(todos, filter), [todos, filter])`.",
+    "estimatedMinutes": 4,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "react-memoization-001",
+    "track": "react",
+    "level": 3,
+    "format": "code-short",
+    "topic": "memoization",
+    "tags": [
+      "useMemo",
+      "dependency-array",
+      "object-is"
+    ],
+    "title": "Bandingkan dependency array seperti useMemo",
+    "prompt": "`useMemo`, `useCallback`, dan `useEffect` memutuskan apakah perlu menghitung ulang dengan membandingkan dependency lama dan baru satu per satu memakai `Object.is`. Tulis `depsChanged(prevDeps, nextDeps)` yang mengembalikan `true` jika perlu dihitung ulang:\n\n- `prevDeps` bernilai `null` (render pertama) → `true`\n- panjang array berbeda → `true`\n- ada satu posisi di mana `Object.is(prev[i], next[i])` bernilai `false` → `true`\n- selain itu → `false`",
+    "data": {
+      "language": "javascript",
+      "starter": "function depsChanged(prevDeps, nextDeps) {\n  // tulis kodemu di sini\n  return false;\n}",
+      "entry": "depsChanged"
+    },
+    "tests": [
+      {
+        "name": "render pertama",
+        "input": [
+          null,
+          [
+            1
+          ]
+        ],
+        "expected": true
+      },
+      {
+        "name": "primitif sama",
+        "input": [
+          [
+            1,
+            "a",
+            true
+          ],
+          [
+            1,
+            "a",
+            true
+          ]
+        ],
+        "expected": false
+      },
+      {
+        "name": "satu nilai berubah",
+        "input": [
+          [
+            1,
+            "a"
+          ],
+          [
+            1,
+            "b"
+          ]
+        ],
+        "expected": true
+      },
+      {
+        "name": "objek baru dengan isi sama",
+        "input": [
+          [
+            {
+              "id": 1
+            }
+          ],
+          [
+            {
+              "id": 1
+            }
+          ]
+        ],
+        "expected": true
+      },
+      {
+        "name": "panjang berbeda",
+        "input": [
+          [
+            1
+          ],
+          [
+            1,
+            2
+          ]
+        ],
+        "expected": true
+      },
+      {
+        "name": "keduanya kosong",
+        "input": [
+          [],
+          []
+        ],
+        "expected": false
+      },
+      {
+        "name": "null tetap null",
+        "input": [
+          [
+            null
+          ],
+          [
+            null
+          ]
+        ],
+        "expected": false
+      }
+    ],
+    "referenceSolution": "function depsChanged(prevDeps, nextDeps) {\n  if (prevDeps === null) return true;\n  if (prevDeps.length !== nextDeps.length) return true;\n  for (let i = 0; i < nextDeps.length; i++) {\n    if (!Object.is(prevDeps[i], nextDeps[i])) return true;\n  }\n  return false;\n}",
+    "hints": [
+      "Tangani `null` dan beda panjang dulu, baru loop per indeks.",
+      "Di dalam loop: `if (!Object.is(prevDeps[i], nextDeps[i])) return true;`."
+    ],
+    "explanation": "Perbandingannya **dangkal per elemen**: objek atau array yang dibuat ulang di setiap render (`{ id: 1 }` baru) selalu dianggap berubah walau isinya sama. Itulah kenapa objek literal di dependency array membuat `useMemo` atau `useEffect` berjalan di setiap render. `Object.is` mirip `===`, tetapi `Object.is(NaN, NaN)` bernilai `true` dan `Object.is(0, -0)` bernilai `false`.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "react-effects-002",
+    "track": "react",
+    "level": 3,
+    "format": "find-bug",
+    "topic": "effects",
+    "tags": [
+      "stale-closure",
+      "setInterval",
+      "useEffect"
+    ],
+    "title": "Timer berhenti di angka 1",
+    "prompt": "Timer ini seharusnya bertambah setiap detik, tetapi angkanya berhenti di `1`. Baris mana yang menyebabkan bug (tanpa mengubah dependency array)?",
+    "data": {
+      "language": "javascript",
+      "code": "function Timer() {\n  const [count, setCount] = useState(0);\n\n  useEffect(() => {\n    const id = setInterval(() => {\n      setCount(count + 1);\n    }, 1000);\n    return () => clearInterval(id);\n  }, []);\n\n  return <p>{count}</p>;\n}"
+    },
+    "answer": {
+      "line": 6,
+      "fixedLine": "      setCount((c) => c + 1);"
+    },
+    "hints": [
+      "Callback interval dibuat sekali saat render pertama. Nilai `count` mana yang ia \"lihat\"?",
+      "Gunakan updater function supaya tidak bergantung pada `count` dari closure."
+    ],
+    "explanation": "Effect hanya berjalan sekali (`[]`), jadi callback `setInterval` menutup (*closure*) `count` dari render pertama, yaitu `0`. Setiap detik ia memanggil `setCount(0 + 1)`, sehingga nilainya tertahan di 1. Ini disebut **stale closure**. Perbaikan: `setCount((c) => c + 1)` yang selalu memakai nilai terbaru. Menambahkan `count` ke deps juga berfungsi, tetapi interval akan dibuat ulang setiap detik.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "react-controlled-inputs-001",
+    "track": "react",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "controlled-inputs",
+    "tags": [
+      "forms",
+      "value",
+      "onChange"
+    ],
+    "title": "Input dengan value tanpa onChange",
+    "prompt": "Apa yang terjadi saat pengguna mengetik di input berikut?",
+    "data": {
+      "language": "javascript",
+      "code": "function NameField() {\n  const [name, setName] = useState('Ana');\n  return <input value={name} />;\n}",
+      "options": [
+        "Teks tidak bisa diubah (tetap `Ana`), dan React memberi peringatan karena ada `value` tanpa `onChange`",
+        "Teks berubah dan `name` ikut ter-update otomatis",
+        "Teks berubah di layar, tetapi `name` tetap `'Ana'`",
+        "React melempar error dan komponen gagal render"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Dengan prop `value`, siapa yang menjadi sumber kebenaran isi input: DOM atau state React?",
+      "Tanpa `onChange`, state tidak pernah diubah, jadi React terus memaksa nilai `'Ana'`."
+    ],
+    "explanation": "Input dengan `value` adalah **controlled**: React selalu memaksa isinya sama dengan `value`. Karena tidak ada `onChange` yang memanggil `setName`, ketikan langsung dikembalikan ke `'Ana'`, dan di development React memperingatkan bahwa field ini akan read-only. Pilihannya: tambah `onChange={(e) => setName(e.target.value)}`, pakai `defaultValue` untuk input uncontrolled, atau tambahkan `readOnly` jika memang sengaja.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "react-keys-002",
+    "track": "react",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "keys",
+    "tags": [
+      "index-as-key",
+      "lists",
+      "state"
+    ],
+    "title": "Index sebagai key saat item disisipkan di atas",
+    "prompt": "Setiap baris punya `<input />` uncontrolled. Pengguna mengetik `\"halo\"` di input baris **pertama** (item `A`), lalu menekan tombol yang menambahkan item `Z` di **awal** list. Apa yang terlihat?",
+    "data": {
+      "language": "javascript",
+      "code": "function List({ items }) {\n  return (\n    <ul>\n      {items.map((item, index) => (\n        <li key={index}>\n          {item.label} <input />\n        </li>\n      ))}\n    </ul>\n  );\n}\n// sebelum: [A, B]  →  sesudah: [Z, A, B]",
+      "options": [
+        "Teks `\"halo\"` sekarang tampil di baris `Z`, bukan di baris `A`",
+        "Teks `\"halo\"` tetap di baris `A`",
+        "Semua input dikosongkan karena list berubah",
+        "React melempar error karena key berubah"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Dengan `key={index}`, baris pertama selalu ber-key `0`, apa pun item-nya.",
+      "React menganggap elemen ber-key `0` adalah elemen yang sama, jadi DOM input-nya dipakai ulang."
+    ],
+    "explanation": "React mencocokkan elemen lama dan baru lewat `key`. Elemen ber-key `0` dulunya `A`, sekarang `Z`. React menganggapnya elemen yang sama, cukup mengganti label, dan mempertahankan DOM `<input>` beserta isinya. Hasilnya `\"halo\"` menempel ke `Z`. Pakai id stabil (`key={item.id}`) agar state dan DOM ikut item yang benar.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

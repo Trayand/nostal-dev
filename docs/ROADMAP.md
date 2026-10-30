@@ -24,12 +24,14 @@ Design in `docs/ARCHITECTURE.md` §8.
 
 ## Ideas backlog
 Content & tracks
-- [ ] **System design** track (flashcards + MC + scenario walkthroughs)
+- [x] **System design** track (flashcards + scenario MC) — added; scenario walkthroughs still open
 - [ ] **Interview prep** mode: timed L4–L5 sets, mock-interview checklist
-- [ ] **Git** track with an in-browser simulated repo (commit graph exercises)
-- [ ] **HTTP** track: read raw requests/responses, pick the right status code/header
+- [x] **Git** track (MC, find-bug, parsons) — added
+- [ ] Git: in-browser simulated repo (commit graph exercises)
+- [x] **HTTP & Web** track — added
 - [ ] **Python** track with Pyodide (WASM) — lazy-loaded, ~10 MB, opt-in download
-- [ ] More tracks: React, Node.js, regex, Linux shell, data structures
+- [x] **React** track (plain-JS logic executable; hooks as MC/find-bug) — added
+- [ ] More tracks: Node.js, regex, Linux shell, data structures
 - [ ] Spaced "concept chains": a flashcard unlocks related code questions
 
 Learning

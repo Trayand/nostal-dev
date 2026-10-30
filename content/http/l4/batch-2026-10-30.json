@@ -1,0 +1,125 @@
+[
+  {
+    "id": "http-cookies-002",
+    "track": "http",
+    "level": 4,
+    "format": "multiple-choice",
+    "topic": "cookies",
+    "tags": [
+      "cookies",
+      "samesite",
+      "csrf",
+      "security"
+    ],
+    "title": "Kapan cookie SameSite=Lax tetap dikirim",
+    "prompt": "`bank.example.com` menyetel:\n\n```http\nSet-Cookie: sid=abc; Secure; HttpOnly; SameSite=Lax\n```\n\nUser sedang membuka `https://evil.test`. Dalam kasus mana browser **mengirim** cookie `sid` ke `bank.example.com`?",
+    "data": {
+      "options": [
+        "Form di `evil.test` yang otomatis men-submit `POST https://bank.example.com/transfer`",
+        "`fetch(\"https://bank.example.com/api/me\", { credentials: \"include\" })` dari `evil.test`",
+        "`<img src=\"https://bank.example.com/logo.png\">` di halaman `evil.test`",
+        "User mengklik link `<a href=\"https://bank.example.com/dashboard\">` di `evil.test`"
+      ]
+    },
+    "answer": {
+      "index": 3
+    },
+    "hints": [
+      "`Lax` memblokir request cross-site, dengan satu pengecualian yang membuat link biasa tetap terasa \"sudah login\".",
+      "Pengecualiannya: navigasi *top-level* (berpindah halaman) dengan method aman seperti `GET`."
+    ],
+    "explanation": "Dengan `SameSite=Lax`, cookie **tidak** dikirim pada request cross-site — `POST` form, `fetch`/XHR, gambar, iframe — **kecuali** navigasi top-level dengan method aman (`GET`), misalnya klik link. Karena itu `Lax` memblokir CSRF klasik berbasis `POST`, tetapi endpoint `GET` yang mengubah state tetap rentan — alasan lain agar `GET` selalu *safe*. `Strict` bahkan tidak mengirim cookie saat klik link dari situs lain; `None` (wajib `Secure`) selalu mengirimnya.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "http-cors-002",
+    "track": "http",
+    "level": 4,
+    "format": "find-bug",
+    "topic": "cors",
+    "tags": [
+      "cors",
+      "credentials",
+      "cookies",
+      "headers"
+    ],
+    "title": "CORS dengan credentials tetap diblokir",
+    "prompt": "JS di `https://app.example.com` memanggil `fetch(\"https://api.example.com/me\", { credentials: \"include\" })`. Server membalas dengan respons berikut, tapi browser tetap memblokir JS membaca hasilnya. Baris mana yang salah?",
+    "data": {
+      "language": "text",
+      "code": "HTTP/1.1 200 OK\nContent-Type: application/json\nAccess-Control-Allow-Origin: *\nAccess-Control-Allow-Credentials: true\nVary: Origin\n\n{\"id\":42,\"name\":\"Budi\"}"
+    },
+    "answer": {
+      "line": 3,
+      "fixedLine": "Access-Control-Allow-Origin: https://app.example.com"
+    },
+    "hints": [
+      "Request dengan cookie (credentials) punya aturan CORS yang lebih ketat.",
+      "Wildcard `*` tidak diterima jika credentials ikut dikirim."
+    ],
+    "explanation": "Jika request membawa credentials (cookie, HTTP auth), `Access-Control-Allow-Origin` **harus berisi origin yang spesifik**, bukan `*` — kalau tidak, situs mana pun bisa membaca data user yang sedang login. Server biasanya mencocokkan header `Origin` request dengan whitelist lalu menggemakannya kembali; karena respons berbeda per origin, `Vary: Origin` (baris 5) memang diperlukan agar cache tidak tertukar. `Access-Control-Allow-Credentials: true` juga wajib — menghapusnya tidak memperbaiki masalah.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "http-tls-001",
+    "track": "http",
+    "level": 4,
+    "format": "parsons",
+    "topic": "tls",
+    "tags": [
+      "tls",
+      "https",
+      "handshake",
+      "security"
+    ],
+    "title": "Urutan handshake TLS 1.3",
+    "prompt": "Susun urutan **high-level** saat browser membuka koneksi HTTPS baru dengan **TLS 1.3** (tanpa session resumption).",
+    "data": {
+      "language": "text"
+    },
+    "answer": {
+      "lines": [
+        "TCP handshake selesai (SYN, SYN-ACK, ACK)",
+        "Client → ClientHello: versi TLS, cipher suite, key share, SNI (nama host)",
+        "Server → ServerHello: cipher suite terpilih + key share milik server",
+        "Kedua pihak menghitung shared secret (ECDHE) dan menurunkan kunci handshake",
+        "Server → Certificate, CertificateVerify, Finished (sudah terenkripsi)",
+        "Client memverifikasi rantai sertifikat ke CA tepercaya, hostname, dan CertificateVerify",
+        "Client → Finished, lalu request HTTP dikirim terenkripsi"
+      ]
+    },
+    "hints": [
+      "Di TLS 1.3, client sudah mengirim *key share* di pesan pertama, sehingga handshake hanya butuh 1 round trip.",
+      "Sertifikat server sudah dikirim terenkripsi, jadi kunci harus diturunkan sebelum pesan Certificate dibaca."
+    ],
+    "explanation": "TLS 1.3 menyelesaikan handshake dalam **1-RTT**: client langsung menebak grup kurva dan mengirim key share, server membalas dengan miliknya, lalu keduanya menurunkan kunci lewat (EC)DHE — kunci sesi **tidak pernah dikirim** lewat jaringan (*forward secrecy*). Sertifikat membuktikan identitas server: tanda tangan di `CertificateVerify` membuktikan server memegang private key sertifikat tersebut. Kesalahan umum: mengira kunci sesi dienkripsi dengan public key server lalu dikirim (itu RSA key exchange gaya lama, sudah dihapus di TLS 1.3).",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

@@ -1,0 +1,331 @@
+[
+  {
+    "id": "react-store-001",
+    "track": "react",
+    "level": 4,
+    "format": "code-full",
+    "topic": "store",
+    "tags": [
+      "createStore",
+      "subscribe",
+      "useSyncExternalStore"
+    ],
+    "title": "Store mini dengan subscribe dan unsubscribe",
+    "prompt": "Library state seperti Redux/Zustand terhubung ke React lewat `useSyncExternalStore(subscribe, getSnapshot)`. Implementasikan `createStore(reducer, initialState)` yang mengembalikan:\n\n- `getState()` → state saat ini\n- `dispatch(action)` → hitung `next = reducer(state, action)`. Jika `Object.is(next, state)`, **jangan** beri tahu listener. Jika berbeda, simpan dan panggil semua listener.\n- `subscribe(listener)` → daftarkan listener dan kembalikan fungsi `unsubscribe`. Memanggil `unsubscribe` dua kali tidak boleh error.\n\nFungsi `runScenario` di bawah adalah harness pengujian. **Jangan diubah.**",
+    "data": {
+      "language": "javascript",
+      "starter": "function createStore(reducer, initialState) {\n  // tulis kodemu di sini\n  return {\n    getState() {},\n    dispatch(action) {},\n    subscribe(listener) {\n      return () => {};\n    },\n  };\n}\n\n// Harness pengujian, jangan diubah\nfunction runScenario(steps) {\n  const reducer = (state, action) => {\n    switch (action.type) {\n      case 'add':\n        return { ...state, total: state.total + action.amount };\n      case 'reset':\n        return { ...state, total: 0 };\n      default:\n        return state;\n    }\n  };\n  const store = createStore(reducer, { total: 0 });\n  const log = [];\n  const unsubscribe = store.subscribe(() => log.push(store.getState().total));\n  for (const step of steps) {\n    if (step === 'unsubscribe') unsubscribe();\n    else store.dispatch(step);\n  }\n  return { final: store.getState(), log };\n}",
+      "entry": "runScenario"
+    },
+    "tests": [
+      {
+        "name": "tanpa dispatch",
+        "input": [
+          []
+        ],
+        "expected": {
+          "final": {
+            "total": 0
+          },
+          "log": []
+        }
+      },
+      {
+        "name": "dua kali add",
+        "input": [
+          [
+            {
+              "type": "add",
+              "amount": 5
+            },
+            {
+              "type": "add",
+              "amount": 3
+            }
+          ]
+        ],
+        "expected": {
+          "final": {
+            "total": 8
+          },
+          "log": [
+            5,
+            8
+          ]
+        }
+      },
+      {
+        "name": "action tak dikenal tidak memberi tahu listener",
+        "input": [
+          [
+            {
+              "type": "add",
+              "amount": 2
+            },
+            {
+              "type": "noop"
+            },
+            {
+              "type": "reset"
+            }
+          ]
+        ],
+        "expected": {
+          "final": {
+            "total": 0
+          },
+          "log": [
+            2,
+            0
+          ]
+        }
+      },
+      {
+        "name": "unsubscribe dua kali",
+        "input": [
+          [
+            {
+              "type": "add",
+              "amount": 1
+            },
+            "unsubscribe",
+            {
+              "type": "add",
+              "amount": 1
+            },
+            "unsubscribe"
+          ]
+        ],
+        "expected": {
+          "final": {
+            "total": 2
+          },
+          "log": [
+            1
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "function createStore(reducer, initialState) {\n  let state = initialState;\n  const listeners = new Set();\n  return {\n    getState() {\n      return state;\n    },\n    dispatch(action) {\n      const next = reducer(state, action);\n      if (Object.is(next, state)) return;\n      state = next;\n      for (const listener of [...listeners]) listener();\n    },\n    subscribe(listener) {\n      listeners.add(listener);\n      return () => {\n        listeners.delete(listener);\n      };\n    },\n  };\n}\n\n// Harness pengujian, jangan diubah\nfunction runScenario(steps) {\n  const reducer = (state, action) => {\n    switch (action.type) {\n      case 'add':\n        return { ...state, total: state.total + action.amount };\n      case 'reset':\n        return { ...state, total: 0 };\n      default:\n        return state;\n    }\n  };\n  const store = createStore(reducer, { total: 0 });\n  const log = [];\n  const unsubscribe = store.subscribe(() => log.push(store.getState().total));\n  for (const step of steps) {\n    if (step === 'unsubscribe') unsubscribe();\n    else store.dispatch(step);\n  }\n  return { final: store.getState(), log };\n}",
+    "hints": [
+      "Simpan `state` dalam closure (`let state = initialState`) dan listener dalam `Set`.",
+      "`Set.delete` aman dipanggil berkali-kali. Di `dispatch`, cek `Object.is(next, state)` sebelum memberi tahu listener."
+    ],
+    "explanation": "Store adalah closure yang menyimpan `state` dan kumpulan listener. `Set` membuat `unsubscribe` idempoten dan mencegah listener terdaftar ganda. Iterasi salinan `[...listeners]` supaya listener yang unsubscribe di tengah notifikasi tidak mengganggu loop. Pengecekan `Object.is` meniru perilaku React: jika reducer mengembalikan state yang sama, tidak ada yang perlu render ulang. Ini juga alasan reducer **wajib immutable**, karena mutasi lalu `return state` akan dianggap \"tidak berubah\".",
+    "estimatedMinutes": 10,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "react-batching-001",
+    "track": "react",
+    "level": 4,
+    "format": "multiple-choice",
+    "topic": "batching",
+    "tags": [
+      "automatic-batching",
+      "setTimeout",
+      "react-18"
+    ],
+    "title": "Batching update di dalam setTimeout",
+    "prompt": "Aplikasi di-mount dengan `createRoot` (React 19, production, tanpa StrictMode). Setelah tombol diklik dan timeout berjalan, berapa kali `'render'` **tambahan** tercetak di console?",
+    "data": {
+      "language": "javascript",
+      "code": "function App() {\n  const [a, setA] = useState(0);\n  const [b, setB] = useState(0);\n  console.log('render');\n\n  function handleClick() {\n    setTimeout(() => {\n      setA(1);\n      setB(1);\n    }, 0);\n  }\n\n  return <button onClick={handleClick}>{a + b}</button>;\n}",
+      "options": [
+        "1",
+        "2",
+        "0",
+        "3"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Sejak React 18, *automatic batching* berlaku di semua konteks, bukan hanya di event handler React.",
+      "Dua `setState` yang terjadi di tick yang sama digabung menjadi satu render."
+    ],
+    "explanation": "Sejak React 18 (`createRoot`), React melakukan **automatic batching** untuk update di mana pun: event handler, `setTimeout`, promise, maupun event native. `setA(1)` dan `setB(1)` digabung, sehingga hanya ada **satu** render ulang. Di React 17 (atau root legacy `ReactDOM.render`), update di luar event handler React tidak di-batch, sehingga hasilnya 2 render. Jika benar-benar perlu render segera, ada `flushSync`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "react-list-diff-001",
+    "track": "react",
+    "level": 4,
+    "format": "code-full",
+    "topic": "list-diff",
+    "tags": [
+      "reconciliation",
+      "keys",
+      "map"
+    ],
+    "title": "Diff dua list berdasarkan key",
+    "prompt": "Reconciliation React mencocokkan anak-anak list berdasarkan `key`. Tulis versi sederhananya: `diffByKey(prev, next)`. Setiap item berbentuk `{ id, text }` dengan `id` unik di dalam satu list. Kembalikan:\n\n- `added`: id yang ada di `next` tapi tidak di `prev` (urutan sesuai `next`)\n- `removed`: id yang ada di `prev` tapi tidak di `next` (urutan sesuai `prev`)\n- `changed`: id yang ada di keduanya tetapi `text`-nya berbeda (urutan sesuai `next`)\n\nPerpindahan posisi saja **bukan** perubahan. Usahakan O(n + m) dengan `Map`.",
+    "data": {
+      "language": "javascript",
+      "starter": "function diffByKey(prev, next) {\n  // tulis kodemu di sini\n  return { added: [], removed: [], changed: [] };\n}",
+      "entry": "diffByKey"
+    },
+    "tests": [
+      {
+        "name": "keduanya kosong",
+        "input": [
+          [],
+          []
+        ],
+        "expected": {
+          "added": [],
+          "removed": [],
+          "changed": []
+        }
+      },
+      {
+        "name": "tambah, hapus, ubah",
+        "input": [
+          [
+            {
+              "id": "a",
+              "text": "A"
+            },
+            {
+              "id": "b",
+              "text": "B"
+            },
+            {
+              "id": "c",
+              "text": "C"
+            }
+          ],
+          [
+            {
+              "id": "c",
+              "text": "C!"
+            },
+            {
+              "id": "d",
+              "text": "D"
+            },
+            {
+              "id": "a",
+              "text": "A"
+            }
+          ]
+        ],
+        "expected": {
+          "added": [
+            "d"
+          ],
+          "removed": [
+            "b"
+          ],
+          "changed": [
+            "c"
+          ]
+        }
+      },
+      {
+        "name": "hanya urutan berubah",
+        "input": [
+          [
+            {
+              "id": 1,
+              "text": "x"
+            },
+            {
+              "id": 2,
+              "text": "y"
+            }
+          ],
+          [
+            {
+              "id": 2,
+              "text": "y"
+            },
+            {
+              "id": 1,
+              "text": "x"
+            }
+          ]
+        ],
+        "expected": {
+          "added": [],
+          "removed": [],
+          "changed": []
+        }
+      },
+      {
+        "name": "dari kosong",
+        "input": [
+          [],
+          [
+            {
+              "id": 1,
+              "text": "x"
+            },
+            {
+              "id": 2,
+              "text": "y"
+            }
+          ]
+        ],
+        "expected": {
+          "added": [
+            1,
+            2
+          ],
+          "removed": [],
+          "changed": []
+        }
+      },
+      {
+        "name": "semua dihapus",
+        "input": [
+          [
+            {
+              "id": 1,
+              "text": "x"
+            },
+            {
+              "id": 2,
+              "text": "y"
+            }
+          ],
+          []
+        ],
+        "expected": {
+          "added": [],
+          "removed": [
+            1,
+            2
+          ],
+          "changed": []
+        }
+      }
+    ],
+    "referenceSolution": "function diffByKey(prev, next) {\n  const prevById = new Map(prev.map((item) => [item.id, item]));\n  const nextIds = new Set(next.map((item) => item.id));\n  const added = [];\n  const changed = [];\n  for (const item of next) {\n    const old = prevById.get(item.id);\n    if (old === undefined) added.push(item.id);\n    else if (old.text !== item.text) changed.push(item.id);\n  }\n  const removed = prev.filter((item) => !nextIds.has(item.id)).map((item) => item.id);\n  return { added, removed, changed };\n}",
+    "hints": [
+      "Buat `Map` dari `prev` (id → item) dan `Set` dari id `next`.",
+      "Satu loop di `next` menghasilkan `added` dan `changed`; satu filter di `prev` menghasilkan `removed`."
+    ],
+    "explanation": "Dengan `Map`/`Set`, setiap pencarian bernilai O(1), jadi totalnya O(n + m). Mencari dengan `find` di dalam loop bernilai O(n·m). Inilah inti kenapa `key` penting: React memakai key untuk tahu elemen mana yang **sama** (cukup di-update atau dipindah), mana yang baru (di-mount), dan mana yang hilang (di-unmount, state-nya dibuang). Tanpa key yang stabil, React hanya bisa mencocokkan berdasarkan posisi.",
+    "estimatedMinutes": 10,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

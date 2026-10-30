@@ -1,0 +1,299 @@
+[
+  {
+    "id": "js-operators-002",
+    "track": "javascript",
+    "level": 2,
+    "format": "predict-output",
+    "topic": "operators",
+    "tags": [
+      "nullish-coalescing",
+      "optional-chaining",
+      "falsy"
+    ],
+    "title": "?? vs || pada nilai 0",
+    "prompt": "Konfigurasi menyimpan `retries: 0` (sengaja nol) dan `user: null`. Apa output kode berikut?",
+    "data": {
+      "language": "javascript",
+      "code": "const config = { retries: 0, user: null };\n\nconsole.log(config.retries || 3);\nconsole.log(config.retries ?? 3);\nconsole.log(config.user?.name);\nconsole.log(config.user?.name ?? 'anonim');",
+      "options": [
+        "0\n0\nundefined\nanonim",
+        "3\n0\nundefined\nanonim",
+        "3\n3\nnull\nanonim",
+        "3\n0\nnull\nnull"
+      ]
+    },
+    "answer": {
+      "output": "3\n0\nundefined\nanonim"
+    },
+    "hints": [
+      "`||` mengganti semua nilai *falsy* (termasuk `0`), sedangkan `??` hanya mengganti `null` dan `undefined`.",
+      "`config.user?.name` tidak melempar error saat `user` bernilai `null`; hasilnya `undefined`."
+    ],
+    "explanation": "`config.retries || 3` → `3`, karena `0` falsy — nilai nol yang sengaja diset malah hilang. `config.retries ?? 3` → `0`, karena `??` hanya bereaksi pada `null`/`undefined`. `config.user?.name` berhenti di `user` yang `null` dan menghasilkan **`undefined`** (bukan `null`), tanpa `TypeError`. Lalu `undefined ?? 'anonim'` → `anonim`. Pelajaran: pakai `??` untuk nilai default jika `0`, `''`, atau `false` adalah nilai yang sah.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-dates-001",
+    "track": "javascript",
+    "level": 2,
+    "format": "predict-output",
+    "topic": "dates",
+    "tags": [
+      "month-index",
+      "overflow",
+      "date"
+    ],
+    "title": "Indeks bulan pada new Date",
+    "prompt": "Konstruktor `new Date(year, month, day)` dipanggil dengan angka bulan. Apa output kode berikut?",
+    "data": {
+      "language": "javascript",
+      "code": "const a = new Date(2026, 12, 1);\nconsole.log(a.getFullYear(), a.getMonth());\n\nconst b = new Date(2026, 1, 1);\nconsole.log(b.getMonth() + 1);",
+      "options": [
+        "2026 12\n2",
+        "2027 0\n2",
+        "2027 1\n2",
+        "2026 11\n1"
+      ]
+    },
+    "answer": {
+      "output": "2027 0\n2"
+    },
+    "hints": [
+      "Bulan di `Date` dihitung dari 0: Januari = 0, Desember = 11. Lalu apa arti bulan 12?",
+      "Nilai di luar rentang tidak error — kelebihannya digulirkan (*overflow*) ke tahun berikutnya."
+    ],
+    "explanation": "Indeks bulan di `Date` dimulai dari **0** (Januari = 0, Desember = 11), sedangkan tahun dan tanggal tidak. Bulan `12` berarti \"satu bulan setelah Desember 2026\", sehingga digulirkan menjadi Januari 2027: `getFullYear()` = 2027, `getMonth()` = 0. `new Date(2026, 1, 1)` adalah **1 Februari**, jadi `getMonth() + 1` = 2. Kesalahan umum: menulis `new Date(2026, 2, 1)` untuk Februari (hasilnya Maret), atau menampilkan `getMonth()` tanpa `+ 1`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-array-methods-004",
+    "track": "javascript",
+    "level": 2,
+    "format": "code-short",
+    "topic": "array-methods",
+    "tags": [
+      "flatMap",
+      "set",
+      "dedupe"
+    ],
+    "title": "Kumpulkan semua tag unik",
+    "prompt": "Setiap post *mungkin* punya properti `tags` (array string). Tulis `allTags(posts)` yang mengembalikan semua tag dari semua post **tanpa duplikat**, sesuai urutan kemunculan pertamanya. Post tanpa `tags` dilewati.\n\nContoh: `allTags([{ tags: ['js', 'css'] }, { tags: ['css', 'html'] }])` → `['js', 'css', 'html']`.",
+    "data": {
+      "language": "javascript",
+      "starter": "function allTags(posts) {\n  // tulis kodemu di sini\n}",
+      "entry": "allTags"
+    },
+    "tests": [
+      {
+        "name": "contoh",
+        "input": [
+          [
+            {
+              "tags": [
+                "js",
+                "css"
+              ]
+            },
+            {
+              "tags": [
+                "css",
+                "html"
+              ]
+            }
+          ]
+        ],
+        "expected": [
+          "js",
+          "css",
+          "html"
+        ]
+      },
+      {
+        "name": "tanpa post",
+        "input": [
+          []
+        ],
+        "expected": []
+      },
+      {
+        "name": "tags kosong atau tidak ada",
+        "input": [
+          [
+            {
+              "tags": []
+            },
+            {
+              "title": "draft"
+            }
+          ]
+        ],
+        "expected": []
+      },
+      {
+        "name": "duplikat dalam satu post",
+        "input": [
+          [
+            {
+              "tags": [
+                "a"
+              ]
+            },
+            {
+              "tags": [
+                "a",
+                "a",
+                "b"
+              ]
+            }
+          ]
+        ],
+        "expected": [
+          "a",
+          "b"
+        ]
+      }
+    ],
+    "referenceSolution": "function allTags(posts) {\n  return [...new Set(posts.flatMap((p) => p.tags ?? []))];\n}",
+    "hints": [
+      "`flatMap` memetakan setiap post ke array tag-nya sekaligus meratakan hasilnya satu tingkat.",
+      "`posts.flatMap((p) => p.tags ?? [])` lalu buang duplikat dengan `[...new Set(...)]` — `Set` mempertahankan urutan penyisipan."
+    ],
+    "explanation": "`flatMap(fn)` = `map(fn)` lalu `flat()` satu tingkat, sehingga array-array tag langsung tergabung menjadi satu array. `p.tags ?? []` mengganti `tags` yang tidak ada dengan array kosong (yang \"hilang\" saat diratakan). `new Set(...)` membuang duplikat sambil **mempertahankan urutan penyisipan**, lalu spread `[...set]` mengubahnya kembali menjadi array. Kesalahan umum: memakai `map` biasa (hasilnya array bersarang) atau lupa menangani post tanpa `tags` (flatMap akan memasukkan `undefined`).",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-equality-001",
+    "track": "javascript",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "equality",
+    "tags": [
+      "object-is",
+      "nan",
+      "strict-equality"
+    ],
+    "title": "Object.is vs === pada NaN dan -0",
+    "prompt": "Ekspresi mana yang bernilai **`true`**?",
+    "data": {
+      "options": [
+        "`NaN === NaN`",
+        "`Object.is(0, -0)`",
+        "`[] === []`",
+        "`Object.is(NaN, NaN)`",
+        "`null === undefined`"
+      ]
+    },
+    "answer": {
+      "index": 3
+    },
+    "hints": [
+      "`===` dan `Object.is` hanya berbeda pada dua kasus khusus: `NaN` dan nol bertanda.",
+      "`Object.is` menganggap `NaN` sama dengan dirinya sendiri, tapi membedakan `0` dan `-0`."
+    ],
+    "explanation": "`Object.is` mirip `===` dengan dua pengecualian: `Object.is(NaN, NaN)` → **`true`** (padahal `NaN === NaN` → `false`), dan `Object.is(0, -0)` → `false` (padahal `0 === -0` → `true`). `[] === []` → `false` karena objek dibandingkan berdasarkan **referensi** dan ini dua array berbeda. `null === undefined` → `false` karena tipenya berbeda; hanya `null == undefined` (loose) yang `true`. Untuk mengecek `NaN` sehari-hari, pakai `Number.isNaN(x)`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-strings-002",
+    "track": "javascript",
+    "level": 2,
+    "format": "fill-blank",
+    "topic": "strings",
+    "tags": [
+      "charAt",
+      "slice",
+      "title-case"
+    ],
+    "title": "Kapitalisasi huruf pertama tiap kata",
+    "prompt": "Lengkapi `titleCase(str)` agar setiap kata (dipisah satu spasi) diawali huruf besar dan sisanya huruf kecil. String kosong harus menghasilkan string kosong.\n\nContoh: `titleCase(\"jAVA sCRIPT\")` → `\"Java Script\"`.",
+    "data": {
+      "language": "javascript",
+      "template": "function titleCase(str) {\n  return str\n    .split(' ')\n    .map((w) => w.{{blank}}(0).toUpperCase() + w.{{blank}}(1).toLowerCase())\n    .join(' ');\n}",
+      "choices": [
+        "charAt",
+        "at",
+        "slice",
+        "split",
+        "push"
+      ],
+      "entry": "titleCase"
+    },
+    "answer": {
+      "blanks": [
+        [
+          "charAt"
+        ],
+        [
+          "slice",
+          "substring",
+          "substr"
+        ]
+      ]
+    },
+    "tests": [
+      {
+        "name": "dua kata",
+        "input": [
+          "halo dunia"
+        ],
+        "expected": "Halo Dunia"
+      },
+      {
+        "name": "kapital acak",
+        "input": [
+          "jAVA sCRIPT"
+        ],
+        "expected": "Java Script"
+      },
+      {
+        "name": "satu huruf",
+        "input": [
+          "a"
+        ],
+        "expected": "A"
+      },
+      {
+        "name": "string kosong",
+        "input": [
+          ""
+        ],
+        "expected": ""
+      }
+    ],
+    "hints": [
+      "Blank pertama mengambil karakter di index 0; blank kedua mengambil sisa string mulai index 1.",
+      "Gunakan `charAt(0)` (aman untuk string kosong) dan `slice(1)`."
+    ],
+    "explanation": "`w.charAt(0)` mengambil huruf pertama, dan `w.slice(1)` mengambil sisanya mulai index 1. Kenapa bukan `at(0)`? Untuk string kosong, `''.at(0)` menghasilkan `undefined`, sehingga `.toUpperCase()` melempar `TypeError`; `''.charAt(0)` mengembalikan `''` yang aman. `''.split(' ')` menghasilkan `['']`, jadi kasus ini memang terjadi. `slice(1)` pada string 1 huruf atau kosong menghasilkan `''` tanpa error.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

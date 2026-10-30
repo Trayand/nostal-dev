@@ -1,0 +1,500 @@
+[
+  {
+    "id": "sql-union-001",
+    "track": "sql",
+    "level": 2,
+    "format": "code-short",
+    "topic": "set-operations",
+    "tags": [
+      "union",
+      "union-all",
+      "distinct"
+    ],
+    "title": "Gabungan email pelanggan dan subscriber tanpa duplikat",
+    "prompt": "Tabel `customers(id, name, email)` dan `subscribers(id, email)`. Satu email bisa muncul di kedua tabel, bahkan lebih dari sekali dalam satu tabel.\n\nBuat daftar **email unik** dari kedua tabel dalam satu kolom bernama `email`. Urutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL);\nCREATE TABLE subscribers (id INTEGER PRIMARY KEY, email TEXT NOT NULL);",
+      "seed": "INSERT INTO customers (id, name, email) VALUES (1, 'Budi', 'budi@mail.com'), (2, 'Sari', 'sari@mail.com'), (3, 'Andi', 'andi@mail.com');\nINSERT INTO subscribers (id, email) VALUES (1, 'sari@mail.com'), (2, 'rina@mail.com'), (3, 'rina@mail.com');"
+    },
+    "tests": [
+      {
+        "name": "data awal (duplikat lintas dan dalam tabel)",
+        "expected": {
+          "columns": [
+            "email"
+          ],
+          "rows": [
+            [
+              "budi@mail.com"
+            ],
+            [
+              "sari@mail.com"
+            ],
+            [
+              "andi@mail.com"
+            ],
+            [
+              "rina@mail.com"
+            ]
+          ]
+        }
+      },
+      {
+        "name": "duplikat di dalam customers",
+        "setup": "INSERT INTO customers (id, name, email) VALUES (4, 'Budi K', 'budi@mail.com');",
+        "expected": {
+          "columns": [
+            "email"
+          ],
+          "rows": [
+            [
+              "budi@mail.com"
+            ],
+            [
+              "sari@mail.com"
+            ],
+            [
+              "andi@mail.com"
+            ],
+            [
+              "rina@mail.com"
+            ]
+          ]
+        }
+      },
+      {
+        "name": "subscribers kosong",
+        "setup": "DELETE FROM subscribers;",
+        "expected": {
+          "columns": [
+            "email"
+          ],
+          "rows": [
+            [
+              "budi@mail.com"
+            ],
+            [
+              "sari@mail.com"
+            ],
+            [
+              "andi@mail.com"
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "SELECT email FROM customers\nUNION\nSELECT email FROM subscribers;",
+    "hints": [
+      "Ada operator yang menumpuk hasil dua `SELECT` dengan jumlah kolom yang sama menjadi satu hasil.",
+      "`SELECT email FROM customers UNION SELECT email FROM subscribers;` — bukan `UNION ALL`."
+    ],
+    "explanation": "`UNION` menggabungkan hasil dua `SELECT` **dan membuang baris duplikat** dari keseluruhan hasil (termasuk duplikat di dalam satu tabel yang sama). `UNION ALL` hanya menumpuk semua baris apa adanya, sehingga `sari@mail.com` dan `rina@mail.com` muncul dua kali. Gunakan `UNION ALL` bila duplikat memang diinginkan (misalnya menghitung total kejadian) karena lebih cepat: tidak perlu proses deduplikasi. Nama kolom hasil diambil dari `SELECT` pertama.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-string-001",
+    "track": "sql",
+    "level": 2,
+    "format": "code-short",
+    "topic": "string-functions",
+    "tags": [
+      "like",
+      "upper",
+      "substr",
+      "concat"
+    ],
+    "title": "Nama lengkap dan kode karyawan dengan fungsi string",
+    "prompt": "Tabel `employees(id, first_name, last_name, dept)`. Nilai `dept` tersimpan dalam huruf kecil, misalnya `'it'`, `'finance'`.\n\nUntuk karyawan yang `last_name`-nya **diawali** huruf `S`, tampilkan:\n- `full_name`: `first_name` + spasi + `last_name` (contoh `'Andi Saputra'`)\n- `code`: **3 huruf pertama** `dept` dalam huruf kapital, tanda `-`, lalu `id` (contoh `'FIN-2'`; dept yang lebih pendek dipakai seluruhnya, `'hr'` → `'HR-3'`)\n\nUrutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE employees (id INTEGER PRIMARY KEY, first_name TEXT NOT NULL, last_name TEXT NOT NULL, dept TEXT NOT NULL);",
+      "seed": "INSERT INTO employees (id, first_name, last_name, dept) VALUES (1, 'Andi', 'Saputra', 'it'), (2, 'Sari', 'Wijaya', 'finance'), (3, 'Budi', 'Santoso', 'hr'), (4, 'Dewi', 'Lestari', 'it'), (5, 'Rina', 'Susanti', 'marketing');"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "full_name",
+            "code"
+          ],
+          "rows": [
+            [
+              "Andi Saputra",
+              "IT-1"
+            ],
+            [
+              "Budi Santoso",
+              "HR-3"
+            ],
+            [
+              "Rina Susanti",
+              "MAR-5"
+            ]
+          ]
+        }
+      },
+      {
+        "name": "huruf s di tengah nama tidak ikut",
+        "setup": "INSERT INTO employees (id, first_name, last_name, dept) VALUES (6, 'Joko', 'Hasibuan', 'it'), (7, 'Tono', 'Sitorus', 'finance');",
+        "expected": {
+          "columns": [
+            "full_name",
+            "code"
+          ],
+          "rows": [
+            [
+              "Andi Saputra",
+              "IT-1"
+            ],
+            [
+              "Budi Santoso",
+              "HR-3"
+            ],
+            [
+              "Rina Susanti",
+              "MAR-5"
+            ],
+            [
+              "Tono Sitorus",
+              "FIN-7"
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "SELECT first_name || ' ' || last_name AS full_name,\n       UPPER(SUBSTR(dept, 1, 3)) || '-' || id AS code\nFROM employees\nWHERE last_name LIKE 'S%';",
+    "hints": [
+      "Di SQLite, string disambung dengan operator `||`; `LIKE` dengan `%` mencocokkan pola awalan.",
+      "`first_name || ' ' || last_name`, `UPPER(SUBSTR(dept, 1, 3)) || '-' || id`, dan `WHERE last_name LIKE 'S%'`."
+    ],
+    "explanation": "- `||` adalah operator penyambung string standar SQL (di SQLite, `+` justru melakukan penjumlahan angka). Angka seperti `id` otomatis diubah ke teks saat disambung.\n- `SUBSTR(teks, mulai, panjang)` memakai indeks **mulai dari 1**; jika string lebih pendek dari panjang yang diminta, sisanya saja yang diambil (`'hr'` → `'hr'`).\n- `LIKE 'S%'` berarti \"diawali S\". Kesalahan umum: `'%S%'` (mengandung S di mana saja), yang ikut menangkap `Lestari` dan `Hasibuan`. Perlu diingat `LIKE` di SQLite **tidak peka huruf besar/kecil** untuk huruf ASCII.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-group-by-002",
+    "track": "sql",
+    "level": 2,
+    "format": "code-short",
+    "topic": "group-by",
+    "tags": [
+      "group-by",
+      "multiple-columns",
+      "order-by"
+    ],
+    "title": "Rekap pesanan per kota dan status",
+    "prompt": "Tabel `orders(id, city, status, total)`.\n\nBuat rekap untuk setiap **kombinasi** kota dan status:\n- `city`\n- `status`\n- `order_count`: jumlah pesanan\n- `total_amount`: jumlah `total`\n\nUrutkan berdasarkan `city` A→Z, lalu `status` A→Z.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE orders (id INTEGER PRIMARY KEY, city TEXT NOT NULL, status TEXT NOT NULL, total INTEGER NOT NULL);",
+      "seed": "INSERT INTO orders (id, city, status, total) VALUES (1, 'Jakarta', 'paid', 150000), (2, 'Jakarta', 'paid', 200000), (3, 'Jakarta', 'pending', 50000), (4, 'Bandung', 'paid', 75000), (5, 'Bandung', 'cancelled', 60000), (6, 'Bandung', 'paid', 125000), (7, 'Surabaya', 'pending', 90000);"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "city",
+            "status",
+            "order_count",
+            "total_amount"
+          ],
+          "rows": [
+            [
+              "Bandung",
+              "cancelled",
+              1,
+              60000
+            ],
+            [
+              "Bandung",
+              "paid",
+              2,
+              200000
+            ],
+            [
+              "Jakarta",
+              "paid",
+              2,
+              350000
+            ],
+            [
+              "Jakarta",
+              "pending",
+              1,
+              50000
+            ],
+            [
+              "Surabaya",
+              "pending",
+              1,
+              90000
+            ]
+          ]
+        },
+        "ordered": true
+      },
+      {
+        "name": "kombinasi baru di kota yang sama",
+        "setup": "INSERT INTO orders (id, city, status, total) VALUES (8, 'Surabaya', 'paid', 40000);",
+        "expected": {
+          "columns": [
+            "city",
+            "status",
+            "order_count",
+            "total_amount"
+          ],
+          "rows": [
+            [
+              "Bandung",
+              "cancelled",
+              1,
+              60000
+            ],
+            [
+              "Bandung",
+              "paid",
+              2,
+              200000
+            ],
+            [
+              "Jakarta",
+              "paid",
+              2,
+              350000
+            ],
+            [
+              "Jakarta",
+              "pending",
+              1,
+              50000
+            ],
+            [
+              "Surabaya",
+              "paid",
+              1,
+              40000
+            ],
+            [
+              "Surabaya",
+              "pending",
+              1,
+              90000
+            ]
+          ]
+        },
+        "ordered": true
+      }
+    ],
+    "referenceSolution": "SELECT city, status, COUNT(*) AS order_count, SUM(total) AS total_amount\nFROM orders\nGROUP BY city, status\nORDER BY city, status;",
+    "hints": [
+      "`GROUP BY` boleh berisi lebih dari satu kolom; satu kelompok = satu kombinasi nilai unik.",
+      "`GROUP BY city, status ORDER BY city, status`."
+    ],
+    "explanation": "Dengan `GROUP BY city, status`, baris dikelompokkan per **pasangan** (city, status), jadi Jakarta-paid dan Jakarta-pending menjadi dua baris terpisah. Jika hanya `GROUP BY city`, SQLite tetap menjalankan query tetapi `status` diambil dari baris sembarang dalam kelompok, hasilnya menyesatkan. `ORDER BY city, status` mengurutkan dulu menurut kota, dan status hanya menentukan urutan di dalam kota yang sama.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-date-001",
+    "track": "sql",
+    "level": 2,
+    "format": "code-short",
+    "topic": "dates",
+    "tags": [
+      "strftime",
+      "group-by",
+      "order-by"
+    ],
+    "title": "Jumlah pesanan dan pendapatan per bulan",
+    "prompt": "Tabel `orders(id, created_at, total)`. `created_at` berupa teks `'YYYY-MM-DD HH:MM:SS'`, dan data bisa mencakup beberapa tahun.\n\nTampilkan per bulan:\n- `month`: format `'YYYY-MM'` (contoh `'2026-01'`)\n- `order_count`: jumlah pesanan\n- `revenue`: jumlah `total`\n\nUrutkan dari bulan paling awal.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE orders (id INTEGER PRIMARY KEY, created_at TEXT NOT NULL, total INTEGER NOT NULL);",
+      "seed": "INSERT INTO orders (id, created_at, total) VALUES (1, '2025-01-15 10:00:00', 100000), (2, '2026-01-03 09:30:00', 150000), (3, '2026-01-28 20:15:00', 50000), (4, '2026-02-10 12:00:00', 200000), (5, '2026-03-01 00:00:00', 75000), (6, '2026-03-31 23:59:59', 25000);"
+    },
+    "tests": [
+      {
+        "name": "bulan sama di tahun berbeda dipisah",
+        "expected": {
+          "columns": [
+            "month",
+            "order_count",
+            "revenue"
+          ],
+          "rows": [
+            [
+              "2025-01",
+              1,
+              100000
+            ],
+            [
+              "2026-01",
+              2,
+              200000
+            ],
+            [
+              "2026-02",
+              1,
+              200000
+            ],
+            [
+              "2026-03",
+              2,
+              100000
+            ]
+          ]
+        },
+        "ordered": true
+      },
+      {
+        "name": "tidak ada pesanan",
+        "setup": "DELETE FROM orders;",
+        "expected": {
+          "columns": [
+            "month",
+            "order_count",
+            "revenue"
+          ],
+          "rows": []
+        },
+        "ordered": true
+      }
+    ],
+    "referenceSolution": "SELECT strftime('%Y-%m', created_at) AS month,\n       COUNT(*) AS order_count,\n       SUM(total) AS revenue\nFROM orders\nGROUP BY month\nORDER BY month;",
+    "hints": [
+      "Ubah `created_at` menjadi teks tahun-bulan, lalu kelompokkan menurut hasil itu.",
+      "`strftime('%Y-%m', created_at) AS month ... GROUP BY month ORDER BY month`."
+    ],
+    "explanation": "SQLite menyimpan tanggal sebagai teks; `strftime('%Y-%m', created_at)` mengambil tahun-bulan sehingga semua pesanan di bulan yang sama jatuh ke kelompok yang sama, tanpa peduli tanggal dan jamnya. Kesalahan umum: memakai `strftime('%m', ...)` saja, yang menggabungkan Januari 2025 dengan Januari 2026. Karena formatnya `YYYY-MM`, urutan teks sama dengan urutan waktu, jadi `ORDER BY month` sudah benar. Tabel kosong menghasilkan nol baris (bukan satu baris berisi 0) karena tidak ada kelompok yang terbentuk.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-null-004",
+    "track": "sql",
+    "level": 2,
+    "format": "code-short",
+    "topic": "null-handling",
+    "tags": [
+      "coalesce",
+      "null",
+      "report"
+    ],
+    "title": "Laporan kontak pelanggan dengan nilai default",
+    "prompt": "Tabel `customers(id, name, city, phone, email)`. Kolom `city`, `phone`, dan `email` bisa `NULL`.\n\nBuat laporan dengan kolom:\n- `name`\n- `city`: kota, atau `'Tidak diketahui'` jika NULL\n- `contact`: `phone` jika ada; jika tidak, `email`; jika keduanya NULL, `'-'`\n\nUrutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT NOT NULL, city TEXT, phone TEXT, email TEXT);",
+      "seed": "INSERT INTO customers (id, name, city, phone, email) VALUES (1, 'Budi', 'Jakarta', '0811111', 'budi@mail.com'), (2, 'Sari', NULL, NULL, 'sari@mail.com'), (3, 'Andi', 'Bandung', NULL, NULL), (4, 'Dewi', NULL, '0822222', NULL);"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "name",
+            "city",
+            "contact"
+          ],
+          "rows": [
+            [
+              "Budi",
+              "Jakarta",
+              "0811111"
+            ],
+            [
+              "Sari",
+              "Tidak diketahui",
+              "sari@mail.com"
+            ],
+            [
+              "Andi",
+              "Bandung",
+              "-"
+            ],
+            [
+              "Dewi",
+              "Tidak diketahui",
+              "0822222"
+            ]
+          ]
+        }
+      },
+      {
+        "name": "pelanggan baru hanya punya email",
+        "setup": "INSERT INTO customers (id, name, city, phone, email) VALUES (5, 'Rina', NULL, NULL, 'rina@mail.com');",
+        "expected": {
+          "columns": [
+            "name",
+            "city",
+            "contact"
+          ],
+          "rows": [
+            [
+              "Budi",
+              "Jakarta",
+              "0811111"
+            ],
+            [
+              "Sari",
+              "Tidak diketahui",
+              "sari@mail.com"
+            ],
+            [
+              "Andi",
+              "Bandung",
+              "-"
+            ],
+            [
+              "Dewi",
+              "Tidak diketahui",
+              "0822222"
+            ],
+            [
+              "Rina",
+              "Tidak diketahui",
+              "rina@mail.com"
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "SELECT name,\n       COALESCE(city, 'Tidak diketahui') AS city,\n       COALESCE(phone, email, '-') AS contact\nFROM customers;",
+    "hints": [
+      "`COALESCE(a, b, c, ...)` mengembalikan argumen pertama yang tidak NULL.",
+      "`COALESCE(city, 'Tidak diketahui') AS city` dan `COALESCE(phone, email, '-') AS contact`."
+    ],
+    "explanation": "`COALESCE` menerima banyak argumen dan mengembalikan yang **pertama** bukan NULL, sehingga urutan argumen adalah urutan prioritas. `COALESCE(email, phone, '-')` akan salah untuk Budi (yang punya keduanya). `COALESCE` hanya mengganti NULL: string kosong `''` tetap dianggap nilai. Bentuk ini jauh lebih ringkas daripada `CASE WHEN phone IS NOT NULL THEN phone WHEN email IS NOT NULL THEN email ELSE '-' END`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

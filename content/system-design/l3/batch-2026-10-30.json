@@ -1,0 +1,224 @@
+[
+  {
+    "id": "sd-load-balancing-002",
+    "track": "system-design",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "load-balancing",
+    "tags": [
+      "sticky-session",
+      "stateless",
+      "session",
+      "autoscaling"
+    ],
+    "title": "User ter-logout saat autoscaling",
+    "prompt": "Sebuah web app menyimpan session login di **memori lokal** tiap app server. Saat ini dipakai **sticky session** di load balancer. Setiap kali autoscaler mematikan instance atau ada deploy, sebagian user ter-logout. Tim ingin bebas menambah/membuang instance. Perubahan mana yang **paling tepat**?",
+    "data": {
+      "options": [
+        "Perbesar ukuran tiap instance supaya autoscaler jarang perlu mematikannya",
+        "Perpanjang durasi cookie sticky session dari 1 jam menjadi 24 jam",
+        "Pindahkan session ke store bersama (mis. Redis) atau token yang ditandatangani, lalu matikan sticky session",
+        "Ganti algoritma load balancing dari round-robin ke least-connections"
+      ]
+    },
+    "answer": {
+      "index": 2
+    },
+    "hints": [
+      "Masalahnya bukan cara memilih server, tapi **di mana state disimpan**.",
+      "Jika server tidak menyimpan apa pun yang penting, server mana pun boleh mati."
+    ],
+    "explanation": "Sticky session hanya mengikat user ke satu server; ketika server itu hilang, session di memorinya ikut hilang. Menjadikan app server **stateless** (session di Redis/DB, atau JWT/cookie yang ditandatangani) membuat setiap instance bisa diganti kapan saja dan beban tersebar rata. Memperbesar instance atau memperpanjang cookie tidak mengubah fakta bahwa state hilang saat instance mati; algoritma load balancing tidak menyentuh masalahnya sama sekali.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sd-caching-002",
+    "track": "system-design",
+    "level": 3,
+    "format": "flashcard",
+    "topic": "caching",
+    "tags": [
+      "write-through",
+      "write-behind",
+      "cache-aside",
+      "consistency"
+    ],
+    "title": "Write-through vs write-behind",
+    "prompt": "Bandingkan strategi tulis cache **write-through** dan **write-behind** (write-back). Apa trade-off utamanya dibanding cache-aside?",
+    "answer": {
+      "back": "- **Write-through**: setiap tulis masuk ke cache **dan** DB secara sinkron sebelum sukses dikembalikan.\n  - ➕ Cache selalu segar; baca setelah tulis konsisten.\n  - ➖ Latensi tulis bertambah; cache terisi data yang mungkin tak pernah dibaca.\n- **Write-behind**: tulis ke cache dulu, lalu di-flush ke DB **secara async** (sering di-batch).\n  - ➕ Tulis sangat cepat, beban DB berkurang lewat batching.\n  - ➖ **Risiko kehilangan data** bila cache mati sebelum flush; DB tertinggal (eventual consistency).\n- **Cache-aside**: aplikasi menulis ke DB lalu invalidate cache; cache diisi saat miss. Paling sederhana, tapi miss pertama lambat dan ada jendela data basi."
+    },
+    "hints": [
+      "Bedanya ada pada **kapan** DB ikut ditulis: bersamaan atau belakangan."
+    ],
+    "explanation": "Write-behind cocok untuk data bervolume tinggi yang boleh hilang sedikit (counter view, metrik), bukan untuk saldo atau pesanan. Write-through cocok bila data sering dibaca tepat setelah ditulis. Kesalahan umum: memakai write-behind untuk data finansial tanpa penyimpanan cache yang durable.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sd-message-queue-001",
+    "track": "system-design",
+    "level": 3,
+    "format": "flashcard",
+    "topic": "message-queue",
+    "tags": [
+      "at-least-once",
+      "idempotency",
+      "dlq",
+      "consumer"
+    ],
+    "title": "At-least-once dan dead letter queue",
+    "prompt": "Queue kamu menjamin **at-least-once delivery**. Apa konsekuensinya bagi consumer, bagaimana membuat consumer **idempotent**, dan apa gunanya **dead letter queue (DLQ)**?",
+    "answer": {
+      "back": "**Konsekuensi:** pesan bisa terkirim **lebih dari sekali** (mis. consumer crash setelah memproses tapi sebelum ack), jadi consumer pasti menerima duplikat.\n\n**Consumer idempotent:**\n- Simpan `message_id` yang sudah diproses (tabel dengan unique constraint) dalam **transaksi yang sama** dengan efeknya.\n- Atau buat operasinya alami idempotent: `UPDATE ... SET status = 'PAID'` alih-alih `balance = balance - 10`.\n\n**DLQ:** pesan yang gagal diproses setelah N kali retry dipindah ke antrean terpisah, supaya satu pesan rusak (*poison message*) tidak memblokir atau terus di-retry, dan bisa diperiksa/di-replay manual."
+    },
+    "hints": [
+      "Ack bisa hilang setelah pekerjaan selesai — apa yang terjadi pada pesan itu?"
+    ],
+    "explanation": "\"Exactly-once\" end-to-end praktis didapat dari at-least-once + deduplikasi di consumer. Kesalahan umum: mengecek `message_id` lalu menyimpannya di langkah terpisah dari efek bisnisnya — crash di antara keduanya tetap menghasilkan duplikat. Pantau ukuran DLQ dengan alert; DLQ yang diam-diam penuh berarti data hilang tanpa disadari.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sd-replication-001",
+    "track": "system-design",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "replication",
+    "tags": [
+      "read-replica",
+      "replication-lag",
+      "read-your-writes"
+    ],
+    "title": "Profil lama setelah disimpan",
+    "prompt": "Database memakai **leader-follower**: semua write ke leader, semua read ke read replica (replikasi async, lag biasanya 1–3 detik). User mengubah nama profil, halaman me-reload, dan nama **lama** masih tampil. Perbaikan mana yang paling tepat **tanpa memperlambat semua write**?",
+    "data": {
+      "options": [
+        "Tambah lebih banyak read replica agar beban tiap replica turun",
+        "Ubah replikasi menjadi sinkron ke semua replica",
+        "Selama beberapa detik setelah user menulis, baca data milik user itu dari leader (read-your-writes)",
+        "Cache profil di Redis dengan TTL 10 menit"
+      ]
+    },
+    "answer": {
+      "index": 2
+    },
+    "hints": [
+      "Yang dibutuhkan user hanyalah melihat **tulisannya sendiri**, bukan konsistensi global.",
+      "Ada satu node yang pasti sudah punya data terbaru."
+    ],
+    "explanation": "Ini masalah **read-your-writes consistency** akibat replication lag. Mengarahkan read data milik user tersebut ke leader (mis. selama N detik setelah write, atau sampai replica mencapai posisi log yang sama) menyelesaikannya dengan biaya kecil. Replikasi sinkron memang menghilangkan lag, tapi memperlambat setiap write dan membuat write gagal bila satu replica lambat — melanggar syarat soal. Menambah replica tidak mengurangi lag; cache 10 menit malah memperpanjang data basi.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sd-retries-001",
+    "track": "system-design",
+    "level": 3,
+    "format": "flashcard",
+    "topic": "retries",
+    "tags": [
+      "timeout",
+      "retry",
+      "exponential-backoff",
+      "jitter"
+    ],
+    "title": "Exponential backoff dengan jitter",
+    "prompt": "Kenapa retry sebaiknya memakai **exponential backoff + jitter**, dan aturan apa lagi yang perlu dipegang saat me-retry panggilan ke service lain?",
+    "answer": {
+      "back": "- **Exponential backoff**: jeda bertambah (mis. 100 ms, 200 ms, 400 ms, …, dengan batas maksimum) supaya service yang sedang kewalahan diberi waktu pulih.\n- **Jitter**: jeda diacak (mis. `random(0, backoff)`) supaya ribuan klien yang gagal bersamaan **tidak retry serentak** dalam gelombang yang sama (*thundering herd*).\n- **Aturan lain:**\n  - Selalu pasang **timeout**; tanpa timeout retry tidak pernah terpicu.\n  - Retry hanya operasi **idempotent** (atau pakai idempotency key).\n  - Batasi jumlah percobaan / pakai **retry budget**, dan jangan retry error permanen seperti `400`.\n  - Hindari retry di setiap lapisan (3 lapis × 3 retry = 27× beban)."
+    },
+    "hints": [
+      "Bayangkan 10.000 klien yang gagal pada milidetik yang sama, lalu retry tepat 1 detik kemudian."
+    ],
+    "explanation": "Retry tanpa backoff dan jitter bisa mengubah gangguan singkat menjadi outage panjang: beban retry datang bergelombang dan terus menekan service yang sedang pulih. Kesalahan umum: retry berlapis di client, gateway, dan service sekaligus sehingga beban berlipat ganda.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sd-request-path-001",
+    "track": "system-design",
+    "level": 3,
+    "format": "parsons",
+    "topic": "request-path",
+    "tags": [
+      "cdn",
+      "load-balancer",
+      "cache-aside",
+      "dns"
+    ],
+    "title": "Urutan perjalanan sebuah request",
+    "prompt": "Browser meminta `GET https://shop.example.com/api/products/42`. Respons ini **belum ada di cache CDN** dan **belum ada di Redis**. Susun langkah perjalanan request dari awal sampai respons diterima browser.",
+    "data": {
+      "language": "text"
+    },
+    "answer": {
+      "lines": [
+        "Browser me-resolve shop.example.com lewat DNS ke edge CDN terdekat",
+        "Browser membuka koneksi TLS ke edge CDN",
+        "CDN cache miss, request diteruskan ke load balancer origin",
+        "Load balancer memilih app server yang lolos health check",
+        "App server mengecek Redis dengan key product:42 dan mendapat miss",
+        "App server membaca produk 42 dari database",
+        "App server menyimpan hasilnya ke Redis dengan TTL lalu membuat respons",
+        "Respons kembali lewat load balancer dan CDN (yang ikut menyimpannya) ke browser"
+      ]
+    },
+    "hints": [
+      "Mulai dari yang paling dekat ke user, lalu masuk makin dalam ke sistem.",
+      "Di dalam app server, urutannya: cek cache → baca DB → isi cache (cache-aside)."
+    ],
+    "explanation": "Request melewati lapisan dari luar ke dalam: DNS → CDN edge → load balancer → app server → cache → database, lalu respons kembali melalui jalur yang sama. Setiap lapisan cache (CDN, Redis) ada untuk menghentikan request sedini mungkin; urutan ini menjelaskan kenapa cache hit di CDN jauh lebih murah daripada hit di Redis. Kesalahan umum: menaruh load balancer sebelum CDN — CDN berada di edge, dekat user.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

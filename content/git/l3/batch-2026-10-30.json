@@ -1,0 +1,221 @@
+[
+  {
+    "id": "git-merge-conflicts-001",
+    "track": "git",
+    "level": 3,
+    "format": "find-bug",
+    "topic": "merge-conflicts",
+    "tags": [
+      "merge",
+      "conflict",
+      "continue"
+    ],
+    "title": "Menyelesaikan konflik merge",
+    "prompt": "Urutan berikut dimaksudkan untuk menggabungkan `feature/login` ke `main` dan menyelesaikan konfliknya. Baris mana yang **salah**?",
+    "data": {
+      "language": "text",
+      "code": "git switch main\ngit merge feature/login\n# CONFLICT (content): Merge conflict in app.js\n# edit app.js: pilih isi yang benar, hapus penanda <<<<<<< ======= >>>>>>>\ngit add app.js\ngit rebase --continue"
+    },
+    "answer": {
+      "line": 6,
+      "fixedLine": "git merge --continue"
+    },
+    "hints": [
+      "Operasi yang sedang berjalan dan terhenti karena konflik adalah merge, bukan rebase.",
+      "Setiap operasi punya `--continue`/`--abort` miliknya sendiri."
+    ],
+    "explanation": "Konflik terjadi saat **merge**, jadi setelah konflik diselesaikan dan file di-stage dengan `git add app.js`, langkah penutupnya adalah `git merge --continue` (atau `git commit`, yang setara di sini) untuk membuat merge commit.\n\n`git rebase --continue` hanya berlaku saat rebase sedang berjalan; di sini Git akan menolak dengan pesan `No rebase in progress?`.\n\nIngat juga: `git add` pada file berkonflik berarti \"konflik sudah selesai\". Pastikan tidak ada penanda `<<<<<<<`/`=======`/`>>>>>>>` tersisa. Untuk membatalkan seluruh merge gunakan `git merge --abort`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Comment lines describe manual steps; only line 6 is an invalid command for the state"
+    }
+  },
+  {
+    "id": "git-stash-001",
+    "track": "git",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "stash",
+    "tags": [
+      "stash",
+      "untracked"
+    ],
+    "title": "Stash dan file untracked",
+    "prompt": "Working tree berisi perubahan pada `app.js` (tracked) dan file baru `draft.md` (untracked, belum pernah di-`add`). Kamu menjalankan `git stash`. Bagaimana kondisi working tree sesudahnya?",
+    "data": {
+      "language": "text",
+      "code": "$ git status --short\n M app.js\n?? draft.md\n$ git stash",
+      "options": [
+        "`app.js` kembali ke versi `HEAD`, tetapi `draft.md` **masih ada** di working tree",
+        "Keduanya disimpan ke stash dan working tree benar-benar bersih",
+        "`draft.md` disimpan ke stash, tetapi perubahan `app.js` tetap ada",
+        "Perintah gagal karena ada file untracked"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Secara default, stash hanya menyimpan perubahan pada file yang sudah di-track (staged maupun unstaged).",
+      "Untuk ikut menyimpan file untracked butuh opsi `-u` (`--include-untracked`)."
+    ],
+    "explanation": "`git stash` (= `git stash push`) secara default menyimpan perubahan **tracked** saja, di staging area maupun working tree, lalu mengembalikan file-file itu ke `HEAD`. File **untracked** seperti `draft.md` tidak disentuh dan tetap ada.\n\nAgar ikut tersimpan gunakan `git stash -u` (`--include-untracked`); `-a` (`--all`) juga menyertakan file yang di-ignore. Kembalikan stash dengan `git stash pop` (terapkan lalu hapus dari daftar) atau `git stash apply` (terapkan, stash tetap disimpan).\n\nKesalahan umum: mengira working tree sudah bersih, lalu pindah branch dan file untracked ikut terbawa.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Default stash behaviour per git-stash(1), Git 2.4x"
+    }
+  },
+  {
+    "id": "git-reset-001",
+    "track": "git",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "reset",
+    "tags": [
+      "reset",
+      "soft",
+      "mixed",
+      "hard",
+      "revert"
+    ],
+    "title": "Efek git reset --soft HEAD~1",
+    "prompt": "Commit terakhir (belum di-push) ternyata kurang satu file. Kamu menjalankan perintah di bawah. Apa hasilnya?",
+    "data": {
+      "language": "text",
+      "code": "git reset --soft HEAD~1",
+      "options": [
+        "Commit terakhir dibatalkan; perubahannya **tetap di staging area**, siap di-commit ulang",
+        "Commit terakhir dibatalkan; perubahannya kembali ke working tree tetapi **tidak** di-stage",
+        "Commit terakhir dan semua perubahannya dibuang dari working tree",
+        "Dibuat commit baru yang membalik isi commit terakhir"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Ketiga mode `reset` sama-sama memindahkan branch ke `HEAD~1`; bedanya ada pada index dan working tree.",
+      "`--soft` adalah mode paling \"lembut\": hanya pointer branch yang dipindah."
+    ],
+    "explanation": "Semua mode `git reset <commit>` memindahkan branch saat ini ke `<commit>`. Bedanya:\n\n| mode | staging area | working tree |\n|---|---|---|\n| `--soft` | tetap (perubahan commit tadi jadi *staged*) | tetap |\n| `--mixed` (default) | di-reset → perubahan jadi *unstaged* | tetap |\n| `--hard` | di-reset | di-reset → perubahan **hilang** |\n\nJadi setelah `--soft`, cukup `git add file-yang-lupa` lalu commit lagi. (Alternatif untuk kasus ini: `git add` lalu `git commit --amend`.)\n\nOpsi terakhir adalah `git revert HEAD`, yang aman untuk commit yang **sudah di-push** karena tidak menulis ulang riwayat. Sedangkan `git restore` hanya mengubah file, tidak memindahkan branch.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Mode table checked against git-reset(1)"
+    }
+  },
+  {
+    "id": "git-tags-001",
+    "track": "git",
+    "level": 3,
+    "format": "fill-blank",
+    "topic": "tags",
+    "tags": [
+      "tag",
+      "annotated",
+      "push"
+    ],
+    "title": "Membuat dan push annotated tag",
+    "prompt": "Buat **annotated tag** `v1.2.0` di commit saat ini, lalu push **hanya tag itu** ke `origin`.",
+    "data": {
+      "language": "text",
+      "template": "git tag {{blank}} v1.2.0 -m \"Release 1.2.0\"\ngit push origin {{blank}}",
+      "choices": [
+        "-a",
+        "-d",
+        "-l",
+        "v1.2.0",
+        "--tags",
+        "--all"
+      ]
+    },
+    "answer": {
+      "blanks": [
+        [
+          "-a"
+        ],
+        [
+          "v1.2.0",
+          "refs/tags/v1.2.0",
+          "tag v1.2.0"
+        ]
+      ]
+    },
+    "hints": [
+      "Annotated tag menyimpan pembuat, tanggal, dan pesan; opsinya singkatan dari *annotate*.",
+      "`git push` biasa tidak mengirim tag. Sebutkan nama tag-nya secara eksplisit."
+    ],
+    "explanation": "`git tag -a v1.2.0 -m \"...\"` membuat **annotated tag**: objek tag tersendiri berisi pembuat, tanggal, dan pesan, sehingga cocok untuk rilis. (Sebenarnya `-m` saja sudah menyiratkan `-a`, tetapi menulis `-a` membuat maksudnya jelas.) Tanpa `-a`/`-m`/`-s`, yang dibuat adalah *lightweight tag*, yaitu sekadar nama untuk sebuah commit.\n\n`git push` biasa **tidak** mengirim tag. `git push origin v1.2.0` mengirim tag itu saja.\n\n- `--tags` mengirim **semua** tag lokal, termasuk tag eksperimen yang mungkin tidak kamu inginkan.\n- `--all` mengirim semua **branch**, bukan tag.\n- `-d` menghapus tag dan `-l` menampilkan daftar tag.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Excluded -f from word bank because `-f -m` would also create an annotated tag"
+    }
+  },
+  {
+    "id": "git-cherry-pick-001",
+    "track": "git",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "cherry-pick",
+    "tags": [
+      "cherry-pick",
+      "hotfix",
+      "release-branch"
+    ],
+    "title": "Membawa satu hotfix ke branch rilis",
+    "prompt": "Perbaikan bug ada di `main` sebagai commit `e4f5a6b`. Branch `release/2.3` butuh perbaikan itu **saja**, tanpa fitur-fitur baru lain yang ada di `main`. Langkah mana yang tepat?",
+    "data": {
+      "options": [
+        "`git switch release/2.3` lalu `git cherry-pick -x e4f5a6b`",
+        "`git switch release/2.3` lalu `git merge main`",
+        "`git switch release/2.3` lalu `git rebase main`",
+        "Tetap di `main` lalu `git cherry-pick release/2.3`"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Merge dan rebase membawa **semua** commit `main` yang belum ada di branch rilis.",
+      "Kamu butuh perintah yang menyalin perubahan dari satu commit tertentu ke branch yang sedang aktif."
+    ],
+    "explanation": "`git cherry-pick <commit>` menerapkan perubahan dari **satu commit** sebagai commit baru (hash baru) di branch **saat ini**. Jadi pindah dulu ke `release/2.3`, lalu cherry-pick `e4f5a6b`. Opsi `-x` menambahkan baris `(cherry picked from commit e4f5a6b...)` ke pesan commit, berguna untuk melacak asal hotfix.\n\n- `git merge main` dan `git rebase main` membawa **semua** commit baru dari `main`, termasuk fitur yang belum siap rilis.\n- Cherry-pick dari `main` dengan argumen `release/2.3` berarti arahnya terbalik: commit di ujung branch rilis akan disalin ke `main`.\n\nJika terjadi konflik: selesaikan, `git add`, lalu `git cherry-pick --continue`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    }
+  }
+]

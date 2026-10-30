@@ -1,0 +1,130 @@
+[
+  {
+    "id": "git-rebase-001",
+    "track": "git",
+    "level": 4,
+    "format": "multiple-choice",
+    "topic": "rebase",
+    "tags": [
+      "rebase",
+      "force-with-lease",
+      "golden-rule"
+    ],
+    "title": "Push setelah rebase branch pribadi",
+    "prompt": "Branch `feature/x` sudah kamu push, dan **hanya kamu** yang memakainya. Kamu menjalankan `git rebase main` agar riwayatnya rapi, lalu `git push` ditolak dengan *non-fast-forward*. Langkah terbaik?",
+    "data": {
+      "options": [
+        "`git push --force-with-lease`",
+        "`git pull` (merge) lalu `git push`",
+        "`git reset --hard origin/feature/x` lalu `git push`",
+        "`git push --no-verify`"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Rebase membuat commit baru dengan hash baru, jadi riwayat lokal dan remote kini berbeda; remote memang perlu ditimpa.",
+      "Ada varian force push yang menolak menimpa jika remote berisi commit yang belum kamu lihat."
+    ],
+    "explanation": "Rebase **menulis ulang** commit (hash baru), sehingga `origin/feature/x` bukan lagi leluhur branch lokalmu. Remote harus ditimpa. `git push --force-with-lease` hanya menimpa jika ujung remote masih sama dengan yang terakhir kamu fetch, jadi pekerjaan orang lain yang ikut ter-push tidak terhapus diam-diam (berbeda dengan `--force` biasa).\n\n- `git pull` akan me-merge commit **lama** (sebelum rebase) dengan versi barunya, sehingga muncul commit duplikat dan rebase-nya sia-sia.\n- `git reset --hard origin/feature/x` membuang hasil rebase.\n- `--no-verify` hanya melewati hook lokal, tidak mengatasi penolakan non-fast-forward.\n\n**Golden rule of rebasing**: jangan rebase commit yang sudah dipakai orang lain (mis. `main` bersama). Di sini aman karena branch-nya pribadi.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Plain --force deliberately not offered so the single answer is unambiguous"
+    }
+  },
+  {
+    "id": "git-detached-head-001",
+    "track": "git",
+    "level": 4,
+    "format": "multiple-choice",
+    "topic": "detached-head",
+    "tags": [
+      "head",
+      "detached",
+      "reflog",
+      "gc"
+    ],
+    "title": "Commit di detached HEAD lalu pindah branch",
+    "prompt": "Perhatikan urutan berikut. Pernyataan mana yang **benar** tentang commit \"Try experiment\" setelah perintah terakhir?",
+    "data": {
+      "language": "text",
+      "code": "git switch --detach a1b2c3d\n# edit file yang sudah ter-track\ngit commit -am \"Try experiment\"\ngit switch main",
+      "options": [
+        "Commit itu masih ada, tetapi tidak ada branch yang menunjuknya; selamatkan dengan `git branch experiment <hash>` (hash ada di pesan Git atau `git reflog`) sebelum dibersihkan garbage collection",
+        "Commit itu otomatis di-merge ke `main` saat `git switch main`",
+        "Commit itu langsung terhapus permanen dan tidak bisa dipulihkan",
+        "Git otomatis membuat branch bernama `a1b2c3d` yang menunjuk commit itu"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Pada detached HEAD, `HEAD` menunjuk langsung ke commit, bukan ke branch, jadi commit baru tidak memajukan branch mana pun.",
+      "Objek commit tidak langsung hilang; ia hanya menjadi *unreachable* dan masih tercatat di reflog `HEAD`."
+    ],
+    "explanation": "Normalnya `HEAD` menunjuk ke **branch** (mis. `refs/heads/main`), dan branch itu maju setiap kali commit. Pada **detached HEAD**, `HEAD` menunjuk langsung ke sebuah commit. Commit baru tetap dibuat, tetapi tidak ada branch yang ikut maju.\n\nSaat kamu pindah ke `main`, commit itu tidak lagi dirujuk branch mana pun. Git bahkan memperingatkan: *\"you are leaving 1 commit behind, not connected to any of your branches\"* sambil menampilkan hash-nya. Commit masih ada dan tercatat di `git reflog`, jadi bisa diselamatkan dengan `git branch experiment <hash>`. Jika dibiarkan, akhirnya commit itu dibersihkan oleh `git gc` setelah entri reflog-nya kedaluwarsa (default 30 hari untuk entri yang unreachable).\n\nCara mencegahnya: buat branch sebelum bereksperimen, misalnya `git switch -c experiment a1b2c3d`. (Padanan lama untuk detach: `git checkout a1b2c3d`.)",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "gc.reflogExpireUnreachable default 30 days; warning text per Git 2.4x switch/checkout"
+    }
+  },
+  {
+    "id": "git-reflog-001",
+    "track": "git",
+    "level": 4,
+    "format": "multiple-choice",
+    "topic": "reflog",
+    "tags": [
+      "reflog",
+      "reset",
+      "recovery"
+    ],
+    "title": "Memulihkan commit setelah reset --hard",
+    "prompt": "Kamu tidak sengaja menjalankan `git reset --hard HEAD~2` dan kehilangan dua commit. Berdasarkan output `git reflog` di bawah, perintah mana yang mengembalikan branch **persis** ke keadaan sebelum reset?",
+    "data": {
+      "language": "text",
+      "code": "$ git reflog -3\n3f1c2ab HEAD@{0}: reset: moving to HEAD~2\n9e8d7c6 HEAD@{1}: commit: Add payment retry\n5b4a3f2 HEAD@{2}: commit: Add payment form",
+      "options": [
+        "`git reset --hard HEAD@{1}`",
+        "`git reset --hard HEAD~1`",
+        "`git reset --hard HEAD@{2}`",
+        "`git revert HEAD@{0}`"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "`HEAD@{n}` berarti \"posisi HEAD n langkah yang lalu\", sedangkan `HEAD~n` berarti \"leluhur ke-n dari commit sekarang\".",
+      "Sebelum entri `reset`, HEAD terakhir berada di commit \"Add payment retry\"."
+    ],
+    "explanation": "Reflog mencatat setiap perpindahan `HEAD` secara lokal. `HEAD@{0}` adalah posisi sekarang (hasil reset), `HEAD@{1}` adalah posisi **sebelum** reset, yaitu `9e8d7c6` \"Add payment retry\". Maka `git reset --hard HEAD@{1}` (atau `git reset --hard 9e8d7c6`) mengembalikan kedua commit.\n\n- `HEAD~1` mengikuti **parent** dari commit sekarang (`3f1c2ab`), jadi malah mundur lebih jauh.\n- `HEAD@{2}` adalah `5b4a3f2` \"Add payment form\", sehingga commit \"Add payment retry\" tetap hilang.\n- `git revert` membuat commit pembalik, dan tidak bisa membatalkan sebuah reset.\n\nCatatan: reflog hanya ada di repo lokal dan entrinya kedaluwarsa (default 90 hari). Perubahan yang **belum pernah di-commit** tidak bisa dipulihkan lewat reflog.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Reflog listing is consistent: 9e8d7c6~2 = 3f1c2ab; HEAD@{n} vs HEAD~n semantics checked"
+    }
+  }
+]

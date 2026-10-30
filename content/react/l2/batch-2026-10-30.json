@@ -1,0 +1,369 @@
+[
+  {
+    "id": "react-reducer-001",
+    "track": "react",
+    "level": 2,
+    "format": "code-short",
+    "topic": "reducer",
+    "tags": [
+      "useReducer",
+      "switch",
+      "immutability"
+    ],
+    "title": "Reducer counter untuk useReducer",
+    "prompt": "Tulis reducer murni `counterReducer(state, action)` untuk dipakai dengan `useReducer`. State berbentuk `{ count, ...fieldLain }`.\n\n- `{ type: 'increment' }` → `count` + 1\n- `{ type: 'decrement' }` → `count` - 1\n- `{ type: 'reset' }` → `count` jadi 0\n- action lain → kembalikan `state` apa adanya\n\nField lain di state harus tetap ada, dan `state` lama **tidak boleh** dimutasi.",
+    "data": {
+      "language": "javascript",
+      "starter": "function counterReducer(state, action) {\n  // tulis kodemu di sini\n  return state;\n}",
+      "entry": "counterReducer"
+    },
+    "tests": [
+      {
+        "name": "increment",
+        "input": [
+          {
+            "count": 0
+          },
+          {
+            "type": "increment"
+          }
+        ],
+        "expected": {
+          "count": 1
+        }
+      },
+      {
+        "name": "decrement ke negatif",
+        "input": [
+          {
+            "count": 0
+          },
+          {
+            "type": "decrement"
+          }
+        ],
+        "expected": {
+          "count": -1
+        }
+      },
+      {
+        "name": "reset",
+        "input": [
+          {
+            "count": 7
+          },
+          {
+            "type": "reset"
+          }
+        ],
+        "expected": {
+          "count": 0
+        }
+      },
+      {
+        "name": "field lain tetap ada",
+        "input": [
+          {
+            "count": 1,
+            "label": "klik"
+          },
+          {
+            "type": "increment"
+          }
+        ],
+        "expected": {
+          "count": 2,
+          "label": "klik"
+        }
+      },
+      {
+        "name": "action tidak dikenal",
+        "input": [
+          {
+            "count": 3,
+            "label": "x"
+          },
+          {
+            "type": "unknown"
+          }
+        ],
+        "expected": {
+          "count": 3,
+          "label": "x"
+        }
+      }
+    ],
+    "referenceSolution": "function counterReducer(state, action) {\n  switch (action.type) {\n    case 'increment':\n      return { ...state, count: state.count + 1 };\n    case 'decrement':\n      return { ...state, count: state.count - 1 };\n    case 'reset':\n      return { ...state, count: 0 };\n    default:\n      return state;\n  }\n}",
+    "hints": [
+      "Gunakan `switch (action.type)` dan kembalikan objek baru di setiap case.",
+      "`return { ...state, count: state.count + 1 };` menyalin field lain lalu menimpa `count`."
+    ],
+    "explanation": "Reducer harus **murni**: hasilnya hanya bergantung pada `state` dan `action`, dan state lama tidak diubah. `{ ...state, count: ... }` membuat objek baru sehingga React melihat referensi berbeda dan me-render ulang. Kesalahan umum: `state.count++; return state;`. Referensinya sama, jadi React bisa melewatkan render. Untuk action tak dikenal, kembalikan `state` yang sama agar tidak ada render yang sia-sia.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "react-immutable-state-002",
+    "track": "react",
+    "level": 2,
+    "format": "fill-blank",
+    "topic": "immutable-state",
+    "tags": [
+      "map",
+      "spread",
+      "arrays"
+    ],
+    "title": "Toggle todo tanpa mutasi",
+    "prompt": "Lengkapi `toggleTodo(todos, id)` agar mengembalikan **array baru** di mana todo dengan `id` tersebut dibalik nilai `done`-nya, tanpa memutasi array maupun objek lama. Pola ini dipakai di `setTodos(prev => toggleTodo(prev, id))`.",
+    "data": {
+      "language": "javascript",
+      "template": "function toggleTodo(todos, id) {\n  return todos.{{blank}}((t) =>\n    t.id === id ? { {{blank}}, done: !t.done } : t\n  );\n}",
+      "choices": [
+        "map",
+        "forEach",
+        "filter",
+        "...t",
+        "t",
+        "...todos"
+      ],
+      "entry": "toggleTodo"
+    },
+    "answer": {
+      "blanks": [
+        [
+          "map"
+        ],
+        [
+          "...t"
+        ]
+      ]
+    },
+    "tests": [
+      {
+        "name": "toggle item kedua",
+        "input": [
+          [
+            {
+              "id": 1,
+              "text": "a",
+              "done": false
+            },
+            {
+              "id": 2,
+              "text": "b",
+              "done": false
+            }
+          ],
+          2
+        ],
+        "expected": [
+          {
+            "id": 1,
+            "text": "a",
+            "done": false
+          },
+          {
+            "id": 2,
+            "text": "b",
+            "done": true
+          }
+        ]
+      },
+      {
+        "name": "done true jadi false",
+        "input": [
+          [
+            {
+              "id": 1,
+              "text": "a",
+              "done": true
+            }
+          ],
+          1
+        ],
+        "expected": [
+          {
+            "id": 1,
+            "text": "a",
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "id tidak ada",
+        "input": [
+          [
+            {
+              "id": 1,
+              "text": "a",
+              "done": false
+            }
+          ],
+          9
+        ],
+        "expected": [
+          {
+            "id": 1,
+            "text": "a",
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "array kosong",
+        "input": [
+          [],
+          1
+        ],
+        "expected": []
+      }
+    ],
+    "hints": [
+      "Method mana yang mengembalikan array baru dengan panjang yang sama?",
+      "Objek baru harus membawa semua field lama, lalu menimpa `done`."
+    ],
+    "explanation": "`map` menghasilkan array baru, dan hanya item yang cocok diganti dengan objek baru `{ ...t, done: !t.done }`. Item lain dikembalikan apa adanya (referensinya sama), jadi komponen anak yang di-memo tidak perlu render ulang. `forEach` mengembalikan `undefined`, dan `t.done = !t.done` di dalam `map` tetap memutasi objek lama.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "react-effects-001",
+    "track": "react",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "effects",
+    "tags": [
+      "useEffect",
+      "dependency-array",
+      "lifecycle"
+    ],
+    "title": "Kapan effect dengan deps kosong berjalan",
+    "prompt": "Di **production build**, kapan setup dan cleanup dari effect berikut dijalankan?",
+    "data": {
+      "language": "javascript",
+      "code": "useEffect(() => {\n  const conn = connect();\n  return () => conn.close();\n}, []);",
+      "options": [
+        "Setup sekali setelah render pertama di-commit; cleanup saat komponen di-unmount",
+        "Setup setiap kali komponen render; cleanup sebelum setup berikutnya",
+        "Setup sebelum render pertama; cleanup setelah render pertama",
+        "Setup setiap kali parent komponen render ulang"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Array dependency kosong berarti tidak ada nilai yang bisa \"berubah\".",
+      "Effect selalu berjalan **setelah** render di-commit, bukan sebelumnya."
+    ],
+    "explanation": "Dengan `[]`, React menjalankan setup sekali setelah komponen pertama kali di-commit ke layar, dan cleanup saat komponen di-unmount. Tanpa array dependency sama sekali, effect berjalan setelah **setiap** render. Catatan: di development dengan `<StrictMode>`, React sengaja menjalankan setup → cleanup → setup sekali lagi saat mount untuk membantu menemukan cleanup yang hilang. Itu tidak terjadi di production.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "react-refs-001",
+    "track": "react",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "refs",
+    "tags": [
+      "useRef",
+      "useState",
+      "re-render"
+    ],
+    "title": "Counter dengan useRef tidak ter-update",
+    "prompt": "Tombol berikut diklik **3 kali**, dan tidak ada hal lain yang membuat komponen render ulang. Teks apa yang tampil?",
+    "data": {
+      "language": "javascript",
+      "code": "function Clicker() {\n  const countRef = useRef(0);\n\n  function handleClick() {\n    countRef.current += 1;\n  }\n\n  return <button onClick={handleClick}>Klik: {countRef.current}</button>;\n}",
+      "options": [
+        "`Klik: 0`",
+        "`Klik: 3`",
+        "`Klik: 1`",
+        "Error: ref tidak boleh diubah"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Apa yang membuat React me-render ulang sebuah komponen?",
+      "Mengubah `ref.current` tidak memicu render."
+    ],
+    "explanation": "`countRef.current` memang bernilai 3 setelah tiga klik, tetapi mengubah ref **tidak** memicu render ulang, jadi layar masih menampilkan hasil render pertama: `Klik: 0`. Pakai `useState` untuk nilai yang perlu tampil di UI, dan `useRef` untuk nilai yang perlu diingat tanpa memicu render (id timer, elemen DOM, nilai sebelumnya). Membaca `ref.current` saat render juga tidak disarankan.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "react-state-updates-002",
+    "track": "react",
+    "level": 2,
+    "format": "fill-blank",
+    "topic": "state-updates",
+    "tags": [
+      "useState",
+      "updater-function"
+    ],
+    "title": "Tambah tiga dengan updater function",
+    "prompt": "Lengkapi kode agar satu klik menambah `count` sebanyak **3**.",
+    "data": {
+      "language": "javascript",
+      "template": "function Counter() {\n  const [count, setCount] = useState(0);\n\n  function addThree() {\n    for (let i = 0; i < 3; i++) {\n      setCount({{blank}});\n    }\n  }\n\n  return <button onClick={addThree}>{count}</button>;\n}",
+      "choices": [
+        "c => c + 1",
+        "count + 1",
+        "c + 1",
+        "() => count + 1"
+      ]
+    },
+    "answer": {
+      "blanks": [
+        [
+          "c => c + 1",
+          "(c) => c + 1",
+          "prev => prev + 1",
+          "(prev) => prev + 1"
+        ]
+      ]
+    },
+    "hints": [
+      "`count` di dalam handler tidak berubah sampai render berikutnya.",
+      "Kirim fungsi yang menerima nilai state **terbaru** di antrean."
+    ],
+    "explanation": "Updater `c => c + 1` dimasukkan ke antrean. Saat render berikutnya, React menjalankan ketiganya berurutan: 0 → 1 → 2 → 3. `count + 1` selalu `0 + 1` karena `count` adalah snapshot render ini. `() => count + 1` juga sebuah updater, tetapi mengabaikan argumennya dan memakai snapshot lama, jadi hasilnya tetap 1. `c + 1` bukan fungsi (dan `c` tidak terdefinisi di sini).",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

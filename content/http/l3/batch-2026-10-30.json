@@ -1,0 +1,213 @@
+[
+  {
+    "id": "http-redirects-002",
+    "track": "http",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "redirects",
+    "tags": [
+      "redirects",
+      "307",
+      "302",
+      "303",
+      "methods"
+    ],
+    "title": "Redirect sementara yang mempertahankan POST",
+    "prompt": "Selama maintenance, `POST /api/checkout` harus diarahkan **sementara** ke server cadangan. Client harus mengulang request dengan **method `POST` dan body yang sama**. Kode status apa yang tepat?",
+    "data": {
+      "options": [
+        "`301 Moved Permanently`",
+        "`302 Found`",
+        "`303 See Other`",
+        "`307 Temporary Redirect`"
+      ]
+    },
+    "answer": {
+      "index": 3
+    },
+    "hints": [
+      "Untuk alasan historis, browser mengubah `POST` menjadi `GET` saat mengikuti `301`/`302`.",
+      "Ada pasangan kode yang dibuat khusus agar method dan body tidak berubah: satu sementara, satu permanen."
+    ],
+    "explanation": "`307 Temporary Redirect` **melarang** client mengubah method dan body, jadi `POST` tetap `POST`. Pasangan permanennya `308 Permanent Redirect`.\n\n- `301`/`302`: RFC 9110 mengizinkan user agent mengganti `POST` menjadi `GET` (dan browser memang melakukannya), sehingga body hilang.\n- `303 See Other`: secara eksplisit menyuruh client melakukan `GET` ke URL lain — cocok untuk pola *Post/Redirect/Get* setelah submit form, bukan untuk kasus ini.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "http-status-codes-003",
+    "track": "http",
+    "level": 3,
+    "format": "fill-blank",
+    "topic": "status-codes",
+    "tags": [
+      "status-codes",
+      "409",
+      "422",
+      "429",
+      "api-design"
+    ],
+    "title": "Memilih 409, 422, atau 429",
+    "prompt": "Pilih kode status yang paling spesifik untuk tiap skenario API berikut.",
+    "data": {
+      "language": "text",
+      "template": "# 1) Client mengirim 300 request dalam 1 menit, batasnya 100/menit\n-> {{blank}}\n\n# 2) JSON valid, Content-Type benar, tapi \"age\": -5 melanggar aturan validasi\n-> {{blank}}\n\n# 3) PUT /docs/7 dengan body \"version\": 3, padahal user lain sudah menyimpan version 4\n-> {{blank}}",
+      "choices": [
+        "400",
+        "409",
+        "412",
+        "422",
+        "429",
+        "503"
+      ]
+    },
+    "answer": {
+      "blanks": [
+        [
+          "429"
+        ],
+        [
+          "422"
+        ],
+        [
+          "409"
+        ]
+      ]
+    },
+    "hints": [
+      "Satu kode berarti \"terlalu banyak request\", satu \"sintaks benar tapi isinya tidak bisa diproses\", satu \"bentrok dengan state resource saat ini\".",
+      "429 Too Many Requests, 422 Unprocessable Content, 409 Conflict."
+    ],
+    "explanation": "- `429 Too Many Requests` (RFC 6585) untuk rate limit, sebaiknya dengan header `Retry-After`. `503` berarti server sedang kewalahan atau maintenance, bukan karena client ini melebihi kuota.\n- `422 Unprocessable Content` (RFC 9110): format dan sintaks benar, tapi instruksinya tidak bisa diproses. `400` dipakai untuk request yang *malformed* (mis. JSON rusak); banyak API memakai `400` untuk validasi juga, tapi `422` lebih spesifik.\n- `409 Conflict`: request bentrok dengan state resource saat ini — contoh klasik di RFC 9110 adalah konflik versi pada `PUT`. `412 Precondition Failed` dipakai jika versinya dikirim lewat header kondisional (`If-Match`), bukan di body.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "http-caching-001",
+    "track": "http",
+    "level": 3,
+    "format": "find-bug",
+    "topic": "caching",
+    "tags": [
+      "caching",
+      "etag",
+      "conditional-request",
+      "304"
+    ],
+    "title": "Revalidasi ETag yang tidak pernah 304",
+    "prompt": "Blok pertama adalah respons awal untuk `/app.css`; blok kedua adalah request revalidasi yang dikirim client berikutnya. Tujuannya: server membalas `304 Not Modified` jika file belum berubah. Client tidak pernah mendapat `304`. Baris mana yang salah?",
+    "data": {
+      "language": "text",
+      "code": "HTTP/1.1 200 OK\nContent-Type: text/css\nCache-Control: no-cache\nETag: \"a1b2c3\"\n\nGET /app.css HTTP/1.1\nHost: cdn.example.com\nIf-Match: \"a1b2c3\""
+    },
+    "answer": {
+      "line": 8,
+      "fixedLine": "If-None-Match: \"a1b2c3\""
+    },
+    "hints": [
+      "`no-cache` + `ETag` adalah kombinasi yang wajar: boleh disimpan, tapi wajib divalidasi ulang.",
+      "Header kondisional mana yang berarti \"kirim ulang hanya jika ETag-nya **sudah berbeda**\"?"
+    ],
+    "explanation": "Revalidasi cache memakai `If-None-Match: <etag>`: jika ETag masih sama → `304` tanpa body; jika berbeda → `200` dengan konten baru. `If-Match` artinya kebalikannya — \"lanjutkan hanya jika ETag **masih sama**\" — dipakai untuk mencegah *lost update* pada `PUT`/`PATCH`/`DELETE` (gagal → `412 Precondition Failed`). Pada `GET`, `If-Match` yang cocok hanya menghasilkan `200` biasa, jadi tidak pernah `304`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "http-cors-001",
+    "track": "http",
+    "level": 3,
+    "format": "parsons",
+    "topic": "cors",
+    "tags": [
+      "cors",
+      "preflight",
+      "browser"
+    ],
+    "title": "Urutan CORS preflight",
+    "prompt": "JS di `https://app.example.com` memanggil `fetch()` dengan method `PUT` ke `https://api.example.com/items/5` dan header `Authorization`. Susun urutan kejadiannya.",
+    "data": {
+      "language": "text"
+    },
+    "answer": {
+      "lines": [
+        "JS memanggil fetch() PUT ke origin lain dengan header Authorization",
+        "Browser mendeteksi request non-simple dan menahan request PUT",
+        "Browser mengirim OPTIONS dengan Origin, Access-Control-Request-Method: PUT, Access-Control-Request-Headers: authorization",
+        "Server membalas 204 dengan Access-Control-Allow-Origin, -Allow-Methods, dan -Allow-Headers",
+        "Browser memeriksa izin; karena cocok, request PUT asli dikirim",
+        "Server membalas PUT dengan Access-Control-Allow-Origin lagi",
+        "Browser memberikan respons PUT ke kode JS"
+      ]
+    },
+    "hints": [
+      "Request asli belum dikirim sampai browser mendapat izin dari server.",
+      "Respons request asli juga harus membawa `Access-Control-Allow-Origin`, bukan hanya respons preflight."
+    ],
+    "explanation": "Method `PUT` dan header `Authorization` membuat request ini **non-simple**, jadi browser mengirim preflight `OPTIONS` terlebih dahulu. Jika header izin di respons preflight tidak cocok, request `PUT` **tidak pernah dikirim**. Kesalahan umum: hanya menangani `OPTIONS` di server, lalu lupa menambahkan `Access-Control-Allow-Origin` pada respons sebenarnya — request sampai ke server, tapi browser memblokir JS membaca hasilnya. `Access-Control-Max-Age` bisa dipakai agar hasil preflight di-cache.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "http-versions-001",
+    "track": "http",
+    "level": 3,
+    "format": "flashcard",
+    "topic": "http-versions",
+    "tags": [
+      "http2",
+      "http3",
+      "quic",
+      "performance"
+    ],
+    "title": "HTTP/1.1 vs HTTP/2 vs HTTP/3",
+    "prompt": "Apa perbedaan utama **HTTP/1.1**, **HTTP/2**, dan **HTTP/3**, terutama soal *head-of-line blocking*?",
+    "answer": {
+      "back": "| | Transport | Ciri utama |\n|---|---|---|\n| **HTTP/1.1** | TCP | Teks; satu request aktif per koneksi → browser membuka ~6 koneksi per host |\n| **HTTP/2** | TCP | Biner, **multiplexing** banyak stream dalam 1 koneksi, kompresi header HPACK |\n| **HTTP/3** | **QUIC** (di atas UDP) | Stream independen di level transport, TLS 1.3 bawaan, handshake lebih cepat, *connection migration* |\n\n**Head-of-line blocking:** HTTP/2 menghilangkannya di level HTTP, tapi satu paket TCP yang hilang tetap **menahan semua stream** (TCP menjaga urutan byte). HTTP/3 menyelesaikannya: paket hilang hanya menahan stream yang terkena."
+    },
+    "hints": [
+      "HTTP/2 memperbaiki masalah di level aplikasi, HTTP/3 di level transport."
+    ],
+    "explanation": "Semantik HTTP (method, status, header) sama di ketiga versi (RFC 9110); yang berbeda adalah cara pengirimannya. Trik HTTP/1.1 seperti *domain sharding* dan menggabungkan file justru tidak perlu (bahkan merugikan) di HTTP/2. HTTP/3 juga mempertahankan koneksi saat IP berubah (mis. pindah dari Wi-Fi ke 4G) berkat connection ID QUIC.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

@@ -1,0 +1,223 @@
+[
+  {
+    "id": "go-interfaces-002",
+    "track": "go",
+    "level": 3,
+    "format": "predict-output",
+    "topic": "interfaces",
+    "tags": [
+      "type-switch",
+      "any",
+      "fmt-stringer",
+      "named-types"
+    ],
+    "title": "Type switch: urutan case dan named type",
+    "prompt": "Asumsi: Go 1.22. Apa output program berikut?",
+    "data": {
+      "language": "go",
+      "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"time\"\n)\n\nfunc describe(v any) string {\n\tswitch x := v.(type) {\n\tcase nil:\n\t\treturn \"nil\"\n\tcase int, int64:\n\t\treturn fmt.Sprintf(\"integer %v\", x)\n\tcase error:\n\t\treturn \"error \" + x.Error()\n\tcase fmt.Stringer:\n\t\treturn \"stringer \" + x.String()\n\tdefault:\n\t\treturn fmt.Sprintf(\"other %T\", x)\n\t}\n}\n\nfunc main() {\n\tfmt.Println(describe(42))\n\tfmt.Println(describe(int8(3)))\n\tfmt.Println(describe(time.Second))\n\tfmt.Println(describe(nil))\n}"
+    },
+    "answer": {
+      "output": "integer 42\nother int8\nstringer 1s\nnil"
+    },
+    "hints": [
+      "Type switch mencocokkan **tipe dinamis persis** (untuk tipe konkret) atau apakah tipe itu **mengimplementasikan** interface (untuk case interface). Case dicek dari atas ke bawah.",
+      "`time.Duration` adalah named type (dasarnya `int64`) tetapi **bukan** `int64`, dan ia punya method `String()`. `int8` tidak cocok dengan `int` maupun `int64`."
+    ],
+    "explanation": "Telusuri tiap panggilan:\n\n- `describe(42)`: konstanta tanpa tipe menjadi `int` → case `int, int64` → `integer 42`. Di case dengan beberapa tipe, `x` tetap bertipe `any`, tetapi `%v` mencetak nilainya.\n- `describe(int8(3))`: `int8` tidak sama dengan `int`/`int64`, tidak mengimplementasikan `error` atau `fmt.Stringer` → `default`, `%T` mencetak `int8`.\n- `describe(time.Second)`: tipe dinamisnya `time.Duration`. Walau dasarnya `int64`, type switch membandingkan tipe secara persis, jadi case `int64` **tidak** cocok. `Duration` tidak punya method `Error()`, tetapi punya `String()` → `stringer 1s`.\n- `describe(nil)`: interface `any` yang nil (tanpa tipe dinamis) cocok dengan `case nil`.\n\nKesalahan umum: mengira named type ikut cocok dengan tipe dasarnya, atau mengira `int8` otomatis \"masuk\" ke case `int`. Urutan case juga penting: jika sebuah tipe mengimplementasikan `error` dan `Stringer` sekaligus, case `error` yang menang karena ditulis lebih dulu.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Go 1.22 semantics traced by hand; not executed (Go not installed)"
+    }
+  },
+  {
+    "id": "go-structs-003",
+    "track": "go",
+    "level": 3,
+    "format": "predict-output",
+    "topic": "structs",
+    "tags": [
+      "embedding",
+      "method-promotion",
+      "composition"
+    ],
+    "title": "Embedding: method yang dipromosikan tidak virtual",
+    "prompt": "Asumsi: Go 1.22. Apa output program berikut?",
+    "data": {
+      "language": "go",
+      "code": "package main\n\nimport \"fmt\"\n\ntype Animal struct {\n\tName string\n}\n\nfunc (a Animal) Speak() string { return a.Name + \" bersuara\" }\n\nfunc (a Animal) Intro() string { return \"Aku \" + a.Name + \", \" + a.Speak() }\n\ntype Dog struct {\n\tAnimal\n}\n\nfunc (d Dog) Speak() string { return d.Name + \" menggonggong\" }\n\nfunc main() {\n\td := Dog{Animal: Animal{Name: \"Rex\"}}\n\tfmt.Println(d.Speak())\n\tfmt.Println(d.Intro())\n\tfmt.Println(d.Animal.Speak())\n}"
+    },
+    "answer": {
+      "output": "Rex menggonggong\nAku Rex, Rex bersuara\nRex bersuara"
+    },
+    "hints": [
+      "`Dog` mendefinisikan `Speak` sendiri, sehingga `d.Speak()` memakai milik `Dog` (method di level luar \"membayangi\" yang di-embed). `d.Name` adalah field `Animal` yang dipromosikan.",
+      "`d.Intro()` sebenarnya adalah `d.Animal.Intro()`. Di dalam `Intro`, receiver-nya `Animal`, jadi `a.Speak()` memanggil `Animal.Speak`. Go tidak punya virtual dispatch untuk embedding."
+    ],
+    "explanation": "Embedding adalah **komposisi**, bukan pewarisan:\n\n1. `d.Speak()`: `Dog` punya method `Speak` di kedalaman 0, yang membayangi `Animal.Speak` → `Rex menggonggong`. `d.Name` bekerja karena field `Name` dipromosikan dari `Animal`.\n2. `d.Intro()`: `Dog` tidak punya `Intro`, jadi dipromosikan dari `Animal` dan dipanggil sebagai `d.Animal.Intro()`. Receiver `a` bertipe `Animal`, sehingga `a.Speak()` memanggil `Animal.Speak` → `Aku Rex, Rex bersuara`. `Animal` tidak tahu ia sedang di-embed di dalam `Dog`.\n3. `d.Animal.Speak()`: memanggil method milik `Animal` secara eksplisit → `Rex bersuara`.\n\nKesalahan umum (terutama dari Java/Python): mengharapkan baris kedua `Aku Rex, Rex menggonggong` seperti method override. Jika perilaku perlu bisa diganti, terima sebuah interface (misalnya `Speaker`) sebagai parameter atau field, bukan mengandalkan embedding.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Go 1.22 semantics traced by hand; not executed (Go not installed)"
+    }
+  },
+  {
+    "id": "go-json-001",
+    "track": "go",
+    "level": 3,
+    "format": "predict-output",
+    "topic": "json",
+    "tags": [
+      "encoding-json",
+      "struct-tags",
+      "exported-identifiers",
+      "omitempty"
+    ],
+    "title": "json.Marshal: tag, omitempty, dan field tidak diekspor",
+    "prompt": "Asumsi: Go 1.22. Apa output program berikut? (Tulis persis seperti yang dicetak, tanpa spasi tambahan.)",
+    "data": {
+      "language": "go",
+      "code": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"fmt\"\n)\n\ntype User struct {\n\tName     string `json:\"name\"`\n\tEmail    string `json:\"email,omitempty\"`\n\tAge      int    `json:\"-\"`\n\tpassword string\n\tAdmin    bool\n}\n\nfunc main() {\n\tu := User{Name: \"Sari\", Age: 30, password: \"rahasia\"}\n\tb, err := json.Marshal(u)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(b))\n}"
+    },
+    "answer": {
+      "output": "{\"name\":\"Sari\",\"Admin\":false}"
+    },
+    "hints": [
+      "`encoding/json` berada di paket lain, jadi ia hanya bisa melihat field yang **diekspor** (diawali huruf kapital). Tag `json:\"-\"` berarti field selalu dilewati.",
+      "`omitempty` melewati field bernilai zero value (string kosong). Field tanpa tag memakai nama field Go apa adanya, dan `false` tetap ditulis karena `Admin` tidak punya `omitempty`. Urutan mengikuti deklarasi struct."
+    ],
+    "explanation": "Telusuri field satu per satu:\n\n- `Name` → tag `name` → `\"name\":\"Sari\"`.\n- `Email` kosong dan bertanda `omitempty` → dilewati.\n- `Age` bertag `json:\"-\"` → selalu dilewati walau bernilai 30.\n- `password` diawali huruf kecil, jadi **tidak diekspor**. Aturan ekspor Go berlaku per paket: paket `encoding/json` tidak bisa mengakses field itu lewat reflection, sehingga diabaikan diam-diam (bukan error).\n- `Admin` tanpa tag → kunci memakai nama field `Admin`, nilainya `false` tetap ditulis.\n\n`json.Marshal` menghasilkan JSON ringkas tanpa spasi, dengan urutan kunci mengikuti urutan deklarasi field. Hasil: `{\"name\":\"Sari\",\"Admin\":false}`.\n\nKesalahan umum: memberi tag pada field huruf kecil (misalnya `password string \\`json:\"password\"\\``) dan heran kenapa tidak muncul di JSON; tag tidak bisa mengekspor field. `go vet` memperingatkan kasus itu.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Go 1.22 semantics traced by hand; not executed (Go not installed)"
+    }
+  },
+  {
+    "id": "go-sorting-001",
+    "track": "go",
+    "level": 3,
+    "format": "fill-blank",
+    "topic": "sorting",
+    "tags": [
+      "slices-sortfunc",
+      "cmp-compare",
+      "multi-key-sort"
+    ],
+    "title": "slices.SortFunc dengan dua kunci urutan",
+    "prompt": "Asumsi: Go 1.22 (paket `slices` dan `cmp` dari standard library). Lengkapi `sortProducts` agar produk diurutkan berdasarkan `Price` **menurun** (termahal dulu); jika harganya sama, berdasarkan `Name` **menaik**.",
+    "data": {
+      "language": "go",
+      "template": "type Product struct {\n\tName  string\n\tPrice int\n}\n\nfunc sortProducts(ps []Product) {\n\tslices.SortFunc(ps, func(a, b Product) {{blank}} {\n\t\tif c := cmp.Compare({{blank}}, {{blank}}); c != 0 {\n\t\t\treturn c\n\t\t}\n\t\treturn cmp.Compare(a.Name, b.Name)\n\t})\n}",
+      "choices": [
+        "int",
+        "bool",
+        "a.Price",
+        "b.Price",
+        "a.Name",
+        "b.Name"
+      ]
+    },
+    "answer": {
+      "blanks": [
+        [
+          "int"
+        ],
+        [
+          "b.Price"
+        ],
+        [
+          "a.Price"
+        ]
+      ]
+    },
+    "hints": [
+      "Berbeda dengan `sort.Slice` (fungsi `less` yang mengembalikan `bool`), fungsi pembanding `slices.SortFunc` mengembalikan angka: negatif jika `a` di depan, 0 jika setara, positif jika `a` di belakang.",
+      "`cmp.Compare(a.Price, b.Price)` menghasilkan urutan **menaik**. Untuk urutan menurun, tukar argumennya."
+    ],
+    "explanation": "`slices.SortFunc(s, cmp func(a, b E) int)` memakai fungsi pembanding tiga arah: hasil `< 0` berarti `a` diletakkan sebelum `b`. `cmp.Compare(x, y)` mengembalikan -1, 0, atau +1.\n\n- Blank 1: tipe kembalian harus `int`. Menulis `bool` (gaya `sort.Slice`) tidak terkompilasi.\n- Blank 2–3: `cmp.Compare(b.Price, a.Price)` bernilai negatif saat `b.Price < a.Price`, yaitu saat `a` lebih mahal, sehingga `a` diletakkan lebih dulu → urutan menurun.\n- Jika harganya sama (`c == 0`), lanjut ke kunci kedua `cmp.Compare(a.Name, b.Name)` → nama menaik.\n\nKesalahan umum: membalik tanda dengan `a.Price > b.Price` (itu `bool`, bukan `int`), atau menulis kunci kedua tanpa mengecek `c != 0` sehingga kunci pertama terabaikan. `slices.SortFunc` tidak stabil; gunakan `slices.SortStableFunc` jika urutan asli elemen yang setara harus dipertahankan.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Go 1.22 semantics traced by hand; not executed (Go not installed)"
+    }
+  },
+  {
+    "id": "go-time-desktop-001",
+    "track": "go",
+    "level": 3,
+    "format": "desktop",
+    "topic": "time",
+    "tags": [
+      "time-duration",
+      "parse-duration",
+      "rounding",
+      "testing"
+    ],
+    "title": "Total durasi kerja dibulatkan ke blok 15 menit",
+    "prompt": "Implementasikan `Billable(entries []string) (time.Duration, error)` untuk aplikasi timesheet:\n\n- Setiap entri berformat durasi Go, misalnya `\"1h30m\"`, `\"45m\"`, `\"1m1s\"` (pakai `time.ParseDuration`).\n- Jumlahkan semua entri, lalu **bulatkan ke atas** ke kelipatan 15 menit (`10m + 2m` → `15m`, `50m + 20m` → `1h15m`). Total yang sudah kelipatan 15 menit (termasuk 0) tidak berubah.\n- Entri yang tidak valid atau bernilai **negatif** → kembalikan `0` dan error yang tidak nil.\n- Daftar kosong → `0, nil`.\n\nUnduh starter, lalu jalankan `go test ./...` sampai semua tes lulus. Asumsi: Go 1.22.",
+    "data": {
+      "language": "go",
+      "command": "go test ./...",
+      "files": [
+        {
+          "path": "go.mod",
+          "kind": "other",
+          "content": "module timesheet\n\ngo 1.22\n"
+        },
+        {
+          "path": "billable.go",
+          "kind": "starter",
+          "content": "package timesheet\n\nimport \"time\"\n\n// Billable sums the duration entries (e.g. \"1h30m\", \"45m\") and rounds the\n// total UP to the next 15-minute block. Invalid or negative entries return\n// 0 and a non-nil error.\nfunc Billable(entries []string) (time.Duration, error) {\n\t// TODO: implement\n\treturn 0, nil\n}\n"
+        },
+        {
+          "path": "billable_test.go",
+          "kind": "test",
+          "content": "package timesheet\n\nimport (\n\t\"testing\"\n\t\"time\"\n)\n\nfunc TestBillable(t *testing.T) {\n\tcases := []struct {\n\t\tname    string\n\t\tin      []string\n\t\twant    time.Duration\n\t\twantErr bool\n\t}{\n\t\t{\"kosong\", nil, 0, false},\n\t\t{\"tepat kelipatan\", []string{\"1h\", \"30m\"}, 90 * time.Minute, false},\n\t\t{\"bulatkan ke atas\", []string{\"10m\", \"2m\"}, 15 * time.Minute, false},\n\t\t{\"sisa detik\", []string{\"1m1s\"}, 15 * time.Minute, false},\n\t\t{\"lintas jam\", []string{\"50m\", \"20m\"}, 75 * time.Minute, false},\n\t\t{\"tepat 15 menit\", []string{\"7m30s\", \"7m30s\"}, 15 * time.Minute, false},\n\t\t{\"lewat satu detik\", []string{\"15m1s\"}, 30 * time.Minute, false},\n\t\t{\"nol\", []string{\"0s\"}, 0, false},\n\t\t{\"format salah\", []string{\"1jam\"}, 0, true},\n\t\t{\"negatif\", []string{\"30m\", \"-5m\"}, 0, true},\n\t}\n\tfor _, c := range cases {\n\t\tt.Run(c.name, func(t *testing.T) {\n\t\t\tgot, err := Billable(c.in)\n\t\t\tif c.wantErr {\n\t\t\t\tif err == nil {\n\t\t\t\t\tt.Fatalf(\"Billable(%q) error = nil, want error\", c.in)\n\t\t\t\t}\n\t\t\t\tif got != 0 {\n\t\t\t\t\tt.Errorf(\"Billable(%q) = %v on error, want 0\", c.in, got)\n\t\t\t\t}\n\t\t\t\treturn\n\t\t\t}\n\t\t\tif err != nil {\n\t\t\t\tt.Fatalf(\"Billable(%q) error = %v, want nil\", c.in, err)\n\t\t\t}\n\t\t\tif got != c.want {\n\t\t\t\tt.Fatalf(\"Billable(%q) = %v, want %v\", c.in, got, c.want)\n\t\t\t}\n\t\t})\n\t}\n}\n"
+        }
+      ]
+    },
+    "referenceSolution": "package timesheet\n\nimport (\n\t\"fmt\"\n\t\"time\"\n)\n\n// Billable sums the duration entries (e.g. \"1h30m\", \"45m\") and rounds the\n// total UP to the next 15-minute block. Invalid or negative entries return\n// 0 and a non-nil error.\nfunc Billable(entries []string) (time.Duration, error) {\n\tvar total time.Duration\n\tfor _, e := range entries {\n\t\td, err := time.ParseDuration(e)\n\t\tif err != nil {\n\t\t\treturn 0, fmt.Errorf(\"entry %q: %w\", e, err)\n\t\t}\n\t\tif d < 0 {\n\t\t\treturn 0, fmt.Errorf(\"entry %q: durasi negatif\", e)\n\t\t}\n\t\ttotal += d\n\t}\n\tconst block = 15 * time.Minute\n\tif rem := total % block; rem != 0 {\n\t\ttotal += block - rem\n\t}\n\treturn total, nil\n}\n",
+    "hints": [
+      "`time.Duration` adalah `int64` dalam nanodetik, jadi `+`, `-`, dan `%` antar-`Duration` langsung bisa dipakai. `time.ParseDuration` menerima tanda minus, jadi periksa `d < 0` sendiri.",
+      "Hitung `rem := total % (15 * time.Minute)`; jika `rem != 0`, tambahkan `15*time.Minute - rem`. Hati-hati: `total.Round(15*time.Minute)` membulatkan ke **terdekat**, bukan ke atas."
+    ],
+    "explanation": "`time.Duration` adalah named type di atas `int64` (satuan nanodetik), sehingga aritmetika antar-`Duration` aman dan tetap bertipe `Duration`; konstanta seperti `15 * time.Minute` juga bertipe `Duration`.\n\nLangkah solusi:\n1. Parse tiap entri dengan `time.ParseDuration`. Input seperti `\"1jam\"` gagal (unit `jam` tidak dikenal) sehingga error diteruskan, dibungkus dengan konteks entri.\n2. `ParseDuration(\"-5m\")` **berhasil** dan menghasilkan durasi negatif, jadi perlu pemeriksaan `d < 0` terpisah.\n3. Pembulatan ke atas: `total % block` adalah sisa di luar kelipatan 15 menit; jika tidak nol, tambahkan kekurangannya. Contoh `1m1s` → sisa `1m1s` → total `15m`; `15m1s` → `30m`.\n\nKesalahan umum: memakai `Round` (membulatkan `50m + 20m = 1h10m` ke `1h15m`, tetapi `1m1s` ke `0`) atau `Truncate` (membulatkan ke bawah), mengubah ke `float64` menit lalu `math.Ceil` (rawan presisi dan konversi bolak-balik), atau lupa bahwa total 0 tidak boleh dibulatkan menjadi 15 menit.",
+    "estimatedMinutes": 20,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Go 1.22 semantics traced by hand; not executed (Go not installed). Starter compiles (time used in signature) and fails 8 of 10 cases."
+    }
+  }
+]

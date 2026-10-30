@@ -1,0 +1,209 @@
+[
+  {
+    "id": "git-init-clone-001",
+    "track": "git",
+    "level": 1,
+    "format": "multiple-choice",
+    "topic": "init-clone",
+    "tags": [
+      "clone",
+      "init",
+      "remote"
+    ],
+    "title": "Menyalin repo remote ke komputer",
+    "prompt": "Kamu ingin mengambil salinan lokal sebuah repo di GitHub **lengkap dengan seluruh riwayat commit-nya** ke folder baru. Perintah mana yang tepat?",
+    "data": {
+      "options": [
+        "`git clone https://github.com/acme/shop.git`",
+        "`git init https://github.com/acme/shop.git`",
+        "`git pull https://github.com/acme/shop.git` di folder kosong",
+        "`git remote add origin https://github.com/acme/shop.git`"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Satu perintah ini membuat folder, menyalin semua objek, dan mengatur remote `origin` sekaligus.",
+      "Namanya berarti \"menggandakan\" repo."
+    ],
+    "explanation": "`git clone <url>` membuat folder baru, mengunduh seluruh riwayat, mengatur remote `origin` ke URL itu, lalu melakukan checkout branch default (mis. `main`).\n\n- `git init` membuat repo **kosong baru** di folder lokal; argumennya adalah direktori, bukan URL.\n- `git pull` hanya bisa dijalankan **di dalam** repo yang sudah ada; di folder kosong Git akan menolak (`not a git repository`).\n- `git remote add` hanya mendaftarkan alamat remote pada repo yang sudah ada, tanpa mengunduh apa pun.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Checked against Git 2.4x behaviour of clone/init/pull/remote; single correct option"
+    }
+  },
+  {
+    "id": "git-staging-001",
+    "track": "git",
+    "level": 1,
+    "format": "fill-blank",
+    "topic": "staging",
+    "tags": [
+      "add",
+      "commit",
+      "staging-area"
+    ],
+    "title": "Stage lalu commit satu file",
+    "prompt": "Lengkapi perintah untuk memasukkan `index.html` ke staging area, lalu membuat commit dengan pesan langsung di baris perintah.",
+    "data": {
+      "language": "text",
+      "template": "git {{blank}} index.html\ngit commit {{blank}} \"Add landing page\"",
+      "choices": [
+        "add",
+        "push",
+        "save",
+        "-m",
+        "-a",
+        "--amend"
+      ]
+    },
+    "answer": {
+      "blanks": [
+        [
+          "add"
+        ],
+        [
+          "-m"
+        ]
+      ]
+    },
+    "hints": [
+      "Perubahan harus masuk staging area dulu sebelum bisa di-commit.",
+      "Opsi untuk menulis pesan commit adalah singkatan dari *message*."
+    ],
+    "explanation": "`git add index.html` memindahkan perubahan file ke **staging area** (index). `git commit -m \"...\"` lalu menyimpan isi staging area sebagai commit baru dengan pesan tersebut.\n\n- `git push` mengirim commit ke remote, bukan men-stage file. `git save` bukan perintah Git.\n- `-a` men-stage otomatis semua file **tracked** yang berubah, tetapi tidak menerima teks pesan: teks `\"Add landing page\"` akan dianggap path, dan Git menolak karena `-a` tidak boleh digabung dengan path.\n- `--amend` mengganti commit terakhir, bukan membuat commit baru.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Word bank avoids `stage` (a real alias of `git add`) to keep one correct answer"
+    }
+  },
+  {
+    "id": "git-gitignore-001",
+    "track": "git",
+    "level": 1,
+    "format": "multiple-choice",
+    "topic": "gitignore",
+    "tags": [
+      "gitignore",
+      "glob"
+    ],
+    "title": "Pola .gitignore untuk semua file log",
+    "prompt": "Baris mana di `.gitignore` yang membuat Git mengabaikan **semua file berakhiran `.log`** (mis. `error.log`, `logs/app.log`)?",
+    "data": {
+      "options": [
+        "`*.log`",
+        "`.log`",
+        "`log`",
+        "`!*.log`"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Kamu butuh wildcard yang cocok dengan nama apa pun sebelum ekstensi.",
+      "Tanda bintang cocok dengan karakter apa pun (kecuali `/`), dan pola tanpa `/` berlaku di semua folder."
+    ],
+    "explanation": "`*.log` adalah pola glob: `*` cocok dengan nama apa pun, dan karena pola tidak mengandung `/`, ia berlaku di **semua level folder** (`error.log`, `logs/app.log`, dst).\n\n- `.log` hanya cocok dengan file/folder yang namanya persis `.log`.\n- `log` hanya cocok dengan file/folder bernama `log`.\n- Awalan `!` adalah **negasi**: membatalkan pengabaian dari pola sebelumnya, kebalikan dari yang diminta.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Pattern semantics checked against gitignore(5)"
+    }
+  },
+  {
+    "id": "git-commit-messages-001",
+    "track": "git",
+    "level": 1,
+    "format": "flashcard",
+    "topic": "commit-messages",
+    "tags": [
+      "commit",
+      "best-practice"
+    ],
+    "title": "Ciri pesan commit yang baik",
+    "prompt": "Apa saja ciri **pesan commit yang baik** menurut konvensi umum Git?",
+    "answer": {
+      "back": "- **Baris subjek** singkat (± 50 karakter, maksimal ~72), merangkum perubahan.\n- Ditulis dalam **mode perintah (imperative)**: `Add login form`, `Fix null check in cart`, bukan `Added...` / `Fixes...`.\n- Tanpa titik di akhir subjek.\n- **Baris kosong** di antara subjek dan body.\n- **Body** (opsional) dibungkus ~72 kolom dan menjelaskan **kenapa** perubahan dibuat, bukan sekadar *apa*.\n- Satu commit = satu perubahan logis; hindari `WIP`, `fix stuff`, `update`."
+    },
+    "hints": [
+      "Bayangkan subjeknya melengkapi kalimat: \"If applied, this commit will ...\""
+    ],
+    "explanation": "Subjek pendek muncul rapi di `git log --oneline`, GitHub, dan email patch. Mode imperative cocok dengan pesan buatan Git sendiri (`Merge branch 'x'`, `Revert \"...\"`). Body menjelaskan alasan karena *apa* yang berubah sudah terlihat di diff, sedangkan *kenapa* hanya ada di kepala penulis. Kesalahan umum: pesan seperti `fix` yang tidak berguna saat mencari bug lewat `git log` atau `git bisect`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Conventions per git-commit(1) DISCUSSION and common practice; 50/72 framed as guideline, not rule"
+    }
+  },
+  {
+    "id": "git-status-001",
+    "track": "git",
+    "level": 1,
+    "format": "predict-output",
+    "topic": "status",
+    "tags": [
+      "status",
+      "short-format",
+      "staging-area"
+    ],
+    "title": "Membaca git status --short",
+    "prompt": "Repo awalnya bersih. `app.js` dan `utils.js` sudah ter-track, `notes.txt` file baru. Apa output perintah terakhir?",
+    "data": {
+      "language": "text",
+      "code": "$ echo \"// v2\" >> app.js\n$ echo \"// tmp\" >> utils.js\n$ echo \"todo\" > notes.txt\n$ git add app.js\n$ git status --short",
+      "options": [
+        "M  app.js\n M utils.js\n?? notes.txt",
+        " M app.js\nM  utils.js\n?? notes.txt",
+        "A  app.js\n M utils.js\n?? notes.txt",
+        "M  app.js\nM  utils.js\nA  notes.txt"
+      ]
+    },
+    "answer": {
+      "output": "M  app.js\n M utils.js\n?? notes.txt"
+    },
+    "hints": [
+      "Format pendek punya dua kolom status: kolom kiri = staging area (index), kolom kanan = working tree.",
+      "Hanya `app.js` yang di-`add`; `notes.txt` belum pernah di-track sehingga ditandai `??`."
+    ],
+    "explanation": "Di `git status --short` setiap baris diawali dua karakter `XY`: **X** = status di staging area, **Y** = status di working tree.\n\n- `M  app.js` → perubahan sudah di-stage (X = `M`), working tree sama dengan index.\n- ` M utils.js` → diubah tetapi **belum** di-stage (X kosong, Y = `M`).\n- `?? notes.txt` → file **untracked**.\n\n`A` hanya dipakai untuk file baru yang sudah di-stage; `app.js` bukan file baru, jadi statusnya `M`. Entri untracked selalu ditampilkan setelah entri tracked.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Lowercase filenames chosen so path sort order is unambiguous; XY codes per git-status(1)"
+    }
+  }
+]

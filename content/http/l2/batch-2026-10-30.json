@@ -1,0 +1,214 @@
+[
+  {
+    "id": "http-status-codes-002",
+    "track": "http",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "status-codes",
+    "tags": [
+      "status-codes",
+      "401",
+      "403",
+      "auth"
+    ],
+    "title": "User biasa membuka halaman admin",
+    "prompt": "User **sudah login** dengan token yang valid, tapi rolenya `member`. Ia memanggil `GET /admin/reports` yang hanya boleh diakses role `admin`. Kode status apa yang tepat?",
+    "data": {
+      "options": [
+        "`400 Bad Request`",
+        "`401 Unauthorized`",
+        "`403 Forbidden`",
+        "`404 Not Found`, selalu, agar endpoint admin tidak ketahuan"
+      ]
+    },
+    "answer": {
+      "index": 2
+    },
+    "hints": [
+      "Server sudah tahu *siapa* user ini. Masalahnya ada di izin, bukan identitas.",
+      "Login ulang tidak akan membantu user ini."
+    ],
+    "explanation": "`403 Forbidden` = server **tahu siapa Anda**, tapi Anda tidak berhak. `401 Unauthorized` (namanya menyesatkan) sebenarnya berarti **belum terautentikasi** atau kredensial tidak valid/kedaluwarsa, dan wajib disertai header `WWW-Authenticate`. RFC 9110 memang mengizinkan `404` untuk menyembunyikan keberadaan resource, tapi itu pilihan opsional, bukan aturan \"selalu\".",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "http-redirects-001",
+    "track": "http",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "redirects",
+    "tags": [
+      "redirects",
+      "301",
+      "302",
+      "seo"
+    ],
+    "title": "Pindah domain secara permanen",
+    "prompt": "Perusahaan pindah dari `old-shop.com` ke `shop.example.com` **selamanya**. Semua `GET` ke URL lama harus diarahkan ke URL baru, dan mesin pencari harus memperbarui indeksnya. Kode redirect mana yang tepat?",
+    "data": {
+      "options": [
+        "`301 Moved Permanently`",
+        "`302 Found`",
+        "`304 Not Modified`",
+        "`307 Temporary Redirect`"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Kata kuncinya \"selamanya\": redirect sementara atau permanen?",
+      "Di antara pilihan, hanya satu yang permanen; `304` bahkan bukan redirect."
+    ],
+    "explanation": "`301` = **permanen**: client boleh memperbarui bookmark, mesin pencari memindahkan indeks ke URL baru, dan respons boleh di-cache. `302` dan `307` = **sementara** (URL lama tetap dianggap yang utama). `304 Not Modified` adalah jawaban revalidasi cache, bukan pengalihan. Catatan: `308 Permanent Redirect` juga permanen dan menjamin method tidak berubah — berguna jika ada `POST` yang ikut dialihkan.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "http-headers-002",
+    "track": "http",
+    "level": 2,
+    "format": "find-bug",
+    "topic": "headers",
+    "tags": [
+      "headers",
+      "content-type",
+      "415"
+    ],
+    "title": "Server menolak body JSON",
+    "prompt": "Request berikut dibalas `415 Unsupported Media Type` oleh API yang hanya menerima JSON. Baris mana yang salah?",
+    "data": {
+      "language": "text",
+      "code": "POST /api/users HTTP/1.1\nHost: api.example.com\nAccept: application/json\nContent-Type: application/x-www-form-urlencoded\nContent-Length: 42\n\n{\"name\":\"Budi\",\"email\":\"budi@example.com\"}"
+    },
+    "answer": {
+      "line": 4,
+      "fixedLine": "Content-Type: application/json"
+    },
+    "hints": [
+      "Header mana yang mendeskripsikan format *body yang dikirim*?",
+      "Body-nya JSON, tapi header-nya mengaku format form HTML."
+    ],
+    "explanation": "`Content-Type` harus mendeskripsikan body yang benar-benar dikirim. `application/x-www-form-urlencoded` adalah format form (`name=Budi&email=...`), sehingga parser JSON di server tidak dijalankan dan server membalas `415`. `Accept` hanya mengatur format **respons**, jadi baris 3 tidak salah. `Content-Length: 42` sesuai dengan panjang body.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "http-cookies-001",
+    "track": "http",
+    "level": 2,
+    "format": "fill-blank",
+    "topic": "cookies",
+    "tags": [
+      "cookies",
+      "security",
+      "httponly",
+      "secure"
+    ],
+    "title": "Atribut cookie session yang aman",
+    "prompt": "Lengkapi header `Set-Cookie` untuk cookie session: (1) **tidak bisa dibaca** JavaScript lewat `document.cookie`, dan (2) **hanya dikirim lewat HTTPS**.",
+    "data": {
+      "language": "text",
+      "template": "Set-Cookie: sid=9f8a7b; {{blank}}; {{blank}}; SameSite=Lax; Path=/",
+      "choices": [
+        "HttpOnly",
+        "Secure",
+        "SameSite=None",
+        "Domain=example.com",
+        "Max-Age=0",
+        "Partitioned"
+      ]
+    },
+    "answer": {
+      "blanks": [
+        [
+          "HttpOnly"
+        ],
+        [
+          "Secure"
+        ]
+      ]
+    },
+    "hints": [
+      "Satu atribut membatasi akses dari JS (hanya HTTP), satu lagi membatasi transport.",
+      "`HttpOnly` dulu, lalu `Secure`."
+    ],
+    "explanation": "- `HttpOnly` → cookie tidak terlihat oleh `document.cookie`, sehingga skrip hasil serangan XSS tidak bisa mencuri session ID.\n- `Secure` → cookie hanya dikirim lewat HTTPS, tidak bocor di koneksi HTTP biasa.\n\nUrutan atribut sebenarnya bebas; di soal ini urutannya mengikuti syarat (1) dan (2). `Max-Age=0` justru menghapus cookie, dan `SameSite=None` melonggarkan perlindungan CSRF.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "http-rest-001",
+    "track": "http",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "rest",
+    "tags": [
+      "rest",
+      "pagination",
+      "api-design"
+    ],
+    "title": "Offset pagination pada feed yang terus bertambah",
+    "prompt": "Feed diurutkan **terbaru dulu** dan dipaginasi dengan `GET /posts?offset=0&limit=20`, lalu `offset=20`. Setelah user membaca halaman 1, **3 posting baru** masuk sebelum ia membuka halaman 2. Apa yang terjadi, dan apa solusi yang umum?",
+    "data": {
+      "options": [
+        "Tidak ada efek, karena HTTP stateless",
+        "3 posting baru otomatis muncul di awal halaman 2; tidak perlu solusi",
+        "3 posting terakhir halaman 1 muncul lagi di halaman 2; pakai cursor pagination, mis. `?before=<id terakhir>&limit=20`",
+        "Halaman 2 melewatkan 3 posting; solusinya menaikkan `limit` menjadi 23",
+        "Server wajib membalas `409 Conflict` sampai client memuat ulang halaman 1"
+      ]
+    },
+    "answer": {
+      "index": 2
+    },
+    "hints": [
+      "Posting baru masuk di atas, jadi semua posting lama bergeser 3 posisi ke bawah.",
+      "Offset menghitung posisi; cursor menunjuk ke item tertentu."
+    ],
+    "explanation": "Dengan offset, posisi item bergeser saat data baru masuk: item ke-18..20 lama sekarang berada di posisi 21..23, sehingga muncul **dua kali**. **Cursor/keyset pagination** (`WHERE id < :last_id ORDER BY id DESC LIMIT 20`) melanjutkan dari item terakhir yang dilihat, sehingga stabil walau ada insert, dan juga lebih cepat di offset besar (database tidak perlu melewati N baris). Kelemahannya: tidak bisa langsung lompat ke \"halaman 50\".",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

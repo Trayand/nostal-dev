@@ -1,0 +1,187 @@
+[
+  {
+    "id": "react-immutable-state-001",
+    "track": "react",
+    "level": 1,
+    "format": "predict-output",
+    "topic": "immutable-state",
+    "tags": [
+      "spread",
+      "shallow-copy",
+      "state"
+    ],
+    "title": "Spread menyalin state secara dangkal",
+    "prompt": "Di React, state di-update dengan membuat objek baru memakai spread. Apa output kode JavaScript berikut?",
+    "data": {
+      "language": "javascript",
+      "code": "const state = { count: 0, user: { name: 'Ana' } };\nconst next = { ...state, count: state.count + 1 };\nnext.user.name = 'Budi';\nconsole.log(state.count, state.user.name);",
+      "options": [
+        "0 Ana",
+        "0 Budi",
+        "1 Budi",
+        "1 Ana"
+      ]
+    },
+    "answer": {
+      "output": "0 Budi"
+    },
+    "hints": [
+      "Spread `{ ...state }` hanya menyalin properti level pertama.",
+      "`next.user` dan `state.user` masih menunjuk ke objek yang sama."
+    ],
+    "explanation": "`{ ...state }` adalah **shallow copy**: `count` disalin sebagai nilai (jadi `state.count` tetap 0), tetapi `user` disalin sebagai referensi. Mengubah `next.user.name` ikut mengubah `state.user`. Di React ini berarti state lama ikut termutasi. Cara benar: `{ ...state, user: { ...state.user, name: 'Budi' } }`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "react-hooks-rules-001",
+    "track": "react",
+    "level": 1,
+    "format": "multiple-choice",
+    "topic": "hooks-rules",
+    "tags": [
+      "useState",
+      "rules-of-hooks"
+    ],
+    "title": "Tempat yang sah memanggil useState",
+    "prompt": "Menurut *Rules of Hooks*, di mana `useState` **boleh** dipanggil?",
+    "data": {
+      "options": [
+        "Di level teratas function component, sebelum `return` apa pun",
+        "Di dalam blok `if` jika state hanya kadang dibutuhkan",
+        "Di dalam loop `for`, satu kali per item list",
+        "Di dalam event handler seperti `handleClick`"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "React mengenali setiap Hook dari **urutan** pemanggilannya di setiap render.",
+      "Urutan hanya stabil jika Hook selalu dipanggil di tempat yang sama, tanpa kondisi."
+    ],
+    "explanation": "Hook seperti `useState` hanya boleh dipanggil di level teratas function component (atau custom Hook), tidak di dalam kondisi, loop, nested function, atau setelah early return. React mencocokkan state dengan Hook berdasarkan urutan panggilan, jadi urutan itu harus sama di setiap render. Event handler bukan bagian dari render, sehingga Hook di sana juga tidak sah.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "react-state-updates-001",
+    "track": "react",
+    "level": 1,
+    "format": "multiple-choice",
+    "topic": "state-updates",
+    "tags": [
+      "useState",
+      "snapshot"
+    ],
+    "title": "Tiga kali setCount dalam satu klik",
+    "prompt": "`count` awalnya `0`. Setelah tombol diklik **sekali**, berapa nilai `count` yang tampil?",
+    "data": {
+      "language": "javascript",
+      "code": "function Counter() {\n  const [count, setCount] = useState(0);\n\n  function handleClick() {\n    setCount(count + 1);\n    setCount(count + 1);\n    setCount(count + 1);\n  }\n\n  return <button onClick={handleClick}>{count}</button>;\n}",
+      "options": [
+        "`1`",
+        "`3`",
+        "`0`",
+        "`2`"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Di dalam satu render, `count` adalah snapshot yang tidak berubah.",
+      "Ketiga panggilan sama-sama menjadi `setCount(0 + 1)`."
+    ],
+    "explanation": "State berperilaku seperti **snapshot** per render. Selama handler berjalan, `count` tetap `0`, jadi ketiga panggilan meminta nilai `1`. Hasilnya `1`, bukan `3`. Untuk menambah berdasarkan nilai terbaru, pakai updater function: `setCount(c => c + 1)`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "react-keys-001",
+    "track": "react",
+    "level": 1,
+    "format": "flashcard",
+    "topic": "keys",
+    "tags": [
+      "lists",
+      "reconciliation"
+    ],
+    "title": "Fungsi prop key di list",
+    "prompt": "Kenapa React membutuhkan prop `key` saat me-render list dengan `map`?",
+    "data": {},
+    "answer": {
+      "back": "`key` adalah identitas stabil setiap item di antara render. React memakainya untuk mencocokkan item lama dan baru: item mana yang tetap, ditambah, dihapus, atau berpindah. Dengan begitu state dan elemen DOM ikut item yang benar.\n\n- Pakai id unik dari data (`todo.id`), bukan `Math.random()`.\n- Index sebagai key hanya aman jika list tidak pernah diurutkan ulang, disisipi, atau dihapus di tengah.\n- `key` cukup unik di antara saudara (sibling), tidak harus global."
+    },
+    "hints": [
+      "Pikirkan bagaimana React tahu item mana yang sama setelah list berubah urutan."
+    ],
+    "explanation": "Tanpa key yang stabil, React mencocokkan item berdasarkan posisi. Saat urutan berubah, state (misalnya isi input) bisa menempel ke item yang salah.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "react-events-001",
+    "track": "react",
+    "level": 1,
+    "format": "find-bug",
+    "topic": "events",
+    "tags": [
+      "onClick",
+      "infinite-render"
+    ],
+    "title": "Error Too many re-renders di tombol suka",
+    "prompt": "Komponen ini langsung error *\"Too many re-renders\"* begitu ditampilkan. Baris mana yang salah?",
+    "data": {
+      "language": "javascript",
+      "code": "function LikeButton() {\n  const [likes, setLikes] = useState(0);\n  function handleClick() {\n    setLikes(likes + 1);\n  }\n  return <button onClick={handleClick()}>Suka ({likes})</button>;\n}"
+    },
+    "answer": {
+      "line": 6,
+      "fixedLine": "  return <button onClick={handleClick}>Suka ({likes})</button>;"
+    },
+    "hints": [
+      "Perhatikan apa yang dikirim ke `onClick`: fungsinya, atau hasil pemanggilannya?",
+      "Tanda kurung `()` membuat fungsi dijalankan saat render."
+    ],
+    "explanation": "`onClick={handleClick()}` **memanggil** `handleClick` saat render, lalu mengirim hasilnya (`undefined`) ke `onClick`. Pemanggilan itu menjalankan `setLikes` di tengah render, yang memicu render lagi, dan seterusnya tanpa henti. Kirim referensi fungsinya: `onClick={handleClick}` (atau `onClick={() => handleClick()}`).",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

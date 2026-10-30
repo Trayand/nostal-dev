@@ -1,0 +1,514 @@
+[
+  {
+    "id": "sql-subquery-003",
+    "track": "sql",
+    "level": 3,
+    "format": "code-short",
+    "topic": "subqueries",
+    "tags": [
+      "not-exists",
+      "anti-join",
+      "null"
+    ],
+    "title": "Produk yang belum pernah terjual dengan NOT EXISTS",
+    "prompt": "Tabel `products(id, name)` dan `order_items(id, order_id, product_id)`. `product_id` bisa `NULL` (item dari produk yang sudah dihapus).\n\nTampilkan `name` produk yang **belum pernah** muncul di `order_items`. Query harus tetap benar walaupun ada `product_id` NULL. Urutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL);\nCREATE TABLE order_items (id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL, product_id INTEGER);",
+      "seed": "INSERT INTO products (id, name) VALUES (1, 'Kopi'), (2, 'Teh'), (3, 'Susu'), (4, 'Roti');\nINSERT INTO order_items (id, order_id, product_id) VALUES (1, 101, 1), (2, 101, 2), (3, 102, 1);"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "name"
+          ],
+          "rows": [
+            [
+              "Susu"
+            ],
+            [
+              "Roti"
+            ]
+          ]
+        }
+      },
+      {
+        "name": "ada product_id NULL",
+        "setup": "INSERT INTO order_items (id, order_id, product_id) VALUES (4, 103, NULL);",
+        "expected": {
+          "columns": [
+            "name"
+          ],
+          "rows": [
+            [
+              "Susu"
+            ],
+            [
+              "Roti"
+            ]
+          ]
+        }
+      },
+      {
+        "name": "Susu terjual",
+        "setup": "INSERT INTO order_items (id, order_id, product_id) VALUES (4, 103, 3), (5, 104, NULL);",
+        "expected": {
+          "columns": [
+            "name"
+          ],
+          "rows": [
+            [
+              "Roti"
+            ]
+          ]
+        }
+      },
+      {
+        "name": "semua produk terjual",
+        "setup": "INSERT INTO order_items (id, order_id, product_id) VALUES (4, 103, 3), (5, 103, 4);",
+        "expected": {
+          "columns": [
+            "name"
+          ],
+          "rows": []
+        }
+      }
+    ],
+    "referenceSolution": "SELECT p.name\nFROM products p\nWHERE NOT EXISTS (\n  SELECT 1 FROM order_items oi WHERE oi.product_id = p.id\n);",
+    "hints": [
+      "`NOT IN (SELECT product_id ...)` berubah perilaku jika subquery mengandung NULL. Cari bentuk yang hanya menanyakan \"ada baris yang cocok atau tidak\".",
+      "`WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id)`."
+    ],
+    "explanation": "`NOT EXISTS` menjalankan subquery berkorelasi untuk setiap produk dan hanya bertanya apakah **ada** baris yang cocok. Baris dengan `product_id` NULL tidak pernah cocok dengan `= p.id`, jadi tidak mengganggu.\n\nSebaliknya `WHERE id NOT IN (SELECT product_id FROM order_items)` menghasilkan **nol baris** begitu ada satu NULL: `3 NOT IN (1, 2, NULL)` sama dengan `3 <> 1 AND 3 <> 2 AND 3 <> NULL`, dan `3 <> NULL` bernilai UNKNOWN sehingga seluruh kondisi tidak pernah TRUE. Jika tetap memakai `NOT IN`, tambahkan `WHERE product_id IS NOT NULL` di subquery. `LEFT JOIN ... WHERE oi.id IS NULL` juga aman.",
+    "estimatedMinutes": 4,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-null-005",
+    "track": "sql",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "null-handling",
+    "tags": [
+      "not-in",
+      "null",
+      "three-valued-logic"
+    ],
+    "title": "NOT IN dengan subquery yang berisi NULL",
+    "prompt": "Tabel `products` berisi 4 baris dengan `id` 1–4 (`Kopi`, `Teh`, `Susu`, `Roti`). Kolom `order_items.product_id` berisi nilai `1`, `2`, dan `NULL`.\n\nApa hasil query berikut?",
+    "data": {
+      "language": "sql",
+      "code": "SELECT name FROM products\nWHERE id NOT IN (SELECT product_id FROM order_items);",
+      "options": [
+        "`Susu` dan `Roti`",
+        "Tidak ada baris (hasil kosong)",
+        "`Susu`, `Roti`, dan satu baris berisi NULL",
+        "Error karena subquery mengandung NULL"
+      ]
+    },
+    "answer": {
+      "index": 1
+    },
+    "hints": [
+      "Uraikan `3 NOT IN (1, 2, NULL)` menjadi rangkaian perbandingan `<>` yang disambung `AND`.",
+      "Perbandingan apa pun dengan NULL bernilai UNKNOWN, dan `WHERE` hanya meloloskan baris yang TRUE."
+    ],
+    "explanation": "`x NOT IN (1, 2, NULL)` setara dengan `x <> 1 AND x <> 2 AND x <> NULL`. Bagian `x <> NULL` selalu UNKNOWN, jadi untuk `id` 3 dan 4 hasilnya `TRUE AND TRUE AND UNKNOWN` = UNKNOWN, sedangkan untuk `id` 1 dan 2 hasilnya FALSE. Tidak ada baris yang TRUE, sehingga hasilnya **kosong**, tanpa error. Inilah alasan anti-join sebaiknya ditulis dengan `NOT EXISTS`, atau subquery `NOT IN` diberi `WHERE product_id IS NOT NULL`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Standard SQL three-valued logic, also SQLite behavior: NOT IN over a list containing NULL never yields TRUE, so 0 rows and no error."
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-aggregate-002",
+    "track": "sql",
+    "level": 3,
+    "format": "code-short",
+    "topic": "aggregates",
+    "tags": [
+      "conditional-aggregation",
+      "case",
+      "sum",
+      "group-by"
+    ],
+    "title": "Pivot status pesanan per kota dengan SUM(CASE)",
+    "prompt": "Tabel `orders(id, city, status, total)`. Status bisa `'paid'`, `'pending'`, atau `'cancelled'`.\n\nTampilkan **satu baris per kota** dengan kolom:\n- `city`\n- `paid_orders`: jumlah pesanan `'paid'`\n- `pending_orders`: jumlah pesanan `'pending'`\n- `paid_revenue`: jumlah `total` pesanan `'paid'` (**0** jika tidak ada)\n\nSemua kota yang punya pesanan harus muncul. Urutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE orders (id INTEGER PRIMARY KEY, city TEXT NOT NULL, status TEXT NOT NULL, total INTEGER NOT NULL);",
+      "seed": "INSERT INTO orders (id, city, status, total) VALUES (1, 'Jakarta', 'paid', 150000), (2, 'Jakarta', 'paid', 200000), (3, 'Jakarta', 'pending', 50000), (4, 'Bandung', 'pending', 75000), (5, 'Bandung', 'cancelled', 60000), (6, 'Surabaya', 'paid', 125000);"
+    },
+    "tests": [
+      {
+        "name": "data awal (kota tanpa pesanan lunas)",
+        "expected": {
+          "columns": [
+            "city",
+            "paid_orders",
+            "pending_orders",
+            "paid_revenue"
+          ],
+          "rows": [
+            [
+              "Jakarta",
+              2,
+              1,
+              350000
+            ],
+            [
+              "Bandung",
+              0,
+              1,
+              0
+            ],
+            [
+              "Surabaya",
+              1,
+              0,
+              125000
+            ]
+          ]
+        }
+      },
+      {
+        "name": "kota hanya punya pesanan batal",
+        "setup": "INSERT INTO orders (id, city, status, total) VALUES (7, 'Medan', 'cancelled', 10000);",
+        "expected": {
+          "columns": [
+            "city",
+            "paid_orders",
+            "pending_orders",
+            "paid_revenue"
+          ],
+          "rows": [
+            [
+              "Jakarta",
+              2,
+              1,
+              350000
+            ],
+            [
+              "Bandung",
+              0,
+              1,
+              0
+            ],
+            [
+              "Surabaya",
+              1,
+              0,
+              125000
+            ],
+            [
+              "Medan",
+              0,
+              0,
+              0
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "SELECT city,\n  SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) AS paid_orders,\n  SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_orders,\n  SUM(CASE WHEN status = 'paid' THEN total ELSE 0 END) AS paid_revenue\nFROM orders\nGROUP BY city;",
+    "hints": [
+      "Jangan memfilter status di `WHERE` (kota tanpa pesanan lunas akan hilang). Hitung per status di dalam agregat.",
+      "`SUM(CASE WHEN status = 'paid' THEN total ELSE 0 END)`, dan pola yang sama dengan `THEN 1` untuk menghitung jumlah."
+    ],
+    "explanation": "*Conditional aggregation* menaruh kondisi **di dalam** agregat: `CASE` mengubah setiap baris menjadi 1/0 (atau `total`/0), lalu `SUM` menjumlahkannya per kelompok. Dengan cara ini satu kali scan menghasilkan beberapa metrik sekaligus, mirip pivot.\n\nDua jebakan:\n1. `WHERE status = 'paid'` membuang kota Bandung dan Medan seluruhnya.\n2. Tanpa `ELSE 0`, `CASE` menghasilkan NULL untuk baris yang tidak cocok, dan `SUM` atas semua NULL bernilai **NULL**, bukan 0.",
+    "estimatedMinutes": 4,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-joins-005",
+    "track": "sql",
+    "level": 3,
+    "format": "code-full",
+    "topic": "joins",
+    "tags": [
+      "multi-join",
+      "left-join",
+      "percent-of-total",
+      "round"
+    ],
+    "title": "Persentase pendapatan per kategori dari tiga tabel",
+    "prompt": "Tabel:\n- `categories(id, name)`\n- `products(id, category_id, name, price)`\n- `order_items(id, product_id, qty)`\n\nPendapatan sebuah item = `qty * price`. Untuk **setiap kategori** (termasuk yang belum ada penjualan) tampilkan:\n- `category`: nama kategori\n- `revenue`: total pendapatan kategori itu (**0** jika tidak ada)\n- `pct_of_total`: persentase `revenue` terhadap total pendapatan semua kategori, dibulatkan **1 desimal** (contoh `64.3`)\n\nUrutkan berdasarkan `revenue` dari terbesar, lalu `category` A→Z jika sama.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE categories (id INTEGER PRIMARY KEY, name TEXT NOT NULL);\nCREATE TABLE products (id INTEGER PRIMARY KEY, category_id INTEGER NOT NULL, name TEXT NOT NULL, price INTEGER NOT NULL);\nCREATE TABLE order_items (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, qty INTEGER NOT NULL);",
+      "seed": "INSERT INTO categories (id, name) VALUES (1, 'Minuman'), (2, 'Makanan'), (3, 'Snack');\nINSERT INTO products (id, category_id, name, price) VALUES (1, 1, 'Kopi', 20000), (2, 1, 'Teh', 10000), (3, 2, 'Nasi Goreng', 25000), (4, 3, 'Keripik', 8000);\nINSERT INTO order_items (id, product_id, qty) VALUES (1, 1, 2), (2, 2, 3), (3, 3, 2), (4, 1, 1);"
+    },
+    "tests": [
+      {
+        "name": "data awal (kategori tanpa penjualan)",
+        "expected": {
+          "columns": [
+            "category",
+            "revenue",
+            "pct_of_total"
+          ],
+          "rows": [
+            [
+              "Minuman",
+              90000,
+              64.3
+            ],
+            [
+              "Makanan",
+              50000,
+              35.7
+            ],
+            [
+              "Snack",
+              0,
+              0
+            ]
+          ]
+        },
+        "ordered": true
+      },
+      {
+        "name": "Snack mulai terjual",
+        "setup": "INSERT INTO order_items (id, product_id, qty) VALUES (5, 4, 5);",
+        "expected": {
+          "columns": [
+            "category",
+            "revenue",
+            "pct_of_total"
+          ],
+          "rows": [
+            [
+              "Minuman",
+              90000,
+              50
+            ],
+            [
+              "Makanan",
+              50000,
+              27.8
+            ],
+            [
+              "Snack",
+              40000,
+              22.2
+            ]
+          ]
+        },
+        "ordered": true
+      },
+      {
+        "name": "revenue sama diurutkan nama",
+        "setup": "INSERT INTO products (id, category_id, name, price) VALUES (5, 3, 'Kacang', 10000);\nINSERT INTO order_items (id, product_id, qty) VALUES (5, 5, 5);",
+        "expected": {
+          "columns": [
+            "category",
+            "revenue",
+            "pct_of_total"
+          ],
+          "rows": [
+            [
+              "Minuman",
+              90000,
+              47.4
+            ],
+            [
+              "Makanan",
+              50000,
+              26.3
+            ],
+            [
+              "Snack",
+              50000,
+              26.3
+            ]
+          ]
+        },
+        "ordered": true
+      }
+    ],
+    "referenceSolution": "WITH cat AS (\n  SELECT c.id, c.name AS category,\n         COALESCE(SUM(oi.qty * p.price), 0) AS revenue\n  FROM categories c\n  LEFT JOIN products p ON p.category_id = c.id\n  LEFT JOIN order_items oi ON oi.product_id = p.id\n  GROUP BY c.id, c.name\n)\nSELECT category, revenue,\n       ROUND(100.0 * revenue / (SELECT SUM(revenue) FROM cat), 1) AS pct_of_total\nFROM cat\nORDER BY revenue DESC, category ASC;",
+    "hints": [
+      "Hitung dulu `revenue` per kategori (dua `LEFT JOIN`: categories → products → order_items), lalu bagi dengan total keseluruhan dari hasil itu.",
+      "Simpan per-kategori di CTE, lalu `ROUND(100.0 * revenue / (SELECT SUM(revenue) FROM cat), 1)`; pakai `100.0` agar tidak terjadi pembagian bilangan bulat."
+    ],
+    "explanation": "Langkahnya:\n1. **Join tiga tabel** dengan `LEFT JOIN` berantai agar kategori tanpa produk/penjualan tetap ada; `COALESCE(SUM(...), 0)` mengubah NULL menjadi 0. Jika join kedua memakai `JOIN` biasa, Snack (punya produk tapi tanpa penjualan) akan hilang.\n2. **Persen dari total** butuh total semua baris di samping nilai per baris. Bisa lewat subquery skalar dari CTE seperti di atas, atau window function `SUM(revenue) OVER ()`.\n3. Di SQLite, `100 * 90000 / 140000` adalah pembagian **bilangan bulat** (hasil 64). Mengalikan dengan `100.0` memaksa pembagian desimal sebelum `ROUND(..., 1)`.",
+    "estimatedMinutes": 8,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-dml-001",
+    "track": "sql",
+    "level": 3,
+    "format": "code-short",
+    "topic": "dml",
+    "tags": [
+      "insert-select",
+      "update",
+      "statement-order"
+    ],
+    "title": "Catat riwayat gaji sebelum menaikkan gaji",
+    "prompt": "Tabel `employees(id, name, dept, salary)` dan `salary_history(employee_id, old_salary, new_salary)` (awalnya kosong).\n\nSemua karyawan departemen `'IT'` mendapat kenaikan gaji **1000000**. Tulis statement yang:\n1. mencatat satu baris `salary_history` untuk setiap karyawan IT (gaji lama dan gaji baru), dan\n2. menaikkan `salary` mereka di `employees`.\n\nAkhiri dengan query pengecekan yang sudah ada di starter (jangan diubah); hanya hasil `SELECT` terakhir itu yang dinilai.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis INSERT dan UPDATE di sini\n\n-- query pengecekan (jangan diubah)\nSELECT e.name, e.salary, h.old_salary, h.new_salary\nFROM employees e\nLEFT JOIN salary_history h ON h.employee_id = e.id;\n",
+      "schema": "CREATE TABLE employees (id INTEGER PRIMARY KEY, name TEXT NOT NULL, dept TEXT NOT NULL, salary INTEGER NOT NULL);\nCREATE TABLE salary_history (employee_id INTEGER NOT NULL, old_salary INTEGER NOT NULL, new_salary INTEGER NOT NULL);",
+      "seed": "INSERT INTO employees (id, name, dept, salary) VALUES (1, 'Andi', 'IT', 15000000), (2, 'Sari', 'IT', 12000000), (3, 'Budi', 'HR', 8000000), (4, 'Dewi', 'Finance', 11000000);"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "name",
+            "salary",
+            "old_salary",
+            "new_salary"
+          ],
+          "rows": [
+            [
+              "Andi",
+              16000000,
+              15000000,
+              16000000
+            ],
+            [
+              "Sari",
+              13000000,
+              12000000,
+              13000000
+            ],
+            [
+              "Budi",
+              8000000,
+              null,
+              null
+            ],
+            [
+              "Dewi",
+              11000000,
+              null,
+              null
+            ]
+          ]
+        }
+      },
+      {
+        "name": "tidak ada karyawan IT",
+        "setup": "UPDATE employees SET dept = 'HR' WHERE dept = 'IT';",
+        "expected": {
+          "columns": [
+            "name",
+            "salary",
+            "old_salary",
+            "new_salary"
+          ],
+          "rows": [
+            [
+              "Andi",
+              15000000,
+              null,
+              null
+            ],
+            [
+              "Sari",
+              12000000,
+              null,
+              null
+            ],
+            [
+              "Budi",
+              8000000,
+              null,
+              null
+            ],
+            [
+              "Dewi",
+              11000000,
+              null,
+              null
+            ]
+          ]
+        }
+      },
+      {
+        "name": "karyawan IT baru ikut naik",
+        "setup": "INSERT INTO employees (id, name, dept, salary) VALUES (5, 'Rina', 'IT', 9000000);",
+        "expected": {
+          "columns": [
+            "name",
+            "salary",
+            "old_salary",
+            "new_salary"
+          ],
+          "rows": [
+            [
+              "Andi",
+              16000000,
+              15000000,
+              16000000
+            ],
+            [
+              "Sari",
+              13000000,
+              12000000,
+              13000000
+            ],
+            [
+              "Budi",
+              8000000,
+              null,
+              null
+            ],
+            [
+              "Dewi",
+              11000000,
+              null,
+              null
+            ],
+            [
+              "Rina",
+              10000000,
+              9000000,
+              10000000
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "INSERT INTO salary_history (employee_id, old_salary, new_salary)\nSELECT id, salary, salary + 1000000 FROM employees WHERE dept = 'IT';\n\nUPDATE employees SET salary = salary + 1000000 WHERE dept = 'IT';\n\nSELECT e.name, e.salary, h.old_salary, h.new_salary\nFROM employees e\nLEFT JOIN salary_history h ON h.employee_id = e.id;",
+    "hints": [
+      "Urutan statement penting: setelah `UPDATE`, gaji lama sudah tidak bisa dibaca lagi dari `employees`.",
+      "Mulai dengan `INSERT INTO salary_history (...) SELECT id, salary, salary + 1000000 FROM employees WHERE dept = 'IT';`, baru `UPDATE employees SET salary = salary + 1000000 WHERE dept = 'IT';`."
+    ],
+    "explanation": "`INSERT ... SELECT` menyisipkan banyak baris sekaligus dari hasil query, tanpa perlu `VALUES` satu per satu. Karena statement dijalankan berurutan, `INSERT` harus **sebelum** `UPDATE`: jika dibalik, `SELECT id, salary, salary + 1000000` membaca gaji yang sudah naik sehingga riwayat mencatat 16 juta → 17 juta. Dalam `UPDATE`, ekspresi `salary + 1000000` di ruas kanan memakai nilai lama baris itu. Kedua statement harus memakai filter `WHERE dept = 'IT'` yang sama agar riwayat dan data konsisten; di aplikasi nyata keduanya dibungkus dalam satu transaksi.",
+    "estimatedMinutes": 4,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

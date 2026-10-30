@@ -50,6 +50,10 @@ They want short daily practice, honest feedback, and to see progress.
 | go | Go | **no** — learning formats + desktop challenges with `go test` |
 | sql | SQLite | yes |
 | concepts | — | no — flashcards + multiple choice |
+| git | — | no — commands, workflows, recovery (MC, find-bug, parsons, flashcards) |
+| http | — | no — HTTP & web fundamentals (status codes, headers, caching, CORS) |
+| react | JavaScript | yes for plain-JS logic (reducers, immutable updates); hooks/rendering as MC/find-bug |
+| system-design | — | no — flashcards + scenario MC, mostly L3–L5 |
 
 ## Non-goals (Phase 1)
 Accounts, sync, backend, analytics, paid services, runtime AI calls, Go/Python execution,

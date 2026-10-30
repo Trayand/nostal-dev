@@ -1,0 +1,202 @@
+[
+  {
+    "id": "http-url-001",
+    "track": "http",
+    "level": 1,
+    "format": "multiple-choice",
+    "topic": "url",
+    "tags": [
+      "url",
+      "fragment",
+      "browser"
+    ],
+    "title": "Bagian URL yang tidak dikirim ke server",
+    "prompt": "Browser membuka URL berikut:\n\n```text\nhttps://shop.example.com:8443/products/42?sort=price#reviews\n```\n\nBagian mana yang **tidak pernah dikirim** ke server dalam HTTP request?",
+    "data": {
+      "options": [
+        "`shop.example.com:8443`",
+        "`/products/42`",
+        "`?sort=price`",
+        "`#reviews`"
+      ]
+    },
+    "answer": {
+      "index": 3
+    },
+    "hints": [
+      "Salah satu bagian hanya dipakai browser untuk menggulir ke posisi tertentu di halaman.",
+      "Bagian setelah tanda `#` disebut *fragment*."
+    ],
+    "explanation": "**Fragment** (`#reviews`) diproses sepenuhnya oleh browser (scroll ke elemen `id=\"reviews\"`, atau dibaca JS lewat `location.hash`) dan tidak ikut di request. Yang dikirim: path + query di request line (`GET /products/42?sort=price HTTP/1.1`), sedangkan host dan port non-default masuk header `Host: shop.example.com:8443`. Skema `https` menentukan cara koneksi (TLS), bukan isi request.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "http-methods-001",
+    "track": "http",
+    "level": 1,
+    "format": "fill-blank",
+    "topic": "methods",
+    "tags": [
+      "methods",
+      "status-codes",
+      "rest"
+    ],
+    "title": "Pasangkan method dan kode status",
+    "prompt": "Lengkapi tabel request → respons API `users` berikut. Komentar `#` menjelaskan situasinya.",
+    "data": {
+      "language": "text",
+      "template": "GET       /users/42   -> 200       # ambil data user 42\n{{blank}} /users/42   -> 200       # ubah email saja, field lain tetap\nDELETE    /users/42   -> {{blank}} # terhapus, respons tanpa body\nGET       /users/999  -> {{blank}} # user 999 tidak ada\nGET       /reports    -> {{blank}} # server crash karena bug di kode",
+      "choices": [
+        "PUT",
+        "PATCH",
+        "POST",
+        "201",
+        "204",
+        "403",
+        "404",
+        "500"
+      ]
+    },
+    "answer": {
+      "blanks": [
+        [
+          "PATCH"
+        ],
+        [
+          "204"
+        ],
+        [
+          "404"
+        ],
+        [
+          "500"
+        ]
+      ]
+    },
+    "hints": [
+      "Ada method untuk mengubah *sebagian* resource, berbeda dengan method yang mengganti seluruhnya.",
+      "Kode 2xx \"sukses tanpa konten\" adalah 204; kesalahan client = 4xx, kesalahan server = 5xx."
+    ],
+    "explanation": "- `PATCH` = ubah **sebagian** field. `PUT` mengganti **seluruh** representasi resource, jadi `PUT` dengan body `{ \"email\": ... }` saja secara semantik menghapus field lain.\n- `204 No Content` = sukses tanpa body, cocok untuk `DELETE`.\n- `404 Not Found` = resource tidak ada.\n- `500 Internal Server Error` = kesalahan di sisi server. Kesalahan umum: membalas bug server dengan `4xx`, atau input buruk dari client dengan `500`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "http-status-codes-001",
+    "track": "http",
+    "level": 1,
+    "format": "multiple-choice",
+    "topic": "status-codes",
+    "tags": [
+      "status-codes",
+      "404",
+      "410"
+    ],
+    "title": "Produk dihapus permanen: 404 atau 410?",
+    "prompt": "Sebuah toko online **sengaja menghapus permanen** halaman produk `/products/42` dan tidak akan pernah mengembalikannya. Server ingin memberi tahu client dan mesin pencari bahwa resource ini **sudah hilang untuk selamanya**. Kode status apa yang paling tepat?",
+    "data": {
+      "options": [
+        "`404 Not Found`",
+        "`410 Gone`",
+        "`403 Forbidden`",
+        "`503 Service Unavailable`"
+      ]
+    },
+    "answer": {
+      "index": 1
+    },
+    "hints": [
+      "`404` tidak menjelaskan apakah ketiadaannya sementara atau permanen.",
+      "Ada kode 4xx yang namanya berarti \"sudah pergi\"."
+    ],
+    "explanation": "`410 Gone` (RFC 9110) menyatakan resource **tidak lagi tersedia dan kondisinya kemungkinan permanen** — mesin pencari biasanya menghapusnya dari indeks lebih cepat. `404` juga boleh dipakai, tapi tidak membedakan sementara vs permanen. `403` berarti akses ditolak, dan `503` berarti server sedang tidak bisa melayani (sementara).",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "http-headers-001",
+    "track": "http",
+    "level": 1,
+    "format": "flashcard",
+    "topic": "headers",
+    "tags": [
+      "headers",
+      "content-type",
+      "accept"
+    ],
+    "title": "Content-Type vs Accept",
+    "prompt": "Apa beda header `Content-Type` dan `Accept`? Kode status apa yang muncul jika masing-masing tidak didukung server?",
+    "answer": {
+      "back": "- `Content-Type` = **format body yang sedang dikirim** (di request maupun respons).\n- `Accept` = **format respons yang diinginkan** client (hanya di request).\n\n```http\nPOST /api/users HTTP/1.1\nContent-Type: application/json   # body saya JSON\nAccept: application/json         # tolong balas JSON\n```\n\n- Body dengan `Content-Type` yang tidak didukung → `415 Unsupported Media Type`\n- Tidak ada format yang cocok dengan `Accept` → `406 Not Acceptable` (atau server mengabaikannya dan memakai format default)"
+    },
+    "hints": [
+      "Satu header mendeskripsikan *apa yang saya kirim*, satunya *apa yang saya mau terima*."
+    ],
+    "explanation": "Keduanya sering tertukar. Request `GET` biasanya tidak punya body, jadi tidak butuh `Content-Type`, tapi tetap bisa mengirim `Accept`. Mekanisme memilih format berdasarkan `Accept` disebut *content negotiation*.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "http-dns-001",
+    "track": "http",
+    "level": 1,
+    "format": "flashcard",
+    "topic": "dns",
+    "tags": [
+      "dns",
+      "networking"
+    ],
+    "title": "Cara kerja resolusi DNS",
+    "prompt": "Apa tugas **DNS**, dan ke mana saja pencarian `www.example.com` berjalan jika belum ada di cache?",
+    "answer": {
+      "back": "DNS menerjemahkan **nama domain → alamat IP**.\n\n1. Cek cache browser, lalu cache OS (dan file `hosts`).\n2. Tanya **recursive resolver** (ISP, `1.1.1.1`, `8.8.8.8`).\n3. Resolver bertanya ke **root server** → dirujuk ke server TLD `.com`.\n4. Server TLD → dirujuk ke **authoritative name server** `example.com`.\n5. Authoritative membalas record: `A` (IPv4), `AAAA` (IPv6), atau `CNAME` (alias).\n\nSetiap jawaban punya **TTL** — berapa lama boleh di-cache."
+    },
+    "hints": [
+      "Hierarki domain dibaca dari kanan: root → `.com` → `example.com`."
+    ],
+    "explanation": "Karena caching ber-TTL, perubahan record DNS tidak langsung terlihat oleh semua orang (\"propagasi\" sebenarnya adalah cache lama yang belum kedaluwarsa). Turunkan TTL sebelum migrasi server agar perpindahan IP cepat terasa.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

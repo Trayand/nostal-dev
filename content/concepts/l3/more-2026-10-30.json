@@ -1,0 +1,168 @@
+[
+  {
+    "id": "concepts-databases-008",
+    "track": "concepts",
+    "level": 3,
+    "format": "flashcard",
+    "topic": "databases",
+    "tags": [
+      "index",
+      "b-tree",
+      "cardinality",
+      "performance"
+    ],
+    "title": "B-tree index dan kolom berkardinalitas rendah",
+    "prompt": "Bagaimana **B-tree index** bekerja secara garis besar, dan kenapa index pada kolom **berkardinalitas rendah** (mis. `is_active` boolean) sering tidak membantu?",
+    "answer": {
+      "back": "**B-tree:** pohon seimbang berisi key yang **terurut**; dari root ke leaf hanya beberapa langkah (`O(log n)`). Karena terurut, ia mendukung `=`, range (`<`, `BETWEEN`), `ORDER BY`, dan pencarian prefix.\n\n**Kardinalitas rendah:** jika satu nilai cocok dengan sebagian besar baris (mis. 50% `true`), index tetap harus mengambil baris-baris itu satu per satu dari tabel (akses acak). Itu sering lebih mahal daripada membaca seluruh tabel berurutan, sehingga query planner memilih **full scan** dan index hanya menambah biaya tulis."
+    },
+    "hints": [
+      "Index paling berguna jika ia menyaring baris menjadi sedikit."
+    ],
+    "explanation": "Yang menentukan adalah **selektivitas** filter, bukan sekadar jumlah nilai unik. Pengecualian: jika distribusinya timpang dan kamu mencari nilai yang langka (mis. `status = 'pending'` yang hanya 1%), index tetap efektif — di PostgreSQL bisa dibuat *partial index* `WHERE status = 'pending'`. Kolom berkardinalitas rendah juga bisa berguna sebagai bagian dari index komposit. Kesalahan umum: menambah index di setiap kolom yang muncul di `WHERE`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-databases-009",
+    "track": "concepts",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "databases",
+    "tags": [
+      "index",
+      "composite-index",
+      "leftmost-prefix"
+    ],
+    "title": "Index komposit dan aturan leftmost prefix",
+    "prompt": "Ada index komposit B-tree `CREATE INDEX idx_name ON users(last_name, first_name);`. Filter mana yang **tidak bisa** langsung menavigasi index ini ke barisnya (index seek biasa)?",
+    "data": {
+      "options": [
+        "`WHERE last_name = 'Santoso'`",
+        "`WHERE last_name = 'Santoso' AND first_name = 'Budi'`",
+        "`WHERE first_name = 'Budi' AND last_name = 'Santoso'`",
+        "`WHERE first_name = 'Budi'`"
+      ]
+    },
+    "answer": {
+      "index": 3
+    },
+    "hints": [
+      "Bayangkan buku telepon yang diurutkan berdasarkan nama belakang, lalu nama depan.",
+      "Urutan kondisi di `WHERE` tidak penting; yang penting kolom paling kiri index ikut difilter."
+    ],
+    "explanation": "Index komposit diurutkan dulu menurut `last_name`, lalu `first_name` di dalam tiap `last_name`. Seek butuh **prefix kiri** index: `last_name` saja, atau `last_name` + `first_name` (urutan penulisan di `WHERE` tidak berpengaruh — optimizer menyusunnya sendiri). Dengan hanya `first_name`, baris yang cocok tersebar di seluruh index. Engine biasanya memindai seluruh index/tabel; beberapa engine (Oracle, MySQL 8.0.13+, SQLite, PostgreSQL 18+) punya **skip scan** yang melompati tiap nilai `last_name` — efektif hanya jika `last_name` punya sedikit nilai unik. Jadi urutkan kolom index sesuai pola query yang paling sering.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-memory-002",
+    "track": "concepts",
+    "level": 3,
+    "format": "flashcard",
+    "topic": "memory",
+    "tags": [
+      "garbage-collection",
+      "memory-leak"
+    ],
+    "title": "Dasar garbage collection",
+    "prompt": "Bagaimana **garbage collector** memutuskan objek mana yang boleh dibebaskan, dan kenapa memory leak tetap bisa terjadi?",
+    "answer": {
+      "back": "**Tracing GC** (JavaScript, Java, Go, C#): mulai dari *roots* (variabel di stack, global), tandai semua objek yang **masih bisa dijangkau** lewat referensi, lalu bebaskan sisanya (*mark-and-sweep*). Banyak GC bersifat **generational**: kebanyakan objek mati muda, jadi area objek baru dibersihkan lebih sering.\n\n**Reference counting** (CPython, Swift ARC): objek bebas saat jumlah referensinya 0 — tapi tidak bisa membebaskan **siklus** sendirian (CPython menambah cycle collector; Swift memakai `weak`).\n\n**Leak tetap mungkin:** GC hanya membebaskan yang *tidak terjangkau*. Objek yang tak dipakai lagi tapi masih direferensikan (cache global tanpa batas, event listener yang tidak dilepas, closure yang menahan data besar) tidak akan dibebaskan."
+    },
+    "hints": [
+      "GC tidak tahu objek mana yang masih kamu *butuhkan* — ia hanya tahu mana yang masih *terjangkau*."
+    ],
+    "explanation": "Dengan tracing GC, siklus objek yang sudah tidak terjangkau tetap dibebaskan. Biayanya: CPU tambahan dan kemungkinan jeda (pause), walau GC modern sebagian besar bekerja konkuren. Kesalahan umum: mengira bahasa ber-GC kebal memory leak, atau mengira menyetel `obj = null` langsung membebaskan memori — itu hanya menghapus satu referensi.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-design-principles-001",
+    "track": "concepts",
+    "level": 3,
+    "format": "flashcard",
+    "topic": "design-principles",
+    "tags": [
+      "solid",
+      "srp",
+      "dip",
+      "oop"
+    ],
+    "title": "SOLID: SRP dan Dependency Inversion",
+    "prompt": "Jelaskan dua prinsip SOLID: **Single Responsibility (SRP)** dan **Dependency Inversion (DIP)**, beserta contoh singkat.",
+    "answer": {
+      "back": "- **SRP** — sebuah modul/class hanya punya **satu alasan untuk berubah** (melayani satu pihak/tanggung jawab). Contoh: `InvoiceService` menghitung tagihan; format PDF dipindah ke `InvoicePdfRenderer`, sehingga perubahan desain PDF tidak menyentuh logika perhitungan.\n- **DIP** — modul tingkat tinggi tidak bergantung pada detail tingkat rendah; **keduanya bergantung pada abstraksi**. Contoh: `OrderService` bergantung pada interface `PaymentGateway`, bukan langsung pada `StripeClient`.\n\n```ts\nclass OrderService {\n  constructor(private payments: PaymentGateway) {}\n}\n```"
+    },
+    "hints": [
+      "DIP sering diwujudkan dengan *dependency injection* lewat constructor."
+    ],
+    "explanation": "SRP membuat perubahan terlokalisasi; DIP membuat implementasi mudah diganti (provider lain, atau fake saat unit test). DIP ≠ dependency injection: DI adalah teknik memasok dependensi, DIP adalah arah ketergantungannya. Kesalahan umum: memaknai SRP sebagai \"satu class hanya boleh satu method\", atau membuat interface untuk segala hal padahal hanya ada satu implementasi dan tidak perlu diganti.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-devops-002",
+    "track": "concepts",
+    "level": 3,
+    "format": "flashcard",
+    "topic": "devops",
+    "tags": [
+      "environment-variables",
+      "twelve-factor",
+      "config",
+      "secrets"
+    ],
+    "title": "Environment variable dan config ala 12-factor",
+    "prompt": "Apa aturan **config** dalam metodologi **12-factor app**, dan apa yang perlu diperhatikan saat memakai **environment variable**?",
+    "answer": {
+      "back": "**Aturan:** semua yang **berbeda antar-deploy** (URL database, kredensial, API key, hostname) disimpan di **environment**, terpisah dari kode. Build yang sama bisa dipakai di staging dan production hanya dengan env berbeda. Tes cepatnya: apakah repo bisa dibuka publik tanpa membocorkan rahasia?\n\n**Perhatikan:**\n- Nilai env selalu **string** → parse dan validasi saat startup, gagal cepat jika ada yang hilang.\n- File `.env` hanya untuk development lokal — masukkan ke `.gitignore`.\n- Variabel yang dibundel ke frontend (mis. `NEXT_PUBLIC_*`, `VITE_*`) **terlihat publik** — jangan isi rahasia.\n- Rahasia di env bisa bocor lewat log atau crash dump; untuk production sering dipakai secret manager."
+    },
+    "hints": [
+      "Bedakan config (berubah per deploy) dari kode (sama di semua deploy)."
+    ],
+    "explanation": "Memisahkan config dari kode mencegah kredensial ter-commit dan menghindari build berbeda untuk tiap environment. Konfigurasi internal yang sama di semua deploy (mis. routing) bukan \"config\" dalam arti ini dan boleh tetap di kode. Kesalahan umum: meng-hardcode `if (env === 'production')` dengan nilai-nilai di dalam kode, atau meng-commit file `.env`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

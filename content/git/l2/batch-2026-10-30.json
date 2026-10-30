@@ -1,0 +1,223 @@
+[
+  {
+    "id": "git-merge-001",
+    "track": "git",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "merge",
+    "tags": [
+      "merge",
+      "fast-forward",
+      "no-ff"
+    ],
+    "title": "Merge saat main tidak bergerak",
+    "prompt": "Branch `feature/search` dibuat dari `main` dan sudah berisi 3 commit. Sejak itu **tidak ada commit baru di `main`**. Apa yang terjadi saat kamu menjalankan perintah berikut (tanpa konfigurasi merge khusus)?",
+    "data": {
+      "language": "text",
+      "code": "git switch main\ngit merge feature/search",
+      "options": [
+        "Fast-forward: pointer `main` dimajukan ke commit terakhir `feature/search`, tanpa membuat merge commit",
+        "Git selalu membuat merge commit baru dengan dua parent",
+        "Ketiga commit disalin ulang di atas `main` dengan hash baru",
+        "Git berhenti dengan konflik karena kedua branch mengubah file yang sama"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Jika `main` adalah leluhur langsung dari `feature/search`, tidak ada dua garis riwayat yang perlu digabung.",
+      "Git cukup menggeser label branch maju; opsi `--no-ff` diperlukan jika kamu tetap ingin merge commit."
+    ],
+    "explanation": "Karena `main` tidak punya commit baru, ujung `main` adalah **leluhur** dari ujung `feature/search`. Riwayatnya lurus, jadi Git melakukan **fast-forward**: label `main` dipindah ke commit terakhir branch fitur. Tidak ada commit baru, tidak ada konflik.\n\n- Merge commit (dua parent) hanya dibuat jika kedua branch sama-sama punya commit baru, atau kamu memaksa dengan `git merge --no-ff`.\n- Menyalin commit dengan hash baru adalah perilaku `rebase`/`cherry-pick`, bukan merge.\n- Konflik tidak mungkin terjadi pada fast-forward karena tidak ada perubahan yang perlu digabung.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Default merge.ff=true assumed (stated as 'tanpa konfigurasi merge khusus')"
+    }
+  },
+  {
+    "id": "git-gitignore-002",
+    "track": "git",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "gitignore",
+    "tags": [
+      "gitignore",
+      "rm-cached",
+      "tracked-files"
+    ],
+    "title": "File sudah ter-commit lalu masuk .gitignore",
+    "prompt": "File `.env` **sudah pernah di-commit**. Kemudian kamu menambahkan baris `.env` ke `.gitignore` dan mengubah isi `.env`. Apa yang benar?",
+    "data": {
+      "options": [
+        "`.env` tetap muncul sebagai *modified*; agar berhenti di-track jalankan `git rm --cached .env` lalu commit",
+        "`.env` otomatis berhenti di-track dan hilang dari `git status`",
+        "`.env` otomatis dihapus dari semua commit lama",
+        "`.env` ikut terhapus dari disk saat commit berikutnya"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "`.gitignore` hanya berpengaruh pada file yang **belum** di-track.",
+      "Kamu perlu mengeluarkan file dari index tanpa menghapusnya dari disk."
+    ],
+    "explanation": "`.gitignore` hanya mencegah file **untracked** masuk ke repo. File yang sudah di-track tetap dipantau, jadi perubahannya tetap muncul di `git status`.\n\nSolusinya: `git rm --cached .env` (hapus dari index, file di disk tetap ada), lalu commit. Setelah itu `.gitignore` baru berlaku.\n\nPenting: file itu **tetap ada di riwayat commit lama**. Jika berisi rahasia (API key, password), anggap sudah bocor dan ganti (rotate) rahasianya; menghapusnya dari riwayat butuh alat penulis-ulang riwayat seperti `git filter-repo`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Behaviour per gitignore(5): 'files already tracked by Git are not affected'"
+    }
+  },
+  {
+    "id": "git-restore-001",
+    "track": "git",
+    "level": 2,
+    "format": "fill-blank",
+    "topic": "restore",
+    "tags": [
+      "restore",
+      "unstage",
+      "discard"
+    ],
+    "title": "Unstage satu file dan buang perubahan file lain",
+    "prompt": "Kamu baru saja menjalankan `git add config.json`, lalu sadar dua hal:\n1. `config.json` tidak boleh ikut commit, tetapi editannya **ingin disimpan** di working tree.\n2. Perubahan di `utils.js` (tidak pernah di-stage) ingin **dibuang** total kembali ke versi commit terakhir.\n\nLengkapi perintahnya.",
+    "data": {
+      "language": "text",
+      "template": "git restore {{blank}} config.json\ngit {{blank}} utils.js",
+      "choices": [
+        "--staged",
+        "--cached",
+        "--hard",
+        "restore",
+        "revert",
+        "reset"
+      ]
+    },
+    "answer": {
+      "blanks": [
+        [
+          "--staged",
+          "-S"
+        ],
+        [
+          "restore",
+          "checkout"
+        ]
+      ]
+    },
+    "hints": [
+      "Opsi pertama menargetkan staging area, bukan working tree.",
+      "Tanpa opsi, perintah yang sama mengembalikan file di working tree dari index."
+    ],
+    "explanation": "`git restore --staged config.json` mengeluarkan file dari staging area (index kembali sama dengan `HEAD`), tetapi editan di working tree **tetap ada**. Padanan lamanya: `git reset config.json`.\n\n`git restore utils.js` (tanpa opsi) menimpa file di working tree dengan versi di index; karena `utils.js` belum di-stage, hasilnya sama dengan commit terakhir. Perubahan ini **tidak bisa di-undo**. Padanan lamanya: `git checkout -- utils.js`.\n\n- `--cached` adalah opsi `git rm`/`git diff`, bukan `git restore`.\n- `--hard` adalah opsi `git reset` dan berlaku untuk seluruh repo.\n- `git revert` membuat commit baru yang membalik commit lain, bukan membuang perubahan lokal.\n- `git reset utils.js` hanya meng-unstage, tidak membuang editan.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Blank 2 also accepts `checkout` (valid legacy form) although not in the word bank"
+    }
+  },
+  {
+    "id": "git-remote-001",
+    "track": "git",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "remote",
+    "tags": [
+      "fetch",
+      "pull",
+      "remote-tracking"
+    ],
+    "title": "Mengambil commit remote tanpa mengubah branch lokal",
+    "prompt": "Kamu ingin melihat commit baru yang di-push rekan ke `origin/main` **tanpa mengubah** branch lokal maupun working tree-mu. Perintah mana?",
+    "data": {
+      "options": [
+        "`git fetch origin`",
+        "`git pull origin main`",
+        "`git push origin main`",
+        "`git merge origin/main`"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "`git pull` sebenarnya adalah dua langkah yang dijalankan berurutan.",
+      "Langkah pertama dari `pull` hanya mengunduh dan memperbarui remote-tracking branch seperti `origin/main`."
+    ],
+    "explanation": "`git fetch origin` mengunduh objek baru dan memperbarui **remote-tracking branch** (`origin/main`, dst). Branch lokal dan working tree tidak disentuh, jadi kamu bisa memeriksa dulu, mis. `git log main..origin/main`.\n\n- `git pull` = `fetch` **lalu** merge (atau rebase, jika dikonfigurasi `pull.rebase`) ke branch saat ini, sehingga mengubah branch lokal.\n- `git push` mengirim commit lokal ke remote, arah sebaliknya.\n- `git merge origin/main` menggabungkan ke branch lokal (dan tanpa fetch dulu, memakai data remote yang mungkin sudah usang).",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    }
+  },
+  {
+    "id": "git-branching-001",
+    "track": "git",
+    "level": 2,
+    "format": "parsons",
+    "topic": "branching",
+    "tags": [
+      "switch",
+      "feature-branch",
+      "push"
+    ],
+    "title": "Alur kerja branch fitur dari main terbaru",
+    "prompt": "Susun perintah untuk alur berikut: pindah ke `main` dan perbarui dari remote, **buat branch baru sebelum mulai bekerja**, stage dan commit `search.js`, lalu push branch baru itu sambil mengatur upstream-nya.",
+    "data": {
+      "language": "text"
+    },
+    "answer": {
+      "lines": [
+        "git switch main",
+        "git pull",
+        "git switch -c feature/search",
+        "git add search.js",
+        "git commit -m \"Add search endpoint\"",
+        "git push -u origin feature/search"
+      ]
+    },
+    "hints": [
+      "Kamu harus berada di `main` sebelum menarik pembaruannya, dan branch fitur dibuat dari `main` yang sudah terbaru.",
+      "`-u` di `push` dipakai sekali di akhir untuk menghubungkan branch lokal dengan `origin/feature/search`."
+    ],
+    "explanation": "1. `git switch main` lalu `git pull` → basis branch fitur adalah `main` terbaru, sehingga konflik nanti lebih kecil.\n2. `git switch -c feature/search` membuat **dan** pindah ke branch baru (padanan lama: `git checkout -b feature/search`).\n3. `git add` → `git commit` mencatat pekerjaan di branch fitur, bukan di `main`.\n4. `git push -u origin feature/search` mengirim branch dan mengatur **upstream**, sehingga berikutnya cukup `git push` / `git pull`.\n\nKesalahan umum: lupa membuat branch dan langsung commit di `main`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Prompt fixes the order (branch before work) to rule out the valid add-then-switch variant"
+    }
+  }
+]

@@ -1,0 +1,76 @@
+[
+  {
+    "id": "react-hooks-rules-002",
+    "track": "react",
+    "level": 5,
+    "format": "predict-output",
+    "topic": "hooks-rules",
+    "tags": [
+      "hook-order",
+      "conditional-hook",
+      "internals"
+    ],
+    "title": "Simulasi Hook bersyarat menggeser state",
+    "prompt": "Kode berikut meniru cara React menyimpan state Hook: sebuah array yang dibaca berdasarkan **urutan** panggilan. Komponen `Profile` melanggar Rules of Hooks. Apa output-nya?",
+    "data": {
+      "language": "javascript",
+      "code": "let hooks = [];\nlet cursor = 0;\n\nfunction useState(initial) {\n  const idx = cursor++;\n  if (hooks[idx] === undefined) hooks[idx] = initial;\n  const setState = (value) => { hooks[idx] = value; };\n  return [hooks[idx], setState];\n}\n\nfunction render(Component) {\n  cursor = 0;\n  return Component();\n}\n\nlet showAge = true;\nlet setNameLater;\n\nfunction Profile() {\n  let age = null;\n  if (showAge) {\n    const [a] = useState(30);\n    age = a;\n  }\n  const [name, setName] = useState('Ana');\n  setNameLater = setName;\n  return name + ':' + age;\n}\n\nconsole.log(render(Profile));\nsetNameLater('Budi');\nshowAge = false;\nconsole.log(render(Profile));"
+    },
+    "answer": {
+      "output": "Ana:30\n30:null"
+    },
+    "hints": [
+      "Di render pertama, slot 0 = umur, slot 1 = nama. `setNameLater` menulis ke slot berapa?",
+      "Di render kedua, `useState('Ana')` adalah panggilan pertama, jadi ia membaca slot 0."
+    ],
+    "explanation": "Render 1: `useState(30)` mengambil slot 0, `useState('Ana')` slot 1, sehingga hasilnya `Ana:30`. `setNameLater('Budi')` menulis ke **slot 1**. Render 2: Hook umur dilewati, jadi `useState('Ana')` sekarang menjadi panggilan pertama dan membaca **slot 0** yang berisi `30`. Hasilnya `30:null`, dan `'Budi'` di slot 1 \"hilang\". React asli bekerja dengan prinsip yang sama (linked list per komponen, dibaca berurutan). Itulah kenapa Hook tidak boleh dipanggil secara kondisional. React akan error/memperingatkan karena urutan Hook berubah. Solusinya: panggil Hook tanpa syarat, lalu pakai kondisi pada nilainya.",
+    "estimatedMinutes": 4,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "react-effects-003",
+    "track": "react",
+    "level": 5,
+    "format": "multiple-choice",
+    "topic": "effects",
+    "tags": [
+      "race-condition",
+      "data-fetching",
+      "cleanup"
+    ],
+    "title": "Race condition saat fetch di useEffect",
+    "prompt": "`userId` berubah cepat dari `1` ke `2`. Response untuk user `1` ternyata datang **setelah** response user `2`, sehingga layar menampilkan data user yang salah. Perubahan mana yang memperbaiki bug ini dengan benar?",
+    "data": {
+      "language": "javascript",
+      "code": "function Profile({ userId }) {\n  const [user, setUser] = useState(null);\n\n  useEffect(() => {\n    fetchUser(userId).then((u) => setUser(u));\n  }, [userId]);\n\n  return <p>{user?.name}</p>;\n}",
+      "options": [
+        "Di dalam effect: `let ignore = false;`, panggil `setUser(u)` hanya jika `!ignore`, dan kembalikan cleanup `() => { ignore = true; }`",
+        "Hapus `userId` dari dependency array agar fetch hanya berjalan sekali",
+        "Bungkus `setUser` dengan `useCallback` agar referensinya stabil",
+        "Ganti `useEffect` dengan `useLayoutEffect` agar fetch selesai sebelum browser menggambar layar"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Saat `userId` berubah, React menjalankan **cleanup** effect lama sebelum effect baru.",
+      "Cleanup bisa menandai bahwa hasil fetch lama sudah tidak relevan."
+    ],
+    "explanation": "Setiap kali `userId` berubah, React memanggil cleanup effect sebelumnya. Flag `ignore` di closure effect lama diset `true`, sehingga response user `1` yang datang terlambat diabaikan. Alternatif setara: `AbortController` dengan `controller.abort()` di cleanup. Menghapus `userId` dari deps membuat data tidak pernah di-refetch (dan melanggar aturan exhaustive deps). `setUser` dari `useState` sudah stabil, jadi `useCallback` tidak relevan. `useLayoutEffect` tidak membuat request async lebih cepat dan tidak mencegah urutan response yang terbalik.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

@@ -1,0 +1,91 @@
+[
+  {
+    "id": "http-browser-navigation-001",
+    "track": "http",
+    "level": 5,
+    "format": "parsons",
+    "topic": "browser-navigation",
+    "tags": [
+      "interview",
+      "dns",
+      "tls",
+      "browser",
+      "rendering"
+    ],
+    "title": "Apa yang terjadi saat membuka URL",
+    "prompt": "Pertanyaan interview klasik: user mengetik `example.com` lalu menekan Enter. Domain ini ada di daftar **HSTS** browser, belum ada koneksi maupun cache DNS, dan koneksi memakai HTTP/1.1 atau HTTP/2 (di atas TCP). Susun urutan kejadiannya.",
+    "data": {
+      "language": "text"
+    },
+    "answer": {
+      "lines": [
+        "Browser mem-parse input sebagai URL; karena HSTS, skemanya dipaksa menjadi https://",
+        "DNS lookup: cache browser/OS kosong, resolver mencari A/AAAA record dan mengembalikan IP",
+        "Browser membuka koneksi TCP ke IP tersebut di port 443",
+        "TLS handshake: browser memverifikasi sertifikat dan kunci sesi disepakati",
+        "Browser mengirim GET / dengan header Host, Accept, dan Cookie",
+        "Server (sering lewat CDN/load balancer) memproses lalu membalas 200 dengan HTML",
+        "Browser mem-parse HTML menjadi DOM dan meminta CSS, JS, serta gambar yang direferensikan",
+        "Browser membangun CSSOM, menghitung layout, lalu paint ke layar"
+      ]
+    },
+    "hints": [
+      "Alamat IP harus diketahui sebelum koneksi apa pun bisa dibuka; enkripsi berjalan di atas koneksi TCP.",
+      "HSTS bekerja di dalam browser, sebelum ada satu paket pun ke jaringan."
+    ],
+    "explanation": "Urutannya: **URL & HSTS → DNS → TCP → TLS → HTTP request → respons → parse → render**. HSTS membuat browser langsung memakai `https://` tanpa mencoba `http://` (tidak ada redirect `301` yang bisa disadap). Pewawancara sering menggali lebih dalam di tiap langkah: hierarki DNS dan TTL, 1-RTT pada TLS 1.3, header `Host` untuk virtual hosting, CSS yang memblokir render dan `<script>` yang memblokir parser. Dengan HTTP/3, langkah TCP dan TLS digabung dalam handshake QUIC di atas UDP.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "http-caching-002",
+    "track": "http",
+    "level": 5,
+    "format": "multiple-choice",
+    "topic": "caching",
+    "tags": [
+      "caching",
+      "cdn",
+      "cache-control",
+      "security",
+      "interview"
+    ],
+    "title": "CDN menampilkan profil user lain",
+    "prompt": "`GET /api/me` mengembalikan profil user berdasarkan **cookie session**, dengan header:\n\n```http\nCache-Control: max-age=60\n```\n\nSetelah API dipasang di belakang CDN, user B kadang melihat profil user A. Perubahan header mana yang **paling tepat** agar browser tetap boleh meng-cache 60 detik, tapi CDN tidak menyimpannya?",
+    "data": {
+      "options": [
+        "`Cache-Control: public, max-age=60`",
+        "`Cache-Control: private, max-age=60`",
+        "`Cache-Control: max-age=60, s-maxage=60`",
+        "Tetap `max-age=60`, ditambah header `ETag`",
+        "`Cache-Control: max-age=60, immutable`"
+      ]
+    },
+    "answer": {
+      "index": 1
+    },
+    "hints": [
+      "Ada dua jenis cache: *private* (browser satu user) dan *shared* (CDN/proxy yang melayani banyak user).",
+      "Satu direktif melarang shared cache menyimpan respons, tapi tetap mengizinkan cache browser."
+    ],
+    "explanation": "`private` (RFC 9111) berarti respons ditujukan untuk satu user: **shared cache (CDN, proxy) tidak boleh menyimpannya**, tapi cache browser boleh — persis yang dibutuhkan. `public` dan `s-maxage` justru secara eksplisit mengizinkan atau mengatur penyimpanan di shared cache. `ETag` hanya membantu revalidasi; selama `max-age` masih segar, CDN tetap menyajikan salinan milik user A. `immutable` hanya memberi tahu bahwa konten tidak akan berubah. Untuk data yang sangat sensitif, `no-store` lebih aman, dengan konsekuensi browser juga tidak meng-cache.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

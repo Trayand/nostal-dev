@@ -1,0 +1,97 @@
+[
+  {
+    "id": "sd-load-balancing-001",
+    "track": "system-design",
+    "level": 2,
+    "format": "flashcard",
+    "topic": "load-balancing",
+    "tags": [
+      "load-balancer",
+      "l4",
+      "l7",
+      "health-check"
+    ],
+    "title": "Load balancer L4 vs L7",
+    "prompt": "Apa beda load balancer **Layer 4** dan **Layer 7**? Kapan memilih masing-masing?",
+    "answer": {
+      "back": "- **L4 (transport)**: meneruskan koneksi TCP/UDP berdasarkan IP dan port, **tanpa membaca isi** request.\n  - Sangat cepat dan murah; cocok untuk trafik non-HTTP (DB, gRPC passthrough, game) atau volume sangat tinggi.\n- **L7 (aplikasi)**: membaca HTTP — path, header, cookie, host.\n  - Bisa routing `/api/*` ke service A dan `/img/*` ke service B, terminasi TLS, retry, rewrite header, rate limit.\n  - Lebih mahal secara CPU (harus parse request, sering mendekripsi TLS).\n\nKeduanya memakai **health check** untuk berhenti mengirim trafik ke node yang sakit; L7 bisa mengecek endpoint HTTP seperti `GET /healthz`."
+    },
+    "hints": [
+      "Angka layer merujuk ke model OSI: transport vs application."
+    ],
+    "explanation": "Pilih L7 bila butuh keputusan berdasarkan isi request (routing per path, canary per header, sticky session via cookie). Pilih L4 bila hanya perlu menyebar koneksi secepat mungkin. Kesalahan umum: mengira L4 bisa routing per URL — L4 tidak pernah melihat URL.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sd-caching-001",
+    "track": "system-design",
+    "level": 2,
+    "format": "flashcard",
+    "topic": "caching",
+    "tags": [
+      "cache-aside",
+      "ttl",
+      "redis"
+    ],
+    "title": "Pola cache-aside dan TTL",
+    "prompt": "Jelaskan alur **cache-aside** (lazy loading) saat membaca dan saat menulis data. Apa peran **TTL**?",
+    "answer": {
+      "back": "**Baca:**\n1. Aplikasi cek cache (mis. Redis) dengan key `user:42`.\n2. **Hit** → kembalikan.\n3. **Miss** → baca dari DB, simpan ke cache dengan TTL, kembalikan.\n\n**Tulis:** update DB dulu, lalu **hapus (invalidate)** key di cache, supaya baca berikutnya mengambil data baru.\n\n**TTL** = batas umur entri. Ia membatasi berapa lama data basi bisa bertahan bila invalidasi gagal, dan membuang key yang jarang dipakai."
+    },
+    "hints": [
+      "Aplikasi, bukan cache, yang bertanggung jawab mengisi cache saat miss."
+    ],
+    "explanation": "Cache-aside populer karena sederhana dan hanya menyimpan data yang benar-benar dibaca. Saat menulis, menghapus key biasanya lebih aman daripada menimpanya: dua penulisan bersamaan yang masing-masing menimpa cache bisa meninggalkan nilai lama. Kesalahan umum: memakai cache tanpa TTL sama sekali, sehingga satu invalidasi yang gagal membuat data basi selamanya.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sd-slo-001",
+    "track": "system-design",
+    "level": 2,
+    "format": "flashcard",
+    "topic": "slo",
+    "tags": [
+      "sli",
+      "slo",
+      "sla",
+      "error-budget"
+    ],
+    "title": "SLI, SLO, SLA dan error budget",
+    "prompt": "Apa beda **SLI**, **SLO**, dan **SLA**? Jika SLO availability 99,9% per 30 hari, berapa kira-kira **error budget**-nya?",
+    "answer": {
+      "back": "- **SLI** (indicator): angka yang diukur, mis. persentase request sukses < 300 ms.\n- **SLO** (objective): target internal untuk SLI, mis. 99,9% request sukses per 30 hari.\n- **SLA** (agreement): janji kontraktual ke pelanggan dengan konsekuensi (refund/kredit). Biasanya lebih longgar dari SLO.\n\n**Error budget** 99,9% per 30 hari = 0,1% × 30 × 24 × 60 menit ≈ **43 menit** downtime (atau 0,1% request gagal)."
+    },
+    "hints": [
+      "Urutannya: yang diukur → targetnya → kontrak dengan pelanggan."
+    ],
+    "explanation": "SLO dibuat lebih ketat dari SLA supaya tim punya ruang sebelum melanggar kontrak. Error budget mengubah keandalan menjadi keputusan: bila budget hampir habis, tim memprioritaskan stabilitas dibanding fitur baru. Kesalahan umum: menargetkan 100% — mustahil dan membuat setiap deploy terasa berisiko.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

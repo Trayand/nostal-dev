@@ -1,0 +1,84 @@
+[
+  {
+    "id": "git-interactive-rebase-001",
+    "track": "git",
+    "level": 5,
+    "format": "multiple-choice",
+    "topic": "interactive-rebase",
+    "tags": [
+      "rebase-interactive",
+      "fixup",
+      "squash",
+      "history-cleanup"
+    ],
+    "title": "Menggabungkan commit typo dengan fixup",
+    "prompt": "Sebelum membuka PR, kamu menjalankan `git rebase -i HEAD~3` dan mendapat todo list di bawah (commit tertua di atas). Kamu ingin perubahan `b2c3d4e` **dilebur ke `a1b2c3d`**, pesan \"Fix typo...\" **dibuang tanpa perlu mengedit pesan**, dan urutan lainnya tetap. Ubahan mana yang tepat?",
+    "data": {
+      "language": "text",
+      "code": "pick a1b2c3d Add search endpoint\npick b2c3d4e Fix typo in search endpoint\npick c3d4e5f Add search tests",
+      "options": [
+        "Ganti baris 2 menjadi `fixup b2c3d4e Fix typo in search endpoint`",
+        "Ganti baris 2 menjadi `squash b2c3d4e Fix typo in search endpoint`",
+        "Ganti baris 2 menjadi `drop b2c3d4e Fix typo in search endpoint`",
+        "Ganti baris 1 menjadi `fixup a1b2c3d Add search endpoint`"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Perintah peleburan selalu menggabungkan sebuah commit ke commit **di atasnya** dalam todo list.",
+      "Ada dua perintah peleburan; hanya satu yang langsung membuang pesan commit yang dilebur tanpa membuka editor."
+    ],
+    "explanation": "Di todo list `rebase -i`, `fixup` (atau `f`) melebur perubahan commit ke commit **sebelumnya** (baris di atasnya) dan **membuang pesannya**. Hasilnya dua commit: \"Add search endpoint\" (sudah termasuk perbaikan typo) dan \"Add search tests\".\n\n- `squash` juga melebur, tetapi membuka editor dengan **gabungan kedua pesan**, sehingga kamu harus menghapus pesan typo secara manual.\n- `drop` membuang commit beserta **perubahannya**, jadi typo kembali muncul.\n- `fixup` di baris 1 tidak punya commit sebelumnya di daftar; Git menolak (`cannot 'fixup' without a previous commit`).\n\nAlur yang lebih otomatis: `git commit --fixup a1b2c3d` saat membuat perbaikan, lalu `git rebase -i --autosquash HEAD~3`. Ingat golden rule: rapikan riwayat seperti ini **sebelum** commit dibagikan, atau push ulang dengan `--force-with-lease` hanya di branch pribadi.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Todo semantics (fixup/squash/drop, oldest-first order) checked against git-rebase(1) for Git 2.4x"
+    }
+  },
+  {
+    "id": "git-bisect-001",
+    "track": "git",
+    "level": 5,
+    "format": "find-bug",
+    "topic": "bisect",
+    "tags": [
+      "bisect",
+      "debugging",
+      "automation"
+    ],
+    "title": "Argumen git bisect start yang tertukar",
+    "prompt": "Rilis `v1.4.0` diketahui **baik**, sedangkan `HEAD` di `main` **rusak**. Skrip `./test-search.sh` keluar dengan kode 0 jika fitur search benar dan 1 jika rusak. Urutan berikut seharusnya menemukan commit pertama yang rusak secara otomatis. Baris mana yang **salah**?",
+    "data": {
+      "language": "text",
+      "code": "git switch main\ngit bisect start v1.4.0 HEAD\ngit bisect run ./test-search.sh\ngit bisect reset"
+    },
+    "answer": {
+      "line": 2,
+      "fixedLine": "git bisect start HEAD v1.4.0"
+    },
+    "hints": [
+      "Lihat urutan argumen yang diterima `git bisect start`.",
+      "Sintaksnya `git bisect start [<bad> [<good>...]]`: commit buruk ditulis lebih dulu."
+    ],
+    "explanation": "`git bisect start <bad> <good>...` menerima commit **buruk** lebih dulu, lalu satu atau lebih commit **baik**. Baris 2 menukar keduanya: `v1.4.0` ditandai buruk dan `HEAD` ditandai baik. Karena commit \"baik\" itu bukan leluhur commit \"buruk\", Git tidak bisa melakukan pencarian yang bermakna dan berhenti dengan pesan peringatan (bahwa commit good bukan leluhur commit bad / *merge base*-nya bad). Yang benar: `git bisect start HEAD v1.4.0` (setara dengan `git bisect start`, `git bisect bad HEAD`, `git bisect good v1.4.0`).\n\nSetelah itu `git bisect run` menjalankan skrip di setiap titik tengah pencarian biner: exit 0 = good, 1–127 (kecuali 125) = bad, 125 = skip (commit tidak bisa dites). Git lalu melaporkan *first bad commit*. `git bisect reset` mengembalikan `HEAD` ke branch semula. Dengan N commit, cukup sekitar log2(N) pengujian.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30",
+      "note": "Argument order and run exit-code semantics per git-bisect(1); other lines valid as written"
+    }
+  }
+]

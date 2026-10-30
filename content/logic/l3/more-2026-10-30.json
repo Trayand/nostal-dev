@@ -1,0 +1,467 @@
+[
+  {
+    "id": "logic-matrix-002",
+    "track": "logic",
+    "level": 3,
+    "format": "code-full",
+    "topic": "matrix",
+    "tags": [
+      "spiral",
+      "boundaries",
+      "traversal"
+    ],
+    "title": "Traversal spiral matriks",
+    "prompt": "Tulis fungsi `spiralOrder(matrix)` yang mengembalikan semua elemen matriks (array 2D, boleh tidak persegi) dalam urutan **spiral searah jarum jam**, dimulai dari kiri atas.\n\nContoh: `[[1,2,3],[4,5,6],[7,8,9]]` → `[1, 2, 3, 6, 9, 8, 7, 4, 5]`.\n\nMatriks kosong `[]` → `[]`.",
+    "data": {
+      "language": "javascript",
+      "starter": "function spiralOrder(matrix) {\n  // tulis kodemu di sini\n}",
+      "entry": "spiralOrder"
+    },
+    "tests": [
+      {
+        "name": "3x3",
+        "input": [
+          [
+            [
+              1,
+              2,
+              3
+            ],
+            [
+              4,
+              5,
+              6
+            ],
+            [
+              7,
+              8,
+              9
+            ]
+          ]
+        ],
+        "expected": [
+          1,
+          2,
+          3,
+          6,
+          9,
+          8,
+          7,
+          4,
+          5
+        ]
+      },
+      {
+        "name": "3x4",
+        "input": [
+          [
+            [
+              1,
+              2,
+              3,
+              4
+            ],
+            [
+              5,
+              6,
+              7,
+              8
+            ],
+            [
+              9,
+              10,
+              11,
+              12
+            ]
+          ]
+        ],
+        "expected": [
+          1,
+          2,
+          3,
+          4,
+          8,
+          12,
+          11,
+          10,
+          9,
+          5,
+          6,
+          7
+        ]
+      },
+      {
+        "name": "kosong",
+        "input": [
+          []
+        ],
+        "expected": []
+      },
+      {
+        "name": "satu baris",
+        "input": [
+          [
+            [
+              1,
+              2,
+              3
+            ]
+          ]
+        ],
+        "expected": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "name": "satu kolom",
+        "input": [
+          [
+            [
+              1
+            ],
+            [
+              2
+            ],
+            [
+              3
+            ]
+          ]
+        ],
+        "expected": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "name": "2x2",
+        "input": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ]
+        ],
+        "expected": [
+          1,
+          2,
+          4,
+          3
+        ]
+      }
+    ],
+    "referenceSolution": "function spiralOrder(matrix) {\n  const result = [];\n  if (matrix.length === 0) return result;\n  let top = 0;\n  let bottom = matrix.length - 1;\n  let left = 0;\n  let right = matrix[0].length - 1;\n  while (top <= bottom && left <= right) {\n    for (let c = left; c <= right; c++) result.push(matrix[top][c]);\n    top++;\n    for (let r = top; r <= bottom; r++) result.push(matrix[r][right]);\n    right--;\n    if (top <= bottom) {\n      for (let c = right; c >= left; c--) result.push(matrix[bottom][c]);\n      bottom--;\n    }\n    if (left <= right) {\n      for (let r = bottom; r >= top; r--) result.push(matrix[r][left]);\n      left++;\n    }\n  }\n  return result;\n}",
+    "hints": [
+      "Simpan empat batas: `top`, `bottom`, `left`, `right`. Setiap putaran: kanan, bawah, kiri, atas — lalu persempit batasnya.",
+      "Setelah menelusuri baris atas dan kolom kanan, cek lagi `top <= bottom` sebelum menelusuri baris bawah, dan `left <= right` sebelum kolom kiri — agar satu baris/kolom tidak terbaca dua kali."
+    ],
+    "explanation": "Pola **empat batas** menyusutkan matriks dari luar ke dalam: baca baris `top` ke kanan lalu `top++`; kolom `right` ke bawah lalu `right--`; baris `bottom` ke kiri lalu `bottom--`; kolom `left` ke atas lalu `left++`. Bagian tersulit adalah *edge case* matriks non-persegi: pada satu baris `[[1,2,3]]`, setelah baris atas dibaca `top > bottom`, sehingga tanpa pengecekan `if (top <= bottom)` elemen akan dibaca ulang ke arah kiri. Kompleksitas O(baris × kolom) karena setiap elemen dikunjungi tepat sekali.",
+    "estimatedMinutes": 10,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-queue-001",
+    "track": "logic",
+    "level": 3,
+    "format": "predict-output",
+    "topic": "queue",
+    "tags": [
+      "simulation",
+      "round-robin",
+      "fifo"
+    ],
+    "title": "Simulasi antrean round-robin",
+    "prompt": "Setiap proses punya sisa giliran. Proses di depan antrean dijalankan satu giliran; jika masih punya sisa, ia kembali ke **belakang** antrean. Apa urutan proses yang selesai?",
+    "data": {
+      "language": "javascript",
+      "code": "const queue = [['A', 3], ['B', 1], ['C', 2]];\nconst done = [];\nwhile (queue.length > 0) {\n  const [name, left] = queue.shift();\n  if (left > 1) {\n    queue.push([name, left - 1]);\n  } else {\n    done.push(name);\n  }\n}\nconsole.log(done.join(' '));",
+      "options": [
+        "A B C",
+        "B C A",
+        "B A C",
+        "C B A"
+      ]
+    },
+    "answer": {
+      "output": "B C A"
+    },
+    "hints": [
+      "`shift()` mengambil dari depan, `push()` menambah ke belakang — ini antrean FIFO. Tulis isi antrean setelah setiap langkah.",
+      "Setelah A dan B diproses: antrean = `[C,2], [A,2]` dan B sudah selesai. Lanjutkan."
+    ],
+    "explanation": "Trace isi antrean:\n\n1. `A3` → kembali sebagai `A2` → `[B1, C2, A2]`\n2. `B1` → **selesai B** → `[C2, A2]`\n3. `C2` → `C1` → `[A2, C1]`\n4. `A2` → `A1` → `[C1, A1]`\n5. `C1` → **selesai C**\n6. `A1` → **selesai A**\n\nHasil: `B C A`. Proses dengan giliran paling sedikit selesai lebih dulu, tapi tidak murni berdasarkan jumlah giliran — posisi di antrean juga menentukan. Kesalahan umum: menganggap `push` menaruh di depan, atau lupa bahwa proses yang dikembalikan antre di belakang proses lain.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-greedy-002",
+    "track": "logic",
+    "level": 3,
+    "format": "code-full",
+    "topic": "greedy",
+    "tags": [
+      "intervals",
+      "sorting",
+      "activity-selection"
+    ],
+    "title": "Jumlah rapat maksimum tanpa bentrok",
+    "prompt": "Kamu menerima array rapat `[start, end]` (tidak harus terurut). Tulis `maxMeetings(meetings)` yang mengembalikan **jumlah terbanyak** rapat yang bisa dihadiri tanpa bentrok. Rapat yang berakhir di waktu `t` boleh disusul rapat yang mulai di waktu `t`.\n\nContoh: `[[1,3],[2,4],[3,5]]` → `2` (`[1,3]` lalu `[3,5]`).",
+    "data": {
+      "language": "javascript",
+      "starter": "function maxMeetings(meetings) {\n  // tulis kodemu di sini\n}",
+      "entry": "maxMeetings"
+    },
+    "tests": [
+      {
+        "name": "contoh",
+        "input": [
+          [
+            [
+              1,
+              3
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              3,
+              5
+            ]
+          ]
+        ],
+        "expected": 2
+      },
+      {
+        "name": "kosong",
+        "input": [
+          []
+        ],
+        "expected": 0
+      },
+      {
+        "name": "rapat panjang di awal",
+        "input": [
+          [
+            [
+              1,
+              10
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              6,
+              7
+            ]
+          ]
+        ],
+        "expected": 3
+      },
+      {
+        "name": "satu rapat",
+        "input": [
+          [
+            [
+              5,
+              6
+            ]
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "name": "semua sama",
+        "input": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              2
+            ]
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "name": "input tidak terurut",
+        "input": [
+          [
+            [
+              3,
+              4
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ]
+          ]
+        ],
+        "expected": 3
+      }
+    ],
+    "referenceSolution": "function maxMeetings(meetings) {\n  const sorted = [...meetings].sort((a, b) => a[1] - b[1]);\n  let count = 0;\n  let lastEnd = -Infinity;\n  for (const [start, end] of sorted) {\n    if (start >= lastEnd) {\n      count++;\n      lastEnd = end;\n    }\n  }\n  return count;\n}",
+    "hints": [
+      "Pilih rapat secara greedy — tapi diurutkan berdasarkan apa? Coba contoh `[[1,10],[2,3],[4,5],[6,7]]` jika diurutkan berdasarkan waktu mulai.",
+      "Urutkan berdasarkan waktu **selesai**, lalu ambil setiap rapat yang `start >= lastEnd` dan perbarui `lastEnd`."
+    ],
+    "explanation": "Ini soal klasik *activity selection*. Pilihan greedy yang benar adalah rapat yang **selesai paling awal**, karena menyisakan waktu sebanyak mungkin untuk rapat berikutnya. Mengurutkan berdasarkan waktu mulai gagal: `[1,10]` dipilih duluan dan memblokir tiga rapat pendek. Setelah diurutkan berdasarkan `end`, cukup satu lintasan: ambil rapat jika `start >= lastEnd`. Kompleksitas O(n log n) karena sorting. `[...meetings]` menyalin array agar input tidak termutasi.",
+    "estimatedMinutes": 7,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-hash-map-003",
+    "track": "logic",
+    "level": 3,
+    "format": "parsons",
+    "topic": "hash-map",
+    "tags": [
+      "map",
+      "frequency",
+      "strings"
+    ],
+    "title": "Karakter pertama yang tidak berulang",
+    "prompt": "Susun baris-baris berikut menjadi fungsi `firstUnique(str)` yang mengembalikan karakter **pertama** yang hanya muncul sekali di `str`, atau `null` jika tidak ada.\n\nContoh: `firstUnique(\"swiss\")` → `\"w\"`.",
+    "data": {
+      "language": "javascript",
+      "entry": "firstUnique"
+    },
+    "answer": {
+      "lines": [
+        "function firstUnique(str) {",
+        "  const counts = new Map();",
+        "  for (const ch of str) counts.set(ch, (counts.get(ch) || 0) + 1);",
+        "  for (const ch of str) {",
+        "    if (counts.get(ch) === 1) return ch;",
+        "  }",
+        "  return null;",
+        "}"
+      ]
+    },
+    "tests": [
+      {
+        "name": "swiss",
+        "input": [
+          "swiss"
+        ],
+        "expected": "w"
+      },
+      {
+        "name": "semua berulang",
+        "input": [
+          "aabb"
+        ],
+        "expected": null
+      },
+      {
+        "name": "kosong",
+        "input": [
+          ""
+        ],
+        "expected": null
+      },
+      {
+        "name": "unik di tengah",
+        "input": [
+          "abcab"
+        ],
+        "expected": "c"
+      },
+      {
+        "name": "satu karakter",
+        "input": [
+          "z"
+        ],
+        "expected": "z"
+      }
+    ],
+    "hints": [
+      "Butuh dua lintasan: satu untuk menghitung, satu untuk mencari.",
+      "Lintasan pertama mengisi `Map` frekuensi. Lintasan kedua menelusuri `str` **sesuai urutan asli** dan mengembalikan karakter pertama dengan hitungan 1."
+    ],
+    "explanation": "Kita tidak bisa tahu sebuah karakter unik sebelum melihat seluruh string, jadi perlu **dua lintasan**: (1) hitung frekuensi dengan `Map` — `(counts.get(ch) || 0) + 1` menangani karakter yang belum ada; (2) telusuri `str` lagi dari depan dan kembalikan karakter pertama yang hitungannya 1. Lintasan kedua harus pada `str`, bukan pada `Map`, agar urutan \"pertama\" sesuai string. Totalnya O(n). Jika `return null` diletakkan di dalam loop, fungsi berhenti terlalu cepat.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-bits-002",
+    "track": "logic",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "bits",
+    "tags": [
+      "bitwise-and",
+      "power-of-two",
+      "binary"
+    ],
+    "title": "Arti n & (n - 1) bernilai nol",
+    "prompt": "Untuk bilangan bulat `n > 0`, kapan ekspresi berikut bernilai `true`?",
+    "data": {
+      "language": "javascript",
+      "code": "(n & (n - 1)) === 0",
+      "options": [
+        "Saat `n` adalah pangkat dua (1, 2, 4, 8, ...)",
+        "Saat `n` genap",
+        "Saat `n` kelipatan 4",
+        "Saat `n` ganjil"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Coba tulis beberapa pasangan dalam biner: `8 = 1000`, `7 = 0111`; `6 = 110`, `5 = 101`.",
+      "`n - 1` membalik bit 1 paling kanan beserta semua bit 0 di kanannya. `n & (n - 1)` jadi menghapus bit 1 paling kanan."
+    ],
+    "explanation": "Mengurangi 1 membalik bit `1` paling kanan menjadi `0` dan semua `0` di kanannya menjadi `1`. Karena itu `n & (n - 1)` sama dengan `n` tanpa bit 1 paling kanannya. Hasilnya `0` hanya jika `n` punya **tepat satu** bit 1 — yaitu pangkat dua. Contoh: `8 & 7 = 1000 & 0111 = 0`, sedangkan `6 & 5 = 110 & 101 = 100 = 4`. Genap saja tidak cukup (6 genap tapi hasilnya 4), dan 12 kelipatan 4 tapi `12 & 11 = 8`. Perhatikan juga tanda kurungnya: `n & (n - 1) === 0` tanpa kurung luar dievaluasi sebagai `n & ((n - 1) === 0)` karena `===` lebih kuat daripada `&`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

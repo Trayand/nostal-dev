@@ -1,0 +1,150 @@
+[
+  {
+    "id": "sd-url-shortener-001",
+    "track": "system-design",
+    "level": 5,
+    "format": "flashcard",
+    "topic": "url-shortener",
+    "tags": [
+      "interview",
+      "url-shortener",
+      "base62",
+      "estimation",
+      "caching"
+    ],
+    "title": "Merancang URL shortener",
+    "prompt": "Rancang URL shortener secara garis besar: **100 juta** URL baru per bulan, rasio baca:tulis **100:1**. Bahas estimasi beban, cara membuat kode pendek, penyimpanan, dan jalur redirect.",
+    "answer": {
+      "back": "**Estimasi:** 100 jt / (30 × 86.400 dtk) ≈ **40 write/dtk**, ≈ **4.000 read/dtk** (puncak beberapa kali lipat). 5 tahun ≈ 6 miliar URL × ~500 B ≈ **3 TB**.\n\n**Kode pendek:** base62 dengan 7 karakter = 62⁷ ≈ **3,5 triliun** kombinasi, cukup.\n- *Counter/ID unik* (mis. tiap server mengambil blok ID dari service pusat) → di-encode base62: tanpa tabrakan, tapi kode berurutan mudah ditebak.\n- *Hash URL* (dipotong 7 karakter): bisa tabrakan, perlu cek unique dan retry.\n\n**Penyimpanan:** key-value `code → long_url` (unique pada `code`); mudah di-shard berdasarkan `code`.\n\n**Redirect:** read-heavy → cache (Redis) di depan DB, key populer hampir selalu hit. `302` bila butuh analytics tiap klik; `301` di-cache browser (beban turun, klik tidak terhitung)."
+    },
+    "hints": [
+      "Mulai dari angka: berapa write/detik dan read/detik, lalu berapa karakter kode yang dibutuhkan."
+    ],
+    "explanation": "Inti soal ini: sistem **read-heavy** dengan data kecil dan immutable, sehingga caching sangat efektif dan konsistensi tidak sulit. Trade-off yang biasa digali interviewer: counter vs hash (tabrakan vs bisa ditebak), dan 301 vs 302 (beban vs analytics). Kesalahan umum: langsung menggambar banyak service tanpa estimasi — 40 write/detik bisa ditangani satu database biasa.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sd-news-feed-001",
+    "track": "system-design",
+    "level": 5,
+    "format": "multiple-choice",
+    "topic": "news-feed",
+    "tags": [
+      "interview",
+      "fan-out",
+      "news-feed",
+      "celebrity-problem"
+    ],
+    "title": "Fan-out untuk akun selebriti",
+    "prompt": "Sebuah news feed memakai **fan-out on write**: saat user posting, ID post disalin ke cache feed setiap follower. Rata-rata user punya 200 follower dan feed terbuka cepat. Masalahnya, ketika akun dengan **50 juta follower** posting, worker fan-out tertinggal berjam-jam dan feed user lain ikut terlambat. Perubahan mana yang **paling tepat**?",
+    "data": {
+      "options": [
+        "Ganti seluruh sistem ke fan-out on read: feed setiap user dirakit saat dibuka dari semua akun yang di-follow",
+        "Hybrid: fan-out on write untuk akun biasa; post akun dengan follower sangat banyak tidak di-fan-out, melainkan diambil dan digabung saat feed dibaca",
+        "Tambah worker fan-out 10× lipat",
+        "Batasi akun selebriti hanya boleh posting sekali per jam"
+      ]
+    },
+    "answer": {
+      "index": 1
+    },
+    "hints": [
+      "Masalahnya hanya muncul pada sedikit akun; sebagian besar user baik-baik saja dengan desain sekarang.",
+      "Jumlah akun selebriti yang di-follow satu user biasanya kecil, jadi menariknya saat baca itu murah."
+    ],
+    "explanation": "Pendekatan **hybrid** (dipakai Twitter/X) mempertahankan read yang cepat untuk mayoritas, dan hanya untuk segelintir akun besar biayanya dipindah ke sisi baca: saat feed dibuka, post terbaru dari beberapa selebriti yang di-follow diambil (dari cache) lalu di-merge. Fan-out on read untuk semua membuat setiap pembukaan feed mahal padahal read jauh lebih sering daripada write. Worker 10× tetap harus menulis 50 juta entri per post — biaya tulis dan lonjakan tidak hilang. Membatasi posting adalah keputusan produk, bukan solusi teknis.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sd-estimation-001",
+    "track": "system-design",
+    "level": 5,
+    "format": "multiple-choice",
+    "topic": "estimation",
+    "tags": [
+      "interview",
+      "back-of-envelope",
+      "storage",
+      "qps"
+    ],
+    "title": "Estimasi storage aplikasi chat",
+    "prompt": "Aplikasi chat punya **50 juta DAU**. Rata-rata tiap user mengirim **40 pesan/hari**, rata-rata **100 byte** per pesan (teks + metadata, tanpa media). Berapa kira-kira storage pesan baru **per hari**, sebelum replikasi?",
+    "data": {
+      "options": [
+        "Sekitar 2 GB",
+        "Sekitar 20 GB",
+        "Sekitar 200 GB",
+        "Sekitar 2 TB"
+      ]
+    },
+    "answer": {
+      "index": 2
+    },
+    "hints": [
+      "Hitung dulu jumlah pesan per hari: DAU × pesan per user.",
+      "50 jt × 40 = 2 miliar pesan; kalikan dengan 100 byte."
+    ],
+    "explanation": "50 × 10⁶ × 40 = **2 × 10⁹ pesan/hari**; × 100 B = **2 × 10¹¹ B ≈ 200 GB/hari**, sekitar **73 TB/tahun**, dan ×3 bila direplikasi 3 kali. Throughput rata-rata ≈ 2 × 10⁹ / 86.400 ≈ **23.000 pesan/detik**, puncak mungkin 2–3×. Angka ini langsung memberi tahu desain: satu node DB tidak cukup, butuh storage yang di-partisi (mis. per `conversation_id`). Kesalahan umum: salah satu orde besaran saat mengonversi byte (10⁹ = GB, 10¹² = TB).",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sd-chat-001",
+    "track": "system-design",
+    "level": 5,
+    "format": "flashcard",
+    "topic": "chat",
+    "tags": [
+      "interview",
+      "websocket",
+      "ordering",
+      "presence",
+      "offline-delivery"
+    ],
+    "title": "Merancang sistem chat 1-on-1",
+    "prompt": "Rancang secara garis besar sistem chat 1-on-1 (seperti WhatsApp). Bahas: koneksi real-time, routing pesan, **urutan pesan**, pesan duplikat, dan user yang **offline**.",
+    "answer": {
+      "back": "- **Koneksi:** klien menjaga **WebSocket** ke *chat gateway*. Registry (mis. Redis) menyimpan `user_id → gateway` tempat user terhubung.\n- **Kirim:** gateway → chat service → simpan pesan dulu (durable) → cari gateway penerima di registry → dorong ke penerima.\n- **Storage:** partisi berdasarkan `conversation_id`, urut berdasarkan nomor urut, sehingga riwayat satu percakapan dibaca dari satu partisi.\n- **Urutan:** beri **sequence number per percakapan** di server; jangan mengandalkan jam klien.\n- **Duplikat:** klien mengirim `client_msg_id` unik; server dedupe ketika klien retry (at-least-once + idempotent).\n- **Offline:** pesan tetap tersimpan; kirim **push notification**. Saat online lagi, klien **sync** dengan meminta pesan setelah `last_seq` yang ia punya.\n- **Presence:** heartbeat berkala dengan TTL, bukan status yang ditulis di setiap event."
+    },
+    "hints": [
+      "Pikirkan apa yang terjadi ketika HP penerima mati selama 2 jam lalu menyala lagi."
+    ],
+    "explanation": "Kunci desain chat: **simpan dulu, kirim kemudian**, sehingga pengiriman real-time hanyalah optimasi; kebenaran ada di storage + sync berbasis sequence number. Ordering per percakapan cukup (ordering global tidak perlu dan mahal). Kesalahan umum: memakai timestamp klien untuk urutan (jam HP bisa salah) atau mengandalkan WebSocket saja tanpa mekanisme sync, sehingga pesan hilang saat koneksi putus.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

@@ -1,0 +1,275 @@
+[
+  {
+    "id": "ts-literal-types-001",
+    "track": "typescript",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "literal-types",
+    "tags": [
+      "as-const",
+      "literal-type",
+      "readonly"
+    ],
+    "title": "Tipe objek dengan as const",
+    "prompt": "Dengan `strict: true`, apa tipe yang diinfer TypeScript untuk `config`?",
+    "data": {
+      "language": "typescript",
+      "code": "const config = {\n  mode: \"dark\",\n  retries: 3,\n} as const;",
+      "options": [
+        "`{ mode: string; retries: number }`",
+        "`{ mode: \"dark\"; retries: 3 }`",
+        "`{ readonly mode: \"dark\"; readonly retries: 3 }`",
+        "`Readonly<{ mode: string; retries: number }>`"
+      ]
+    },
+    "answer": {
+      "index": 2
+    },
+    "hints": [
+      "`as const` melakukan dua hal sekaligus pada object literal.",
+      "Nilai tidak dilebarkan (*widening*) ke `string`/`number`, **dan** setiap property menjadi `readonly`."
+    ],
+    "explanation": "Tanpa `as const`, property object literal dilebarkan: `{ mode: string; retries: number }`, karena property objek bisa diubah. `as const` mematikan pelebaran itu (tipe literal `\"dark\"` dan `3` dipertahankan) **dan** menandai semua property `readonly`, sehingga `config.retries = 4` menjadi compile error. Opsi `{ mode: \"dark\"; retries: 3 }` salah karena melupakan `readonly`; opsi `Readonly<{ mode: string; ... }>` salah karena tipe literalnya hilang.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-tuples-001",
+    "track": "typescript",
+    "level": 2,
+    "format": "predict-output",
+    "topic": "tuples",
+    "tags": [
+      "tuple",
+      "rest-element",
+      "optional-element"
+    ],
+    "title": "Tuple opsional dan rest element",
+    "prompt": "Apa output kode berikut?",
+    "data": {
+      "language": "typescript",
+      "code": "function tail([first, ...rest]: [string, ...number[]]): number[] {\n  return rest;\n}\n\nconst point: [number, number, number?] = [3, 4];\nconsole.log(point.length, point[2] ?? \"kosong\");\n\nconst nums = tail([\"skor\", 10, 20]);\nconsole.log(nums.length, JSON.stringify(nums));"
+    },
+    "answer": {
+      "output": "2 kosong\n2 [10,20]"
+    },
+    "hints": [
+      "Elemen tuple opsional (`number?`) boleh tidak ada sama sekali di array runtime-nya.",
+      "Destructuring `[first, ...rest]` memasukkan semua elemen setelah yang pertama ke `rest`."
+    ],
+    "explanation": "Tipe tuple hilang saat runtime; yang tersisa array biasa. `point` hanya berisi `[3, 4]`, jadi `length` = `2` dan `point[2]` = `undefined`, sehingga `??` memberi `\"kosong\"`. Tipe `[string, ...number[]]` berarti satu `string` di depan lalu nol atau lebih `number`; `rest` berisi `[10, 20]`. Kesalahan umum: mengira tuple `[number, number, number?]` selalu punya panjang 3.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-arrays-002",
+    "track": "typescript",
+    "level": 2,
+    "format": "find-bug",
+    "topic": "arrays",
+    "tags": [
+      "readonly",
+      "readonly-array",
+      "sort"
+    ],
+    "title": "Mengurutkan array readonly",
+    "prompt": "Dengan `strict: true`, baris mana yang menyebabkan **compile error**?",
+    "data": {
+      "language": "typescript",
+      "code": "function median(values: readonly number[]): number {\n  const sorted = values.sort((a, b) => a - b);\n  const mid = Math.floor(sorted.length / 2);\n  return sorted.length % 2 === 0\n    ? (sorted[mid - 1] + sorted[mid]) / 2\n    : sorted[mid];\n}\n\nconst scores: readonly number[] = [70, 90, 80];\nconsole.log(median(scores));"
+    },
+    "answer": {
+      "line": 2,
+      "fixedLine": "  const sorted = [...values].sort((a, b) => a - b);"
+    },
+    "hints": [
+      "Tipe `readonly number[]` hanya menyediakan method yang **tidak mengubah** array.",
+      "`sort` mengurutkan array di tempat (*in place*). Salin dulu arraynya."
+    ],
+    "explanation": "`readonly number[]` (alias `ReadonlyArray<number>`) tidak punya method yang memutasi seperti `push`, `splice`, dan `sort`, jadi baris 2 error: *Property 'sort' does not exist on type 'readonly number[]'*. Solusinya salin dulu: `[...values].sort(...)` (atau `values.toSorted(...)` jika `lib` ES2023 aktif). Membaca dengan `sorted[mid]` dan `length` tetap boleh. Inilah gunanya `readonly` pada parameter: fungsi berjanji tidak mengubah array milik pemanggil.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-optional-chaining-001",
+    "track": "typescript",
+    "level": 2,
+    "format": "code-short",
+    "topic": "optional-chaining",
+    "tags": [
+      "optional-chaining",
+      "nullish-coalescing",
+      "optional-property"
+    ],
+    "title": "Kota pengguna dengan fallback",
+    "prompt": "Lengkapi `getCity(user)` yang mengembalikan `user.address.city`. Jika `user` bernilai `null`, `address` tidak ada, atau `city` tidak ada, kembalikan `\"-\"`.\n\nString kosong `\"\"` dianggap nilai yang valid dan dikembalikan apa adanya.\n\n```ts\ntype User = { name: string; address?: { city?: string } };\n```",
+    "data": {
+      "language": "typescript",
+      "starter": "type User = { name: string; address?: { city?: string } };\n\nfunction getCity(user: User | null): string {\n  return \"-\";\n}",
+      "entry": "getCity"
+    },
+    "tests": [
+      {
+        "name": "kota ada",
+        "input": [
+          {
+            "name": "Ani",
+            "address": {
+              "city": "Bandung"
+            }
+          }
+        ],
+        "expected": "Bandung"
+      },
+      {
+        "name": "user null",
+        "input": [
+          null
+        ],
+        "expected": "-"
+      },
+      {
+        "name": "tanpa address",
+        "input": [
+          {
+            "name": "Budi"
+          }
+        ],
+        "expected": "-"
+      },
+      {
+        "name": "address tanpa city",
+        "input": [
+          {
+            "name": "Cici",
+            "address": {}
+          }
+        ],
+        "expected": "-"
+      },
+      {
+        "name": "city string kosong",
+        "input": [
+          {
+            "name": "Dodi",
+            "address": {
+              "city": ""
+            }
+          }
+        ],
+        "expected": ""
+      }
+    ],
+    "referenceSolution": "type User = { name: string; address?: { city?: string } };\n\nfunction getCity(user: User | null): string {\n  return user?.address?.city ?? \"-\";\n}",
+    "hints": [
+      "`?.` berhenti dan menghasilkan `undefined` begitu menemukan `null`/`undefined` di rantai akses.",
+      "Gabungkan `user?.address?.city` dengan `??`, bukan `||`, agar `\"\"` tidak diganti."
+    ],
+    "explanation": "`user?.address?.city` bertipe `string | undefined`: jika `user` `null` atau `address` tidak ada, ekspresi berhenti dan menghasilkan `undefined` tanpa error. `?? \"-\"` hanya mengganti `null`/`undefined`, sehingga hasil akhirnya `string` sesuai return type. Kesalahan umum: memakai `|| \"-\"` yang juga mengganti string kosong, atau menulis `user.address?.city` yang crash saat `user` `null` (dan ditolak `strict` karena `user` mungkin `null`).",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-utility-types-003",
+    "track": "typescript",
+    "level": 2,
+    "format": "code-short",
+    "topic": "utility-types",
+    "tags": [
+      "record",
+      "index-signature",
+      "counting"
+    ],
+    "title": "Hitung kata dengan Record",
+    "prompt": "Tulis `countWords(words: string[]): Record<string, number>` yang menghitung kemunculan tiap kata **tanpa membedakan huruf besar/kecil**. Key hasil selalu huruf kecil.\n\nContoh: `countWords([\"Apel\", \"apel\", \"Jeruk\"])` → `{ apel: 2, jeruk: 1 }`.",
+    "data": {
+      "language": "typescript",
+      "starter": "function countWords(words: string[]): Record<string, number> {\n  const counts: Record<string, number> = {};\n  return counts;\n}",
+      "entry": "countWords"
+    },
+    "tests": [
+      {
+        "name": "array kosong",
+        "input": [
+          []
+        ],
+        "expected": {}
+      },
+      {
+        "name": "kata berulang",
+        "input": [
+          [
+            "a",
+            "b",
+            "a"
+          ]
+        ],
+        "expected": {
+          "a": 2,
+          "b": 1
+        }
+      },
+      {
+        "name": "beda huruf besar/kecil",
+        "input": [
+          [
+            "Apel",
+            "apel",
+            "JERUK"
+          ]
+        ],
+        "expected": {
+          "apel": 2,
+          "jeruk": 1
+        }
+      },
+      {
+        "name": "satu kata",
+        "input": [
+          [
+            "Halo"
+          ]
+        ],
+        "expected": {
+          "halo": 1
+        }
+      }
+    ],
+    "referenceSolution": "function countWords(words: string[]): Record<string, number> {\n  const counts: Record<string, number> = {};\n  for (const word of words) {\n    const key = word.toLowerCase();\n    counts[key] = (counts[key] ?? 0) + 1;\n  }\n  return counts;\n}",
+    "hints": [
+      "Normalisasi tiap kata dengan `toLowerCase()` sebelum dipakai sebagai key.",
+      "Untuk key yang belum ada, `counts[key]` bernilai `undefined` saat runtime: pakai `(counts[key] ?? 0) + 1`."
+    ],
+    "explanation": "`Record<string, number>` setara dengan index signature `{ [key: string]: number }`: objek dengan key string bebas dan nilai `number`. Perhatikan bahwa tanpa `noUncheckedIndexedAccess`, TypeScript menganggap `counts[key]` selalu `number`, padahal untuk key baru nilainya `undefined`; `counts[key] + 1` akan menghasilkan `NaN`. Karena itu `?? 0` tetap diperlukan walau type checker tidak memintanya.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

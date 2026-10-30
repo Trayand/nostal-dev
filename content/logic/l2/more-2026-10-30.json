@@ -1,0 +1,289 @@
+[
+  {
+    "id": "logic-strings-002",
+    "track": "logic",
+    "level": 2,
+    "format": "code-short",
+    "topic": "strings",
+    "tags": [
+      "anagram",
+      "normalization",
+      "frequency"
+    ],
+    "title": "Cek dua kata anagram",
+    "prompt": "Tulis fungsi `isAnagram(a, b)` yang mengembalikan `true` jika `a` dan `b` tersusun dari huruf yang **sama persis dengan jumlah yang sama**, dengan mengabaikan huruf besar/kecil dan spasi.\n\nContoh: `isAnagram(\"Dormitory\", \"dirty room\")` → `true`.",
+    "data": {
+      "language": "javascript",
+      "starter": "function isAnagram(a, b) {\n  // tulis kodemu di sini\n}",
+      "entry": "isAnagram"
+    },
+    "tests": [
+      {
+        "name": "listen/silent",
+        "input": [
+          "listen",
+          "silent"
+        ],
+        "expected": true
+      },
+      {
+        "name": "beda kapital dan spasi",
+        "input": [
+          "Dormitory",
+          "dirty room"
+        ],
+        "expected": true
+      },
+      {
+        "name": "satu huruf beda",
+        "input": [
+          "abc",
+          "abd"
+        ],
+        "expected": false
+      },
+      {
+        "name": "huruf sama, jumlah beda",
+        "input": [
+          "aab",
+          "abb"
+        ],
+        "expected": false
+      },
+      {
+        "name": "dua string kosong",
+        "input": [
+          "",
+          ""
+        ],
+        "expected": true
+      },
+      {
+        "name": "panjang beda",
+        "input": [
+          "a",
+          ""
+        ],
+        "expected": false
+      }
+    ],
+    "referenceSolution": "function isAnagram(a, b) {\n  const normalize = (s) => s.toLowerCase().replace(/ /g, \"\").split(\"\").sort().join(\"\");\n  return normalize(a) === normalize(b);\n}",
+    "hints": [
+      "Bersihkan dulu kedua string (huruf kecil, buang spasi). Setelah itu, bagaimana membandingkan isinya tanpa peduli urutan?",
+      "Urutkan hurufnya: `s.split(\"\").sort().join(\"\")`. Dua anagram menghasilkan string terurut yang sama."
+    ],
+    "explanation": "Dua string adalah anagram jika **multiset** hurufnya sama. Cara paling ringkas: normalisasi (huruf kecil, tanpa spasi) lalu urutkan hurufnya — anagram pasti menghasilkan string terurut yang identik. Alternatif O(n): hitung frekuensi tiap huruf dengan objek/`Map` lalu bandingkan. Kesalahan umum: hanya memeriksa apakah setiap huruf `a` **ada** di `b` (misalnya dengan `includes`), sehingga `\"aab\"` dan `\"abb\"` dianggap anagram padahal jumlah hurufnya berbeda.",
+    "estimatedMinutes": 4,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-matrix-001",
+    "track": "logic",
+    "level": 2,
+    "format": "predict-output",
+    "topic": "matrix",
+    "tags": [
+      "nested-loop",
+      "column-major",
+      "tracing"
+    ],
+    "title": "Telusuri matriks kolom demi kolom",
+    "prompt": "Perhatikan urutan loop: loop luar memakai `c` (kolom), loop dalam memakai `r` (baris). Apa outputnya?",
+    "data": {
+      "language": "javascript",
+      "code": "const grid = [\n  [1, 2, 3],\n  [4, 5, 6],\n];\nconst out = [];\nfor (let c = 0; c < grid[0].length; c++) {\n  for (let r = 0; r < grid.length; r++) {\n    out.push(grid[r][c]);\n  }\n}\nconsole.log(out.join(' '));",
+      "options": [
+        "1 2 3 4 5 6",
+        "1 4 2 5 3 6",
+        "3 6 2 5 1 4",
+        "1 4 2 5"
+      ]
+    },
+    "answer": {
+      "output": "1 4 2 5 3 6"
+    },
+    "hints": [
+      "Loop dalam berjalan penuh untuk setiap nilai `c`. Untuk `c = 0`, elemen mana saja yang diambil?",
+      "`c = 0` mengambil `grid[0][0]` lalu `grid[1][0]`, yaitu 1 dan 4. Lanjutkan untuk `c = 1` dan `c = 2`."
+    ],
+    "explanation": "Karena loop luar adalah **kolom**, matriks dibaca kolom demi kolom (*column-major*): kolom 0 → `1 4`, kolom 1 → `2 5`, kolom 2 → `3 6`. Batas loop juga penting: `grid[0].length` (3) adalah jumlah kolom dan `grid.length` (2) jumlah baris. Kesalahan umum: menukar kedua batas ini, yang pada matriks non-persegi membuat sebagian elemen terlewat atau terbaca `undefined`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-hash-map-002",
+    "track": "logic",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "hash-map",
+    "tags": [
+      "set",
+      "duplicates",
+      "complexity"
+    ],
+    "title": "Cek duplikat dalam waktu linear",
+    "prompt": "Kamu perlu memeriksa apakah array berisi 100.000 angka punya **duplikat**. Pendekatan mana yang berjalan dalam waktu **O(n)** (rata-rata)?",
+    "data": {
+      "options": [
+        "Dua loop bersarang yang membandingkan setiap pasangan `arr[i]` dan `arr[j]`",
+        "Urutkan array, lalu bandingkan setiap elemen dengan tetangganya",
+        "Satu loop dengan `Set`: jika `seen.has(x)` maka ada duplikat, jika tidak `seen.add(x)`",
+        "`arr.some((x, i) => arr.indexOf(x) !== i)`"
+      ]
+    },
+    "answer": {
+      "index": 2
+    },
+    "hints": [
+      "Berapa biaya satu operasi pada setiap pendekatan? `indexOf` dan loop dalam sama-sama menelusuri array.",
+      "`Set.has` dan `Set.add` rata-rata O(1), jadi satu loop di atasnya totalnya O(n)."
+    ],
+    "explanation": "`Set` menyimpan nilai yang sudah dilihat, dan `has`/`add` rata-rata berjalan O(1), sehingga satu kali lintasan bernilai **O(n)**. Pilihan lain:\n\n- Loop bersarang: O(n²).\n- Sort lalu bandingkan tetangga: O(n log n) — benar, tapi bukan linear (dan mengubah urutan array jika tidak disalin).\n- `some` + `indexOf`: terlihat satu baris, tapi `indexOf` sendiri O(n) di dalam loop, jadi totalnya O(n²).",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-bits-001",
+    "track": "logic",
+    "level": 2,
+    "format": "fill-blank",
+    "topic": "bits",
+    "tags": [
+      "binary",
+      "modulo",
+      "division"
+    ],
+    "title": "Hitung bit 1 dalam representasi biner",
+    "prompt": "Lengkapi fungsi `countOnes(n)` yang menghitung berapa banyak digit `1` pada representasi **biner** dari bilangan bulat non-negatif `n`, tanpa memakai `toString(2)`.\n\nContoh: `countOnes(5)` → `2` (karena 5 = `101`).",
+    "data": {
+      "language": "javascript",
+      "template": "function countOnes(n) {\n  let count = 0;\n  while (n > 0) {\n    count += n {{blank}} 2;\n    n = Math.floor(n {{blank}} 2);\n  }\n  return count;\n}",
+      "choices": [
+        "%",
+        "/",
+        "*",
+        "-",
+        "**"
+      ],
+      "entry": "countOnes"
+    },
+    "answer": {
+      "blanks": [
+        [
+          "%"
+        ],
+        [
+          "/"
+        ]
+      ]
+    },
+    "tests": [
+      {
+        "name": "nol",
+        "input": [
+          0
+        ],
+        "expected": 0
+      },
+      {
+        "name": "satu",
+        "input": [
+          1
+        ],
+        "expected": 1
+      },
+      {
+        "name": "5 = 101",
+        "input": [
+          5
+        ],
+        "expected": 2
+      },
+      {
+        "name": "8 = 1000",
+        "input": [
+          8
+        ],
+        "expected": 1
+      },
+      {
+        "name": "255 = 11111111",
+        "input": [
+          255
+        ],
+        "expected": 8
+      },
+      {
+        "name": "1023",
+        "input": [
+          1023
+        ],
+        "expected": 10
+      }
+    ],
+    "hints": [
+      "Digit terakhir bilangan desimal didapat dengan `% 10`. Bagaimana dengan digit terakhir dalam basis 2?",
+      "`n % 2` memberi bit terakhir (0 atau 1), lalu `Math.floor(n / 2)` menggeser bilangan satu bit ke kanan."
+    ],
+    "explanation": "Sama seperti mengambil digit desimal dengan `% 10` dan `/ 10`, di basis 2 kita memakai `% 2` dan `/ 2`. `n % 2` adalah bit paling kanan (0 atau 1), jadi bisa langsung dijumlahkan ke `count`. `Math.floor(n / 2)` membuang bit itu (setara dengan `n >> 1` untuk bilangan kecil). Loop berhenti saat semua bit habis (`n === 0`). Contoh 5: `5 % 2 = 1`, `n = 2`; `2 % 2 = 0`, `n = 1`; `1 % 2 = 1`, `n = 0` → total 2.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-greedy-001",
+    "track": "logic",
+    "level": 2,
+    "format": "find-bug",
+    "topic": "greedy",
+    "tags": [
+      "coins",
+      "loops",
+      "while-vs-if"
+    ],
+    "title": "Uang kembalian dengan pecahan terbesar",
+    "prompt": "Fungsi ini seharusnya memecah `amount` menjadi pecahan sebanyak mungkin dari yang **terbesar** (greedy). `makeChange(2300)` seharusnya `[1000, 1000, 200, 100]`, tetapi hasilnya `[1000, 500, 200, 100]` (totalnya hanya 1800). Baris mana yang salah?",
+    "data": {
+      "language": "javascript",
+      "code": "function makeChange(amount) {\n  const coins = [1000, 500, 200, 100];\n  const result = [];\n  for (const coin of coins) {\n    if (amount >= coin) {\n      result.push(coin);\n      amount -= coin;\n    }\n  }\n  return result;\n}"
+    },
+    "answer": {
+      "line": 5,
+      "fixedLine": "    while (amount >= coin) {"
+    },
+    "hints": [
+      "Berapa kali pecahan 1000 bisa dipakai untuk 2300? Berapa kali kode ini memakainya?",
+      "`if` hanya berjalan sekali per pecahan. Ganti dengan loop yang terus mengambil pecahan selama masih cukup."
+    ],
+    "explanation": "Strategi greedy yang benar: ambil pecahan terbesar **sebanyak mungkin**, baru pindah ke pecahan berikutnya. Dengan `if`, setiap pecahan maksimal dipakai sekali: 2300 → ambil 1000 (sisa 1300) → 500 (sisa 800) → 200 (sisa 600) → 100 (sisa 500), dan sisa 500 tidak pernah dibayar. Dengan `while`, 1000 diambil dua kali (sisa 300), 500 dilewati, 200 sekali, 100 sekali → `[1000, 1000, 200, 100]`. Catatan: greedy ini optimal untuk sistem pecahan seperti rupiah, tapi tidak untuk semua kombinasi pecahan.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]

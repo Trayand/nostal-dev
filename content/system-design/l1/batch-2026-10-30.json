@@ -1,0 +1,73 @@
+[
+  {
+    "id": "sd-scaling-001",
+    "track": "system-design",
+    "level": 1,
+    "format": "flashcard",
+    "topic": "scaling",
+    "tags": [
+      "scaling",
+      "vertical",
+      "horizontal"
+    ],
+    "title": "Vertical vs horizontal scaling",
+    "prompt": "Apa beda **vertical scaling** (scale up) dan **horizontal scaling** (scale out)? Sebutkan satu kelebihan dan satu kekurangan masing-masing.",
+    "answer": {
+      "back": "- **Vertical (scale up)**: mesin yang sama diperbesar (CPU, RAM, disk lebih besar).\n  - ➕ Sederhana, tanpa perubahan kode; tidak ada masalah data terdistribusi.\n  - ➖ Ada batas fisik/harga, dan tetap **single point of failure**.\n- **Horizontal (scale out)**: menambah lebih banyak mesin di belakang load balancer.\n  - ➕ Hampir tak terbatas, dan lebih tahan gagal (satu node mati, yang lain jalan).\n  - ➖ Aplikasi harus **stateless** (state dipindah ke DB/cache bersama); data terdistribusi membawa masalah konsistensi."
+    },
+    "hints": [
+      "Satu menjawab \"mesin lebih besar\", yang lain \"mesin lebih banyak\"."
+    ],
+    "explanation": "Banyak sistem memulai dengan vertical scaling karena murah secara kompleksitas, lalu beralih ke horizontal ketika butuh ketersediaan tinggi atau sudah mentok di ukuran mesin terbesar. Kesalahan umum: mengira horizontal scaling \"gratis\" — server yang menyimpan session di memori lokal harus dibuat stateless dulu.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sd-observability-001",
+    "track": "system-design",
+    "level": 1,
+    "format": "multiple-choice",
+    "topic": "observability",
+    "tags": [
+      "observability",
+      "tracing",
+      "latency"
+    ],
+    "title": "Mencari service yang lambat",
+    "prompt": "Endpoint `POST /checkout` kadang butuh 4 detik. Satu request melewati 6 microservice. Sinyal observability mana yang **paling langsung** menunjukkan service mana yang menyumbang waktu terbanyak pada request lambat itu?",
+    "data": {
+      "options": [
+        "Metrics CPU dan memori tiap service",
+        "Distributed trace (span per service dengan durasinya)",
+        "Uptime check / health check tiap service",
+        "Jumlah total request per menit di load balancer"
+      ]
+    },
+    "answer": {
+      "index": 1
+    },
+    "hints": [
+      "Yang dicari adalah perjalanan **satu request** melintasi banyak service.",
+      "Sinyal ini menyimpan trace ID dan span berisi waktu mulai/selesai di setiap hop."
+    ],
+    "explanation": "**Trace** menggabungkan span dari semua service untuk satu request, sehingga terlihat langsung hop mana yang lama. **Metrics** bagus untuk tren dan alert (\"p99 naik\"), tapi agregat — tidak menjelaskan satu request tertentu. **Logs** detail per kejadian; tanpa correlation ID sulit disambung lintas service. Health check hanya bilang service hidup atau mati.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-30"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-30"
+    },
+    "status": "verified"
+  }
+]
