@@ -1,12 +1,12 @@
 // Post-build step: write out/sw.js with a precache list of every file in out/.
 // The cache name is a hash of all file contents, so any change → new version.
 import { createHash } from "node:crypto";
-import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 const OUT = "out";
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
-const SKIP = [/^sw\.js$/, /\.map$/, /^404\//, /^_not-found\//];
+const SKIP = [/^sw\.js$/, /\.map$/, /^404\//, /^_not-found\//, /(^|\/)\./];
 
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -14,6 +14,25 @@ function walk(dir: string): string[] {
     return statSync(full).isDirectory() ? walk(full) : [full];
   });
 }
+
+// Next 16's client prefetches "/practice/__next.practice.__PAGE__.txt", but the
+// static export writes it as "/practice/__next.practice/__PAGE__.txt". Add the
+// flat copy so prefetches don't 404 on static hosts.
+function flattenSegmentPrefetch(dir: string) {
+  for (const name of readdirSync(dir)) {
+    const full = path.join(dir, name);
+    if (!statSync(full).isDirectory() || name === "_next") continue;
+    if (name.startsWith("__next.")) {
+      for (const file of readdirSync(full)) {
+        const src = path.join(full, file);
+        if (statSync(src).isFile()) copyFileSync(src, path.join(dir, `${name}.${file}`));
+      }
+    } else {
+      flattenSegmentPrefetch(full);
+    }
+  }
+}
+flattenSegmentPrefetch(OUT);
 
 const hash = createHash("sha256");
 const urls: string[] = [];

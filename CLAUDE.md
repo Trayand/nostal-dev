@@ -45,6 +45,13 @@ docs/                     CONCEPT, ARCHITECTURE, ROADMAP
 | `npm run content:build` | Validate + bundle shippable content into `public/content/` |
 | `npm run content:review` | Checklist of non-executable items for manual/LLM review |
 
+Playwright uses its bundled Chromium; set `PW_CHANNEL=chrome` (or `msedge`) to use an installed browser.
+
+## Writing content
+Read `docs/CONTENT-AUTHORING.md` before creating or editing questions (exact schema per format,
+predict-output formatting, SQL test shape). Use `/gen-questions`, `/review-content`, `/add-track`
+in `.claude/commands/`. Owner-facing walkthrough (Indonesian): `MANUAL.md`.
+
 ## Rules
 1. **Never ship unverified content.** Only items with `status: "verified"` or `"published"` that
    pass validation are bundled. Never hand-edit `public/content/` — it is generated.

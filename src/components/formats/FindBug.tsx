@@ -9,7 +9,7 @@ export function FindBug({ q, value, onChange, locked }: FormatProps<"find-bug">)
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-muted">{t("q.tapBuggyLine")}</p>
-      <div role="radiogroup" aria-label={t("q.code")} className="overflow-x-auto rounded-xl border border-border bg-surface-2 py-1 font-mono text-sm">
+      <div role="radiogroup" aria-label={t("q.code")} className="rounded-xl border border-border bg-surface-2 py-1 font-mono text-sm">
         {lines.map((line, i) => {
           const n = i + 1;
           const isSel = selected === n;
@@ -25,10 +25,10 @@ export function FindBug({ q, value, onChange, locked }: FormatProps<"find-bug">)
               aria-label={`Baris ${n}: ${line.trim() || "(kosong)"}`}
               disabled={locked}
               onClick={() => onChange({ kind: "line", line: n })}
-              className={`flex min-h-11 w-full items-center text-left -outline-offset-2 ${tone}`}
+              className={`flex min-h-11 w-full items-start text-left -outline-offset-2 ${tone}`}
             >
-              <span aria-hidden="true" className="w-9 shrink-0 select-none pr-3 text-right text-muted/70">{n}</span>
-              <span className="whitespace-pre pr-3">{line || " "}</span>
+              <span aria-hidden="true" className="w-9 shrink-0 select-none py-1 pr-3 text-right text-muted/70">{n}</span>
+              <span className="min-w-0 flex-1 whitespace-pre-wrap break-words py-1 pr-3">{line || " "}</span>
             </button>
           );
         })}
