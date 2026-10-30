@@ -8,6 +8,8 @@ import { getStorage, type Settings } from "@/lib/storage";
 interface AppContextValue {
   settings: Settings;
   ready: boolean;
+  /** Resolved theme (system preference applied). */
+  isDark: boolean;
   updateSettings: (patch: Partial<Settings>) => Promise<void>;
   t: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
@@ -22,7 +24,7 @@ const defaultSettings: Settings = {
 const AppContext = createContext<AppContextValue | null>(null);
 
 /** Applies the theme class on <html>. Mirrored to localStorage so the next page load paints correctly. */
-function applyTheme(theme: Settings["theme"]) {
+function applyTheme(theme: Settings["theme"]): boolean {
   const dark =
     theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   document.documentElement.classList.toggle("dark", dark);
@@ -31,11 +33,13 @@ function applyTheme(theme: Settings["theme"]) {
   } catch {
     // Storage may be blocked (private mode); the theme still applies for this page.
   }
+  return dark;
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [ready, setReady] = useState(false);
+  const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
     getStorage()
@@ -48,7 +52,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    applyTheme(settings.theme);
+    setIsDark(applyTheme(settings.theme));
     document.documentElement.lang = settings.lang;
   }, [settings.theme, settings.lang]);
 
@@ -64,7 +68,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <AppContext.Provider value={{ settings, ready, updateSettings, t }}>{children}</AppContext.Provider>
+    <AppContext.Provider value={{ settings, ready, isDark, updateSettings, t }}>{children}</AppContext.Provider>
   );
 }
 

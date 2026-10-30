@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { withBase } from "@/lib/base-path";
 import { useApp } from "./AppProvider";
 
@@ -11,14 +11,16 @@ import { useApp } from "./AppProvider";
 export function ServiceWorker() {
   const { t } = useApp();
   const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
+  const updateRequested = useRef(false);
 
   useEffect(() => {
     if (process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator)) return;
 
-    let reloading = false;
+    // Reload only after the user accepted an update. (On the very first visit the
+    // new worker also takes control via clients.claim() — that must not reload.)
     navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (reloading) return;
-      reloading = true;
+      if (!updateRequested.current) return;
+      updateRequested.current = false;
       window.location.reload();
     });
 
@@ -46,7 +48,10 @@ export function ServiceWorker() {
       <span className="text-sm">{t("update.available")}</span>
       <button
         type="button"
-        onClick={() => waiting.postMessage({ type: "SKIP_WAITING" })}
+        onClick={() => {
+          updateRequested.current = true;
+          waiting.postMessage({ type: "SKIP_WAITING" });
+        }}
         className="min-h-11 rounded-lg bg-accent px-4 font-semibold text-accent-contrast"
       >
         {t("update.reload")}
