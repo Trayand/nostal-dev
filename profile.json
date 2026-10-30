@@ -1,0 +1,10 @@
+{
+  "lang": "id",
+  "focusTopics": ["async", "closures", "array-methods", "sql-joins", "typescript-generics"],
+  "weakAreas": ["recursion", "promises"],
+  "dailyGoalMinutes": 15,
+  "levelThresholds": {
+    "windowSize": 10,
+    "levelUpAccuracy": 0.8
+  }
+}

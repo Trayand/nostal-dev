@@ -1,0 +1,44 @@
+[
+  {
+    "id": "logic",
+    "title": "Logika & Algoritma",
+    "description": "Pemanasan logika: kondisi, loop, rekursi, struktur data dasar (kode dalam JavaScript).",
+    "language": "javascript",
+    "icon": "🧩"
+  },
+  {
+    "id": "javascript",
+    "title": "JavaScript",
+    "description": "Bahasa inti: scope, closure, array method, async/await, event loop.",
+    "language": "javascript",
+    "icon": "🟨"
+  },
+  {
+    "id": "typescript",
+    "title": "TypeScript",
+    "description": "Tipe, interface, generics, narrowing, utility types.",
+    "language": "typescript",
+    "icon": "🔷"
+  },
+  {
+    "id": "go",
+    "title": "Go",
+    "description": "Materi belajar Go (tanpa eksekusi di browser). Tantangan penuh dikerjakan di desktop dengan go test.",
+    "language": "go",
+    "icon": "🐹"
+  },
+  {
+    "id": "sql",
+    "title": "SQL",
+    "description": "Query SQLite: SELECT, JOIN, GROUP BY, subquery, window function.",
+    "language": "sql",
+    "icon": "🗄️"
+  },
+  {
+    "id": "concepts",
+    "title": "Konsep",
+    "description": "Flashcard spaced repetition: async, closure, HTTP, REST, Git, database, kompleksitas.",
+    "language": "text",
+    "icon": "🧠"
+  }
+]
