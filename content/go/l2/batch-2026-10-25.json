@@ -31,9 +31,9 @@
     },
     "status": "verified",
     "reviewed": {
-      "by": "claude-opus-5-5 (self-review)",
+      "by": "claude-opus-5-5 (second pass)",
       "date": "2026-10-25",
-      "note": "Go 1.22 semantics checked by reasoning; not executed"
+      "note": "Go 1.22 semantics traced by hand; not executed (Go not installed)"
     }
   },
   {
@@ -73,9 +73,9 @@
     },
     "status": "verified",
     "reviewed": {
-      "by": "claude-opus-5-5 (self-review)",
+      "by": "claude-opus-5-5 (second pass)",
       "date": "2026-10-25",
-      "note": "Go 1.22 semantics checked by reasoning; not executed"
+      "note": "Go 1.22 semantics traced by hand; not executed (Go not installed)"
     }
   },
   {
@@ -111,9 +111,9 @@
     },
     "status": "verified",
     "reviewed": {
-      "by": "claude-opus-5-5 (self-review)",
+      "by": "claude-opus-5-5 (second pass)",
       "date": "2026-10-25",
-      "note": "Go 1.22 semantics checked by reasoning; not executed"
+      "note": "Go 1.22 semantics traced by hand; not executed (Go not installed)"
     }
   },
   {
@@ -153,9 +153,9 @@
     },
     "status": "verified",
     "reviewed": {
-      "by": "claude-opus-5-5 (self-review)",
+      "by": "claude-opus-5-5 (second pass)",
       "date": "2026-10-25",
-      "note": "Go 1.22 semantics checked by reasoning; not executed"
+      "note": "Go 1.22 semantics traced by hand; not executed (Go not installed)"
     }
   },
   {
@@ -205,9 +205,9 @@
     },
     "status": "verified",
     "reviewed": {
-      "by": "claude-opus-5-5 (self-review)",
+      "by": "claude-opus-5-5 (second pass)",
       "date": "2026-10-25",
-      "note": "Go 1.22 semantics checked by reasoning; not executed"
+      "note": "Go 1.22 semantics traced by hand; not executed (Go not installed)"
     }
   }
 ]

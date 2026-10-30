@@ -5,16 +5,32 @@
     "level": 2,
     "format": "desktop",
     "topic": "strings",
-    "tags": ["runes", "unicode", "testing"],
+    "tags": [
+      "runes",
+      "unicode",
+      "testing"
+    ],
     "title": "Membalik string (aman untuk Unicode)",
     "prompt": "Implementasikan `Reverse(s string) string` yang membalik string **per karakter**, bukan per byte, sehingga `\"héllo\"` → `\"olléh\"` dan emoji tetap utuh.\n\nUnduh starter, lalu jalankan `go test ./...` sampai semua tes lulus.",
     "data": {
       "language": "go",
       "command": "go test ./...",
       "files": [
-        { "path": "go.mod", "kind": "other", "content": "module reverse\n\ngo 1.22\n" },
-        { "path": "reverse.go", "kind": "starter", "content": "package reverse\n\n// Reverse returns s with its characters (runes) in reverse order.\nfunc Reverse(s string) string {\n\t// TODO: implement\n\treturn s\n}\n" },
-        { "path": "reverse_test.go", "kind": "test", "content": "package reverse\n\nimport \"testing\"\n\nfunc TestReverse(t *testing.T) {\n\tcases := []struct{ in, want string }{\n\t\t{\"\", \"\"},\n\t\t{\"abc\", \"cba\"},\n\t\t{\"héllo\", \"olléh\"},\n\t\t{\"Go🐹!\", \"!🐹oG\"},\n\t}\n\tfor _, c := range cases {\n\t\tif got := Reverse(c.in); got != c.want {\n\t\t\tt.Errorf(\"Reverse(%q) = %q, want %q\", c.in, got, c.want)\n\t\t}\n\t}\n}\n" }
+        {
+          "path": "go.mod",
+          "kind": "other",
+          "content": "module reverse\n\ngo 1.22\n"
+        },
+        {
+          "path": "reverse.go",
+          "kind": "starter",
+          "content": "package reverse\n\n// Reverse returns s with its characters (runes) in reverse order.\nfunc Reverse(s string) string {\n\t// TODO: implement\n\treturn s\n}\n"
+        },
+        {
+          "path": "reverse_test.go",
+          "kind": "test",
+          "content": "package reverse\n\nimport \"testing\"\n\nfunc TestReverse(t *testing.T) {\n\tcases := []struct{ in, want string }{\n\t\t{\"\", \"\"},\n\t\t{\"abc\", \"cba\"},\n\t\t{\"héllo\", \"olléh\"},\n\t\t{\"Go🐹!\", \"!🐹oG\"},\n\t}\n\tfor _, c := range cases {\n\t\tif got := Reverse(c.in); got != c.want {\n\t\t\tt.Errorf(\"Reverse(%q) = %q, want %q\", c.in, got, c.want)\n\t\t}\n\t}\n}\n"
+        }
       ]
     },
     "referenceSolution": "func Reverse(s string) string {\n\tr := []rune(s)\n\tfor i, j := 0, len(r)-1; i < j; i, j = i+1, j-1 {\n\t\tr[i], r[j] = r[j], r[i]\n\t}\n\treturn string(r)\n}",
@@ -24,7 +40,15 @@
     ],
     "explanation": "`[]rune(s)` memecah string menjadi code point Unicode, jadi karakter multi-byte seperti `é` dan emoji tidak terpotong. Membalik `[]byte` akan merusak karakter tersebut.",
     "estimatedMinutes": 15,
-    "source": { "model": "claude-opus-5-5", "date": "2026-10-25" },
-    "status": "verified"
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (second pass)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics traced by hand; not executed (Go not installed)"
+    }
   }
 ]

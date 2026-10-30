@@ -5,22 +5,40 @@
     "level": 1,
     "format": "multiple-choice",
     "topic": "zero-values",
-    "tags": ["variables", "types"],
+    "tags": [
+      "variables",
+      "types"
+    ],
     "title": "Zero value di Go",
     "prompt": "Apa nilai `s` dan `n` setelah deklarasi berikut?",
     "data": {
       "language": "go",
       "code": "var s string\nvar n int",
-      "options": ["`s = \"\"`, `n = 0`", "`s = nil`, `n = 0`", "`s = nil`, `n = nil`", "Error kompilasi: variabel belum diinisialisasi"]
+      "options": [
+        "`s = \"\"`, `n = 0`",
+        "`s = nil`, `n = 0`",
+        "`s = nil`, `n = nil`",
+        "Error kompilasi: variabel belum diinisialisasi"
+      ]
     },
-    "answer": { "index": 0 },
+    "answer": {
+      "index": 0
+    },
     "hints": [
       "Go tidak punya konsep variabel \"belum diinisialisasi\".",
       "`nil` hanya untuk pointer, slice, map, channel, function, dan interface."
     ],
     "explanation": "Setiap tipe di Go punya **zero value**: `0` untuk angka, `\"\"` untuk string, `false` untuk bool, dan `nil` untuk pointer/slice/map/channel/func/interface. String tidak bisa `nil`.",
     "estimatedMinutes": 1,
-    "source": { "model": "claude-opus-5-5", "date": "2026-10-25" },
-    "status": "verified"
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (second pass)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics traced by hand; not executed (Go not installed)"
+    }
   }
 ]

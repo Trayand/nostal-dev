@@ -32,9 +32,9 @@
     },
     "status": "verified",
     "reviewed": {
-      "by": "claude-opus-5-5 (self-review)",
+      "by": "claude-opus-5-5 (second pass)",
       "date": "2026-10-25",
-      "note": "Go 1.22 semantics checked by reasoning; not executed"
+      "note": "Go 1.22 semantics traced by hand; not executed (Go not installed)"
     }
   },
   {
@@ -51,7 +51,7 @@
       "testing"
     ],
     "title": "ParallelMap generik dengan batas worker",
-    "prompt": "Implementasikan fungsi generik\n\n```go\nfunc ParallelMap[T, R any](in []T, workers int, f func(T) R) []R\n```\n\nyang menerapkan `f` ke setiap elemen `in` secara **paralel** dengan paling banyak `workers` goroutine berjalan bersamaan, lalu mengembalikan hasil dengan **urutan yang sama** seperti input.\n\n- `workers < 1` diperlakukan sebagai 1.\n- Input kosong → slice dengan panjang 0.\n- Fungsi baru kembali setelah semua pekerjaan selesai (tanpa goroutine yang bocor).\n- Harus lolos `go test -race ./...` (tanpa data race).\n\nUnduh starter, lalu jalankan `go test ./...` sampai semua tes lulus. Asumsi: Go 1.22.",
+    "prompt": "Implementasikan fungsi generik\n\n```go\nfunc ParallelMap[T, R any](in []T, workers int, f func(T) R) []R\n```\n\nyang menerapkan `f` ke setiap elemen `in` secara **paralel** dengan paling banyak `workers` goroutine berjalan bersamaan, lalu mengembalikan hasil dengan **urutan yang sama** seperti input.\n\n- `workers < 1` diperlakukan sebagai 1.\n- Input kosong → slice dengan panjang 0.\n- Fungsi baru kembali setelah semua pekerjaan selesai (tanpa goroutine yang bocor).\n- Harus bebas data race. Opsional: cek dengan `go test -race ./...` (di Windows, race detector butuh cgo dan compiler C seperti gcc).\n\nUnduh starter, lalu jalankan `go test ./...` sampai semua tes lulus. Asumsi: Go 1.22.",
     "data": {
       "language": "go",
       "command": "go test ./...",
@@ -86,9 +86,9 @@
     },
     "status": "verified",
     "reviewed": {
-      "by": "claude-opus-5-5 (self-review)",
+      "by": "claude-opus-5-5 (second pass)",
       "date": "2026-10-25",
-      "note": "Go 1.22 semantics checked by reasoning; not executed"
+      "note": "Go 1.22 semantics traced by hand; not executed (Go not installed)"
     }
   }
 ]
