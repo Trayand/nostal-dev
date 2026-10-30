@@ -44,7 +44,8 @@ async function main() {
   const { files, broken } = readContentFiles();
   const results = [
     ...broken,
-    ...(await validateBank(files, { trackIds: tracks.map((t) => t.id), exec: nodeExecutor })),
+    ...(await validateBank(files, { trackIds: tracks.map((t) => t.id),
+      trackLanguages: Object.fromEntries(tracks.map((t) => [t.id, t.language])), exec: nodeExecutor })),
   ];
   const shipped = results.filter(isShippable).map((r) => r.question!);
   const failed = results.filter((r) => !r.ok);

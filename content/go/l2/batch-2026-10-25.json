@@ -1,0 +1,213 @@
+[
+  {
+    "id": "go-slices-002",
+    "track": "go",
+    "level": 2,
+    "format": "predict-output",
+    "topic": "slices",
+    "tags": [
+      "append",
+      "aliasing",
+      "reslice"
+    ],
+    "title": "append pada sub-slice menimpa slice asal",
+    "prompt": "Apa output program berikut?",
+    "data": {
+      "language": "go",
+      "code": "package main\n\nimport \"fmt\"\n\nfunc main() {\n\ta := []int{1, 2, 3, 4}\n\tb := a[:2]\n\tb = append(b, 99)\n\tfmt.Println(a)\n\tfmt.Println(len(b), cap(b))\n}"
+    },
+    "answer": {
+      "output": "[1 2 99 4]\n3 4"
+    },
+    "hints": [
+      "`b := a[:2]` tidak menyalin data: `b` memakai array dasar yang sama dengan `a`, dengan `len 2` dan `cap 4`.",
+      "Karena kapasitas `b` masih cukup, `append` menulis langsung ke indeks 2 array yang sama, yaitu `a[2]`."
+    ],
+    "explanation": "Slice adalah \"jendela\" ke sebuah array dasar. `b := a[:2]` punya `len = 2` tetapi `cap = 4` (kapasitas dihitung sampai ujung array `a`). Saat `append(b, 99)`, kapasitas masih cukup sehingga Go **tidak** mengalokasi array baru; `99` ditulis ke posisi indeks 2 milik array yang sama. Akibatnya `a` menjadi `[1 2 99 4]`, dan `b` memiliki `len 3`, `cap 4`.\n\nCara menghindari aliasing: batasi kapasitas dengan full slice expression `a[:2:2]` (append akan mengalokasi array baru), atau salin dulu dengan `slices.Clone`/`copy`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics checked by reasoning; not executed"
+    }
+  },
+  {
+    "id": "go-maps-002",
+    "track": "go",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "maps",
+    "tags": [
+      "iteration-order",
+      "range"
+    ],
+    "title": "Urutan iterasi range pada map",
+    "prompt": "Pernyataan mana yang **benar** tentang output kode berikut?",
+    "data": {
+      "language": "go",
+      "code": "m := map[string]int{\"a\": 1, \"b\": 2, \"c\": 3}\nfor k := range m {\n\tfmt.Print(k, \" \")\n}",
+      "options": [
+        "Ketiga key tercetak, tetapi urutannya tidak dijamin dan bisa berbeda antar eksekusi",
+        "Selalu `a b c` karena mengikuti urutan penulisan literal",
+        "Selalu urut alfabetis karena key bertipe `string`",
+        "Urutannya acak, tetapi selalu sama setiap kali program yang sama dijalankan"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Spesifikasi Go sengaja tidak mendefinisikan urutan iterasi map.",
+      "Runtime bahkan mengacak titik awal iterasi agar programmer tidak bergantung pada urutan tertentu."
+    ],
+    "explanation": "Spesifikasi Go menyatakan urutan iterasi `range` pada map **tidak ditentukan**, dan runtime sengaja mengacaknya sehingga urutan bisa berbeda antar eksekusi (bahkan antar loop dalam program yang sama). Yang dijamin hanya: setiap key dikunjungi tepat sekali (selama map tidak diubah saat iterasi).\n\nJika butuh urutan tetap, kumpulkan key ke slice lalu urutkan, misalnya dengan `slices.Sorted(maps.Keys(m))` (Go 1.23+) atau `sort.Strings(keys)`. Catatan: `fmt.Println(m)` memang mencetak map dengan key terurut (sejak Go 1.12), tetapi itu perilaku paket `fmt`, bukan `range`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics checked by reasoning; not executed"
+    }
+  },
+  {
+    "id": "go-structs-002",
+    "track": "go",
+    "level": 2,
+    "format": "find-bug",
+    "topic": "structs",
+    "tags": [
+      "copy-semantics",
+      "range",
+      "pointers"
+    ],
+    "title": "Mengubah salinan struct di dalam loop",
+    "prompt": "Program ini seharusnya menambah `Score` setiap pemain sebanyak 5, tetapi slice `players` tidak berubah. Baris mana yang salah? (Bug bisa diperbaiki dengan mengubah tepat satu baris.)",
+    "data": {
+      "language": "go",
+      "code": "package main\n\nimport \"fmt\"\n\ntype Player struct {\n\tName  string\n\tScore int\n}\n\nfunc main() {\n\tplayers := []Player{{\"Ana\", 10}, {\"Budi\", 20}}\n\tfor i := range players {\n\t\tp := players[i]\n\t\tp.Score += 5\n\t}\n\tfmt.Println(players) // harapan: [{Ana 15} {Budi 25}]\n}"
+    },
+    "answer": {
+      "line": 13,
+      "fixedLine": "\t\tp := &players[i]"
+    },
+    "hints": [
+      "Assignment struct di Go menyalin seluruh isi struct.",
+      "`p` adalah salinan, bukan referensi ke elemen slice. Ambil alamat elemennya agar `p.Score += 5` mengubah data asli."
+    ],
+    "explanation": "Struct di Go adalah **value type**: `p := players[i]` menyalin elemen ke variabel baru, sehingga `p.Score += 5` hanya mengubah salinan. Dengan `p := &players[i]`, `p` menjadi pointer ke elemen di array dasar slice, dan `p.Score += 5` (otomatis di-dereference) mengubah data asli. Output menjadi `[{Ana 15} {Budi 25}]`.\n\nMengubah hanya baris 14 menjadi `players[i].Score += 5` tidak cukup: `p` jadi tidak terpakai dan Go menolak kompilasi (`declared and not used`). Bug yang sama terjadi pada `for _, p := range players`, karena variabel range juga salinan.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics checked by reasoning; not executed"
+    }
+  },
+  {
+    "id": "go-channels-001",
+    "track": "go",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "channels",
+    "tags": [
+      "unbuffered",
+      "deadlock"
+    ],
+    "title": "Kirim ke unbuffered channel tanpa penerima",
+    "prompt": "Apa yang terjadi saat program berikut dijalankan?",
+    "data": {
+      "language": "go",
+      "code": "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tch := make(chan int)\n\tch <- 1\n\tfmt.Println(<-ch)\n}",
+      "options": [
+        "Mencetak `1`",
+        "`fatal error: all goroutines are asleep - deadlock!`",
+        "Mencetak `0`",
+        "Error kompilasi: channel harus dibaca di goroutine lain"
+      ]
+    },
+    "answer": {
+      "index": 1
+    },
+    "hints": [
+      "`make(chan int)` tanpa kapasitas membuat **unbuffered** channel.",
+      "Pengiriman ke unbuffered channel memblokir sampai ada goroutine lain yang menerima. Di sini hanya ada `main`, dan ia sedang terblokir."
+    ],
+    "explanation": "Pada unbuffered channel, `ch <- 1` harus \"bertemu\" dengan penerima pada saat yang sama. Satu-satunya goroutine adalah `main`, dan ia terblokir di baris pengiriman sehingga tidak pernah sampai ke `<-ch`. Runtime mendeteksi semua goroutine tertidur dan menghentikan program dengan `fatal error: all goroutines are asleep - deadlock!`. Compiler tidak memeriksa hal ini, jadi kodenya tetap terkompilasi.\n\nPerbaikan: pakai buffered channel `make(chan int, 1)` (pengiriman tidak memblokir selama buffer belum penuh), atau kirim dari goroutine lain: `go func() { ch <- 1 }()`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics checked by reasoning; not executed"
+    }
+  },
+  {
+    "id": "go-errors-002",
+    "track": "go",
+    "level": 2,
+    "format": "fill-blank",
+    "topic": "errors",
+    "tags": [
+      "wrapping",
+      "errors-is",
+      "sentinel-error"
+    ],
+    "title": "Membungkus error dan memeriksa dengan errors.Is",
+    "prompt": "Lengkapi kode agar `find` **membungkus** `ErrNotFound` dengan konteks tambahan, dan `main` tetap bisa mengenali error tersebut sehingga mencetak `tidak ditemukan`.",
+    "data": {
+      "language": "go",
+      "template": "var ErrNotFound = errors.New(\"not found\")\n\nfunc find(id int) error {\n\treturn fmt.Errorf(\"find %d: {{blank}}\", id, ErrNotFound)\n}\n\nfunc main() {\n\terr := find(7)\n\tif {{blank}}(err, ErrNotFound) {\n\t\tfmt.Println(\"tidak ditemukan\")\n\t}\n}",
+      "choices": [
+        "%w",
+        "%v",
+        "%s",
+        "errors.Is",
+        "errors.As",
+        "errors.Unwrap"
+      ]
+    },
+    "answer": {
+      "blanks": [
+        [
+          "%w"
+        ],
+        [
+          "errors.Is"
+        ]
+      ]
+    },
+    "hints": [
+      "Hanya satu verb `fmt.Errorf` yang menyimpan error asli sebagai error yang dibungkus (bisa di-unwrap).",
+      "Pakai `%w` untuk membungkus, lalu `errors.Is` untuk menelusuri rantai error dan membandingkannya dengan sentinel `ErrNotFound`."
+    ],
+    "explanation": "`fmt.Errorf` dengan verb `%w` menghasilkan error baru (`find 7: not found`) yang **membungkus** `ErrNotFound`. `errors.Is(err, ErrNotFound)` membuka rantai pembungkus satu per satu dan mengembalikan `true` jika ada yang sama dengan target.\n\nJika memakai `%v` atau `%s`, teks pesannya sama, tetapi error asli hilang (hanya jadi string), sehingga `errors.Is` mengembalikan `false`. `errors.As` dipakai untuk mencari error berdasarkan **tipe** dan butuh pointer target, bukan nilai sentinel. `errors.Unwrap` hanya mengembalikan satu lapis error, bukan `bool`, jadi tidak bisa dipakai sebagai kondisi `if`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics checked by reasoning; not executed"
+    }
+  }
+]

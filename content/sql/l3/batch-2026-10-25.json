@@ -1,0 +1,456 @@
+[
+  {
+    "id": "sql-joins-003",
+    "track": "sql",
+    "level": 3,
+    "format": "code-full",
+    "topic": "joins",
+    "tags": [
+      "left-join",
+      "coalesce",
+      "group-by",
+      "order-by"
+    ],
+    "title": "Total belanja semua pelanggan termasuk yang nol",
+    "prompt": "Tabel `customers(id, name, city)` dan `orders(id, customer_id, total, status)`.\n\nTampilkan **semua** pelanggan beserta total belanja dari pesanan berstatus `'paid'`:\n- `name`\n- `total_spent`: jumlah `total` pesanan `'paid'` milik pelanggan itu, **0** jika tidak ada\n\nUrutkan berdasarkan `total_spent` dari terbesar, lalu `name` A→Z jika sama.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT NOT NULL, city TEXT NOT NULL);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER, total INTEGER NOT NULL, status TEXT NOT NULL);",
+      "seed": "INSERT INTO customers (id, name, city) VALUES (1, 'Budi', 'Jakarta'), (2, 'Sari', 'Bandung'), (3, 'Andi', 'Jakarta'), (4, 'Dewi', 'Surabaya'), (5, 'Rina', 'Bandung'), (6, 'Agus', 'Medan');\nINSERT INTO orders (id, customer_id, total, status) VALUES (1, 1, 150000, 'paid'), (2, 2, 75000, 'pending'), (3, 1, 200000, 'paid'), (4, 3, 50000, 'cancelled'), (5, 4, 125000, 'paid');"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "name",
+            "total_spent"
+          ],
+          "rows": [
+            [
+              "Budi",
+              350000
+            ],
+            [
+              "Dewi",
+              125000
+            ],
+            [
+              "Agus",
+              0
+            ],
+            [
+              "Andi",
+              0
+            ],
+            [
+              "Rina",
+              0
+            ],
+            [
+              "Sari",
+              0
+            ]
+          ]
+        },
+        "ordered": true
+      },
+      {
+        "name": "total sama diurutkan nama",
+        "setup": "INSERT INTO orders (id, customer_id, total, status) VALUES (6, 2, 125000, 'paid');",
+        "expected": {
+          "columns": [
+            "name",
+            "total_spent"
+          ],
+          "rows": [
+            [
+              "Budi",
+              350000
+            ],
+            [
+              "Dewi",
+              125000
+            ],
+            [
+              "Sari",
+              125000
+            ],
+            [
+              "Agus",
+              0
+            ],
+            [
+              "Andi",
+              0
+            ],
+            [
+              "Rina",
+              0
+            ]
+          ]
+        },
+        "ordered": true
+      }
+    ],
+    "referenceSolution": "SELECT c.name, COALESCE(SUM(o.total), 0) AS total_spent\nFROM customers c\nLEFT JOIN orders o\n  ON o.customer_id = c.id AND o.status = 'paid'\nGROUP BY c.id, c.name\nORDER BY total_spent DESC, c.name ASC;",
+    "hints": [
+      "Pakai `LEFT JOIN` agar pelanggan tanpa pesanan lunas tetap muncul. Hati-hati menaruh filter status: di `WHERE` ia akan membuang baris NULL hasil LEFT JOIN.",
+      "Taruh `o.status = 'paid'` di klausa `ON`, lalu `COALESCE(SUM(o.total), 0)` dan `GROUP BY c.id, c.name`."
+    ],
+    "explanation": "Dua jebakan sekaligus:\n1. **Filter di `WHERE`** (`WHERE o.status = 'paid'`) mengubah LEFT JOIN menjadi INNER JOIN, karena baris pelanggan tanpa pasangan punya `o.status` NULL dan dibuang. Filter tabel kanan harus di `ON`.\n2. `SUM` atas kelompok yang semuanya NULL menghasilkan **NULL**, bukan 0, jadi butuh `COALESCE(..., 0)`.\n\nUrutan sekunder `name ASC` membuat hasil deterministik saat total sama.",
+    "estimatedMinutes": 6,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-subquery-001",
+    "track": "sql",
+    "level": 3,
+    "format": "code-short",
+    "topic": "subqueries",
+    "tags": [
+      "correlated-subquery",
+      "avg"
+    ],
+    "title": "Gaji di atas rata-rata departemennya",
+    "prompt": "Tabel `employees(id, name, dept, salary)`.\n\nTampilkan `name`, `dept`, dan `salary` karyawan yang gajinya **lebih tinggi dari rata-rata gaji departemennya sendiri** (bukan rata-rata seluruh perusahaan). Urutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE employees (id INTEGER PRIMARY KEY, name TEXT NOT NULL, dept TEXT NOT NULL, salary INTEGER NOT NULL);",
+      "seed": "INSERT INTO employees (id, name, dept, salary) VALUES (1, 'Andi', 'IT', 15000000), (2, 'Sari', 'IT', 12000000), (3, 'Budi', 'HR', 8000000), (4, 'Dewi', 'Finance', 11000000), (5, 'Rina', 'IT', 9000000), (6, 'Joko', 'HR', 7000000), (7, 'Tono', 'Finance', 13000000);"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "name",
+            "dept",
+            "salary"
+          ],
+          "rows": [
+            [
+              "Andi",
+              "IT",
+              15000000
+            ],
+            [
+              "Budi",
+              "HR",
+              8000000
+            ],
+            [
+              "Tono",
+              "Finance",
+              13000000
+            ]
+          ]
+        }
+      },
+      {
+        "name": "departemen satu orang dan gaji sama dengan rata-rata",
+        "setup": "INSERT INTO employees (name, dept, salary) VALUES ('Lina', 'Marketing', 10000000); UPDATE employees SET salary = 12000000 WHERE name = 'Rina';",
+        "expected": {
+          "columns": [
+            "name",
+            "dept",
+            "salary"
+          ],
+          "rows": [
+            [
+              "Andi",
+              "IT",
+              15000000
+            ],
+            [
+              "Budi",
+              "HR",
+              8000000
+            ],
+            [
+              "Tono",
+              "Finance",
+              13000000
+            ]
+          ]
+        }
+      },
+      {
+        "name": "Rina naik melewati rata-rata IT",
+        "setup": "UPDATE employees SET salary = 14000000 WHERE name = 'Rina';",
+        "expected": {
+          "columns": [
+            "name",
+            "dept",
+            "salary"
+          ],
+          "rows": [
+            [
+              "Andi",
+              "IT",
+              15000000
+            ],
+            [
+              "Rina",
+              "IT",
+              14000000
+            ],
+            [
+              "Budi",
+              "HR",
+              8000000
+            ],
+            [
+              "Tono",
+              "Finance",
+              13000000
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "SELECT e.name, e.dept, e.salary\nFROM employees e\nWHERE e.salary > (\n  SELECT AVG(e2.salary) FROM employees e2 WHERE e2.dept = e.dept\n);",
+    "hints": [
+      "Untuk setiap karyawan, bandingkan gajinya dengan rata-rata yang dihitung **hanya** dari departemen yang sama.",
+      "Subquery berkorelasi: `WHERE e.salary > (SELECT AVG(e2.salary) FROM employees e2 WHERE e2.dept = e.dept)`."
+    ],
+    "explanation": "Subquery **berkorelasi** merujuk kolom query luar (`e.dept`), sehingga dievaluasi ulang untuk tiap karyawan dan menghasilkan rata-rata departemennya. Tanpa `WHERE e2.dept = e.dept`, subquery menghitung rata-rata seluruh perusahaan (±10,7 juta) dan hasilnya salah (Sari dan Dewi ikut, Budi hilang). Alternatif: JOIN ke tabel turunan `SELECT dept, AVG(salary) ... GROUP BY dept`, atau window function `AVG(salary) OVER (PARTITION BY dept)`.",
+    "estimatedMinutes": 4,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-cte-001",
+    "track": "sql",
+    "level": 3,
+    "format": "code-full",
+    "topic": "cte",
+    "tags": [
+      "with",
+      "strftime",
+      "dates",
+      "group-by"
+    ],
+    "title": "Bulan dengan pendapatan di atas rata-rata",
+    "prompt": "Tabel `orders(id, order_date, total, status)`. `order_date` berupa teks `'YYYY-MM-DD'`.\n\nHitung pendapatan bulanan dari pesanan berstatus `'paid'`, lalu tampilkan hanya bulan yang pendapatannya **lebih tinggi dari rata-rata pendapatan bulanan** (rata-rata dihitung atas bulan-bulan yang punya pesanan paid).\n\nKolom:\n- `month`: format `'YYYY-MM'`\n- `revenue`: total pendapatan bulan itu\n\nUrutkan berdasarkan `month` dari yang paling awal.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE orders (id INTEGER PRIMARY KEY, order_date TEXT NOT NULL, total INTEGER NOT NULL, status TEXT NOT NULL);",
+      "seed": "INSERT INTO orders (id, order_date, total, status) VALUES (1, '2026-01-05', 100000, 'paid'), (2, '2026-01-20', 150000, 'paid'), (3, '2026-02-03', 80000, 'paid'), (4, '2026-02-14', 300000, 'cancelled'), (5, '2026-03-01', 200000, 'paid'), (6, '2026-03-15', 120000, 'paid'), (7, '2026-03-28', 50000, 'pending'), (8, '2026-04-10', 90000, 'paid');"
+    },
+    "tests": [
+      {
+        "name": "data awal (rata-rata 185000)",
+        "expected": {
+          "columns": [
+            "month",
+            "revenue"
+          ],
+          "rows": [
+            [
+              "2026-01",
+              250000
+            ],
+            [
+              "2026-03",
+              320000
+            ]
+          ]
+        },
+        "ordered": true
+      },
+      {
+        "name": "April bertambah (rata-rata 260000)",
+        "setup": "INSERT INTO orders (id, order_date, total, status) VALUES (9, '2026-04-30', 300000, 'paid');",
+        "expected": {
+          "columns": [
+            "month",
+            "revenue"
+          ],
+          "rows": [
+            [
+              "2026-03",
+              320000
+            ],
+            [
+              "2026-04",
+              390000
+            ]
+          ]
+        },
+        "ordered": true
+      }
+    ],
+    "referenceSolution": "WITH monthly AS (\n  SELECT strftime('%Y-%m', order_date) AS month, SUM(total) AS revenue\n  FROM orders\n  WHERE status = 'paid'\n  GROUP BY month\n)\nSELECT month, revenue\nFROM monthly\nWHERE revenue > (SELECT AVG(revenue) FROM monthly)\nORDER BY month;",
+    "hints": [
+      "Pecah jadi dua langkah: hitung dulu tabel bulanan (`month`, `revenue`) dalam `WITH monthly AS (...)`, lalu filter dari situ.",
+      "Bulan diambil dengan `strftime('%Y-%m', order_date)` (atau `substr(order_date, 1, 7)`); filternya `WHERE revenue > (SELECT AVG(revenue) FROM monthly)`."
+    ],
+    "explanation": "CTE (`WITH`) memberi nama pada hasil antara sehingga bisa dipakai **dua kali**: sekali untuk dibaca barisnya, sekali untuk menghitung `AVG(revenue)`. Tanpa CTE Anda harus menulis ulang agregasi bulanan di subquery. Jebakan: lupa `status = 'paid'` membuat Februari (ada pesanan batal 300000) ikut muncul, dan `AVG(total)` atas pesanan (bukan atas bulan) memberi rata-rata yang salah. Tanggal format ISO `YYYY-MM-DD` juga aman diurutkan sebagai teks.",
+    "estimatedMinutes": 8,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-joins-004",
+    "track": "sql",
+    "level": 3,
+    "format": "find-bug",
+    "topic": "joins",
+    "tags": [
+      "left-join",
+      "where-vs-on"
+    ],
+    "title": "LEFT JOIN yang diam-diam menjadi INNER JOIN",
+    "prompt": "Query ini seharusnya menampilkan **semua** pelanggan beserta jumlah pesanan lunas (`'paid'`) mereka, termasuk pelanggan dengan 0 pesanan lunas. Ternyata pelanggan tanpa pesanan lunas tidak muncul sama sekali.\n\nBaris mana yang salah?",
+    "data": {
+      "language": "sql",
+      "code": "SELECT c.name, COUNT(o.id) AS paid_orders\nFROM customers c\nLEFT JOIN orders o ON o.customer_id = c.id\nWHERE o.status = 'paid'\nGROUP BY c.id, c.name;"
+    },
+    "answer": {
+      "line": 4,
+      "fixedLine": "  AND o.status = 'paid'"
+    },
+    "hints": [
+      "Apa nilai `o.status` untuk pelanggan yang tidak punya pasangan di `orders`?",
+      "Kondisi pada tabel kanan sebuah LEFT JOIN harus ikut di klausa `ON`, bukan di `WHERE`."
+    ],
+    "explanation": "Untuk pelanggan tanpa pesanan (atau hanya pesanan pending/batal), LEFT JOIN menghasilkan baris dengan `o.status` NULL atau bukan `'paid'`; `WHERE o.status = 'paid'` lalu membuang baris itu sehingga hasilnya sama dengan INNER JOIN. Memindahkan kondisi ke `ON` (`... ON o.customer_id = c.id AND o.status = 'paid'`) hanya membatasi **pesanan mana yang dipasangkan**, sementara semua pelanggan tetap ada. `COUNT(o.id)` sudah benar: ia menghitung 0 untuk pelanggan tanpa pasangan.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Lines 1-3 and 5 are correct (COUNT(o.id) counts 0 for unmatched rows); only line 4 causes the bug. Fixed line continues the ON clause of line 3."
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-self-join-001",
+    "track": "sql",
+    "level": 3,
+    "format": "code-short",
+    "topic": "self-join",
+    "tags": [
+      "self-join",
+      "left-join"
+    ],
+    "title": "Nama karyawan beserta nama atasannya",
+    "prompt": "Tabel `employees(id, name, manager_id)`. `manager_id` merujuk ke `employees.id` milik atasan langsung; direktur tidak punya atasan (`manager_id` NULL).\n\nTampilkan **semua** karyawan dengan kolom `name` dan `manager_name` (nama atasan langsung; `NULL` jika tidak punya atasan). Urutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE employees (id INTEGER PRIMARY KEY, name TEXT NOT NULL, manager_id INTEGER);",
+      "seed": "INSERT INTO employees (id, name, manager_id) VALUES (1, 'Hendra', NULL), (2, 'Sari', 1), (3, 'Budi', 1), (4, 'Andi', 2), (5, 'Rina', 2), (6, 'Joko', 3);"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "name",
+            "manager_name"
+          ],
+          "rows": [
+            [
+              "Hendra",
+              null
+            ],
+            [
+              "Sari",
+              "Hendra"
+            ],
+            [
+              "Budi",
+              "Hendra"
+            ],
+            [
+              "Andi",
+              "Sari"
+            ],
+            [
+              "Rina",
+              "Sari"
+            ],
+            [
+              "Joko",
+              "Budi"
+            ]
+          ]
+        }
+      },
+      {
+        "name": "karyawan baru tanpa atasan",
+        "setup": "INSERT INTO employees (id, name, manager_id) VALUES (7, 'Lina', NULL), (8, 'Putri', 6);",
+        "expected": {
+          "columns": [
+            "name",
+            "manager_name"
+          ],
+          "rows": [
+            [
+              "Hendra",
+              null
+            ],
+            [
+              "Sari",
+              "Hendra"
+            ],
+            [
+              "Budi",
+              "Hendra"
+            ],
+            [
+              "Andi",
+              "Sari"
+            ],
+            [
+              "Rina",
+              "Sari"
+            ],
+            [
+              "Joko",
+              "Budi"
+            ],
+            [
+              "Lina",
+              null
+            ],
+            [
+              "Putri",
+              "Joko"
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "SELECT e.name, m.name AS manager_name\nFROM employees e\nLEFT JOIN employees m ON m.id = e.manager_id;",
+    "hints": [
+      "Gabungkan tabel `employees` dengan dirinya sendiri memakai dua alias: satu untuk karyawan, satu untuk atasan.",
+      "`FROM employees e LEFT JOIN employees m ON m.id = e.manager_id`, lalu pilih `e.name, m.name AS manager_name`."
+    ],
+    "explanation": "*Self-join* memperlakukan satu tabel sebagai dua peran lewat alias (`e` = karyawan, `m` = manajer). Harus `LEFT JOIN`: dengan INNER JOIN, Hendra (yang `manager_id`-nya NULL) hilang dari hasil. Perhatikan arah kondisi: `m.id = e.manager_id` (atasan adalah baris yang id-nya ditunjuk karyawan), bukan sebaliknya.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

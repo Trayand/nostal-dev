@@ -1,0 +1,332 @@
+[
+  {
+    "id": "ts-discriminated-unions-001",
+    "track": "typescript",
+    "level": 3,
+    "format": "code-full",
+    "topic": "discriminated-unions",
+    "tags": [
+      "switch",
+      "union",
+      "kind"
+    ],
+    "title": "Total luas bangun datar",
+    "prompt": "Diberikan tipe berikut:\n\n```ts\ntype Shape =\n  | { kind: \"circle\"; radius: number }\n  | { kind: \"rect\"; width: number; height: number }\n  | { kind: \"triangle\"; base: number; height: number };\n```\n\nTulis `totalArea(shapes: Shape[]): number` yang menjumlahkan luas semua bangun, lalu **membulatkan ke 2 desimal** (`Math.round(x * 100) / 100`).\n\n- circle: `π × r²` (pakai `Math.PI`)\n- rect: `width × height`\n- triangle: `base × height / 2`",
+    "data": {
+      "language": "typescript",
+      "starter": "type Shape =\n  | { kind: \"circle\"; radius: number }\n  | { kind: \"rect\"; width: number; height: number }\n  | { kind: \"triangle\"; base: number; height: number };\n\nfunction totalArea(shapes: Shape[]): number {\n  let total = 0;\n  // tulis kodemu di sini\n  return total;\n}",
+      "entry": "totalArea"
+    },
+    "tests": [
+      {
+        "name": "satu lingkaran",
+        "input": [
+          [
+            {
+              "kind": "circle",
+              "radius": 1
+            }
+          ]
+        ],
+        "expected": 3.14
+      },
+      {
+        "name": "persegi panjang + segitiga",
+        "input": [
+          [
+            {
+              "kind": "rect",
+              "width": 2,
+              "height": 3
+            },
+            {
+              "kind": "triangle",
+              "base": 4,
+              "height": 5
+            }
+          ]
+        ],
+        "expected": 16
+      },
+      {
+        "name": "array kosong",
+        "input": [
+          []
+        ],
+        "expected": 0
+      },
+      {
+        "name": "campuran",
+        "input": [
+          [
+            {
+              "kind": "circle",
+              "radius": 2
+            },
+            {
+              "kind": "rect",
+              "width": 1,
+              "height": 1
+            }
+          ]
+        ],
+        "expected": 13.57
+      }
+    ],
+    "referenceSolution": "type Shape =\n  | { kind: \"circle\"; radius: number }\n  | { kind: \"rect\"; width: number; height: number }\n  | { kind: \"triangle\"; base: number; height: number };\n\nfunction area(s: Shape): number {\n  switch (s.kind) {\n    case \"circle\":\n      return Math.PI * s.radius ** 2;\n    case \"rect\":\n      return s.width * s.height;\n    case \"triangle\":\n      return (s.base * s.height) / 2;\n  }\n}\n\nfunction totalArea(shapes: Shape[]): number {\n  let total = 0;\n  for (const s of shapes) total += area(s);\n  return Math.round(total * 100) / 100;\n}",
+    "hints": [
+      "`switch (s.kind)` mempersempit `s` ke varian yang tepat di setiap `case`.",
+      "Jumlahkan dulu semua luas, baru bulatkan sekali di akhir."
+    ],
+    "explanation": "Property `kind` adalah *discriminant*: di `case \"circle\"` TypeScript tahu `s` punya `radius`, di `case \"rect\"` punya `width`/`height`. Dengan `strict`, switch yang menangani semua varian membuat fungsi `area` dianggap selalu return. Bulatkan di akhir, bukan per bangun, agar error pembulatan tidak menumpuk.",
+    "estimatedMinutes": 8,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-keyof-001",
+    "track": "typescript",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "keyof",
+    "tags": [
+      "keyof",
+      "indexed-access",
+      "generics"
+    ],
+    "title": "Tipe hasil getProp dengan keyof",
+    "prompt": "Dengan `strict: true`, apa tipe `a` yang di-infer TypeScript?",
+    "data": {
+      "language": "typescript",
+      "code": "interface User {\n  id: number;\n  name: string;\n  active: boolean;\n}\n\nfunction getProp<T, K extends keyof T>(obj: T, key: K): T[K] {\n  return obj[key];\n}\n\nconst user: User = { id: 1, name: \"Rina\", active: true };\nconst a = getProp(user, \"name\");",
+      "options": [
+        "`string`",
+        "`string | number | boolean`",
+        "`\"name\"`",
+        "`User`"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "`K` di-infer dari argumen kedua sebagai literal `\"name\"`.",
+      "`T[K]` adalah *indexed access type*: `User[\"name\"]`."
+    ],
+    "explanation": "`T` di-infer sebagai `User` dan `K` sebagai literal `\"name\"` (karena `K extends keyof T`). Return type `T[K]` menjadi `User[\"name\"]` = `string`. Jika return type ditulis `T[keyof T]`, hasilnya akan melebar menjadi `string | number | boolean`. `getProp(user, \"email\")` akan error karena `\"email\"` bukan `keyof User`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-unknown-001",
+    "track": "typescript",
+    "level": 3,
+    "format": "find-bug",
+    "topic": "unknown",
+    "tags": [
+      "unknown",
+      "narrowing",
+      "null"
+    ],
+    "title": "Narrowing unknown yang belum lengkap",
+    "prompt": "Dengan `strict: true`, satu baris berikut menyebabkan **compile error**. Baris mana?",
+    "data": {
+      "language": "typescript",
+      "code": "function hasId(data: unknown): boolean {\n  if (typeof data === \"object\") {\n    return \"id\" in data;\n  }\n  return false;\n}"
+    },
+    "answer": {
+      "line": 3,
+      "fixedLine": "    return data !== null && \"id\" in data;"
+    },
+    "hints": [
+      "Apa hasil `typeof null` di JavaScript?",
+      "Setelah `typeof data === \"object\"`, tipe `data` adalah `object | null`."
+    ],
+    "explanation": "`typeof null === \"object\"`, jadi TypeScript mempersempit `unknown` menjadi `object | null`, bukan `object`. Operator `in` tidak boleh dipakai pada nilai yang mungkin `null`: *'data' is possibly 'null'*. Tambahkan `data !== null` sebelum `\"id\" in data`. Berbeda dengan `any`, `unknown` memaksa kita membuktikan tipenya dulu.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-generics-002",
+    "track": "typescript",
+    "level": 3,
+    "format": "parsons",
+    "topic": "generics",
+    "tags": [
+      "keyof",
+      "record",
+      "group-by"
+    ],
+    "title": "Susun fungsi groupBy generic",
+    "prompt": "Susun baris-baris berikut menjadi fungsi `groupBy(items, key)` yang mengelompokkan objek berdasarkan nilai property `key`.\n\nContoh: `groupBy([{ type: \"buah\", name: \"apel\" }, { type: \"sayur\", name: \"bayam\" }], \"type\")` → `{ buah: [ ...apel ], sayur: [ ...bayam ] }`.",
+    "data": {
+      "language": "typescript",
+      "entry": "groupBy"
+    },
+    "answer": {
+      "lines": [
+        "function groupBy<T, K extends keyof T>(items: T[], key: K): Record<string, T[]> {",
+        "  const result: Record<string, T[]> = {};",
+        "  for (const item of items) {",
+        "    const group = String(item[key]);",
+        "    if (!result[group]) result[group] = [];",
+        "    result[group].push(item);",
+        "  }",
+        "  return result;",
+        "}"
+      ]
+    },
+    "tests": [
+      {
+        "name": "dua kelompok",
+        "input": [
+          [
+            {
+              "type": "buah",
+              "name": "apel"
+            },
+            {
+              "type": "sayur",
+              "name": "bayam"
+            },
+            {
+              "type": "buah",
+              "name": "jeruk"
+            }
+          ],
+          "type"
+        ],
+        "expected": {
+          "buah": [
+            {
+              "type": "buah",
+              "name": "apel"
+            },
+            {
+              "type": "buah",
+              "name": "jeruk"
+            }
+          ],
+          "sayur": [
+            {
+              "type": "sayur",
+              "name": "bayam"
+            }
+          ]
+        }
+      },
+      {
+        "name": "key angka",
+        "input": [
+          [
+            {
+              "n": 1
+            },
+            {
+              "n": 2
+            },
+            {
+              "n": 1
+            }
+          ],
+          "n"
+        ],
+        "expected": {
+          "1": [
+            {
+              "n": 1
+            },
+            {
+              "n": 1
+            }
+          ],
+          "2": [
+            {
+              "n": 2
+            }
+          ]
+        }
+      },
+      {
+        "name": "array kosong",
+        "input": [
+          [],
+          "type"
+        ],
+        "expected": {}
+      }
+    ],
+    "hints": [
+      "Objek hasil dibuat sebelum loop dan dikembalikan setelah loop.",
+      "Di dalam loop: hitung nama kelompok → pastikan array-nya ada → `push`."
+    ],
+    "explanation": "`K extends keyof T` menjamin `key` adalah nama property yang benar-benar ada di `T`, jadi `groupBy(items, \"typo\")` ditolak compiler. `String(item[key])` mengubah nilai property menjadi key objek. Urutan penting: array kelompok harus dibuat (`result[group] = []`) sebelum `push`.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-utility-types-002",
+    "track": "typescript",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "utility-types",
+    "tags": [
+      "return-type",
+      "typeof",
+      "widening"
+    ],
+    "title": "ReturnType dan pelebaran literal",
+    "prompt": "Dengan `strict: true`, tipe `Result` sama dengan apa?",
+    "data": {
+      "language": "typescript",
+      "code": "function makeResult() {\n  return { ok: true, value: 42 };\n}\n\ntype Result = ReturnType<typeof makeResult>;",
+      "options": [
+        "`{ ok: true; value: 42 }`",
+        "`{ ok: boolean; value: number }`",
+        "`boolean | number`",
+        "`() => { ok: boolean; value: number }`"
+      ]
+    },
+    "answer": {
+      "index": 1
+    },
+    "hints": [
+      "`typeof makeResult` adalah tipe fungsinya; `ReturnType` mengambil tipe kembaliannya.",
+      "Property objek literal bisa diubah, jadi literal `true`/`42` dilebarkan."
+    ],
+    "explanation": "`typeof makeResult` = `() => { ok: boolean; value: number }`, dan `ReturnType` mengambil bagian setelah `=>`. Literal di property objek mengalami *widening* (`true` → `boolean`, `42` → `number`) karena property-nya mutable. Untuk mempertahankan literal, tulis `return { ok: true, value: 42 } as const;` (hasilnya juga `readonly`).",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

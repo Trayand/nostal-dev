@@ -1,0 +1,79 @@
+[
+  {
+    "id": "js-error-handling-001",
+    "track": "javascript",
+    "level": 4,
+    "format": "predict-output",
+    "topic": "error-handling",
+    "tags": [
+      "async-await",
+      "try-catch",
+      "return-await"
+    ],
+    "title": "return vs return await di try/catch",
+    "prompt": "Apa output kode berikut? Perhatikan perbedaan fungsi `a` dan `b`.",
+    "data": {
+      "language": "javascript",
+      "code": "async function failing() {\n  throw new Error('x');\n}\n\nasync function a() {\n  try {\n    return failing();\n  } catch {\n    return 'ditangkap a';\n  }\n}\n\nasync function b() {\n  try {\n    return await failing();\n  } catch {\n    return 'ditangkap b';\n  }\n}\n\n(async () => {\n  await a().then((v) => console.log(v), () => console.log('a ditolak'));\n  await b().then((v) => console.log(v), () => console.log('b ditolak'));\n})();",
+      "options": [
+        "ditangkap a\nditangkap b",
+        "a ditolak\nditangkap b",
+        "a ditolak\nb ditolak",
+        "ditangkap a\nb ditolak"
+      ]
+    },
+    "answer": {
+      "output": "a ditolak\nditangkap b"
+    },
+    "hints": [
+      "`failing()` tidak melempar secara sinkron; ia mengembalikan Promise yang rejected.",
+      "Blok `try` hanya menangkap error yang terjadi **selama** blok itu berjalan. Tanpa `await`, rejection terjadi setelah `a` sudah keluar dari `try`."
+    ],
+    "explanation": "Di `a`, `return failing()` langsung mengembalikan Promise yang rejected tanpa menunggu, sehingga `try/catch` di `a` tidak pernah melihat error-nya; Promise milik `a` ikut rejected → `a ditolak`. Di `b`, `await failing()` menunggu Promise di dalam `try`, rejection berubah menjadi exception yang ditangkap `catch` → `ditangkap b`. Inilah alasan `return await` berguna (dan tidak redundan) di dalam `try/catch`.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-this-002",
+    "track": "javascript",
+    "level": 4,
+    "format": "predict-output",
+    "topic": "this",
+    "tags": [
+      "classes",
+      "arrow-function",
+      "class-fields",
+      "strict-mode"
+    ],
+    "title": "Method vs arrow field yang dilepas dari objek",
+    "prompt": "Method biasa dan arrow function (class field) dilepas dari instance lalu dipanggil sendiri-sendiri. Apa output kode berikut?",
+    "data": {
+      "language": "javascript",
+      "code": "class Counter {\n  count = 0;\n  incMethod() {\n    this.count++;\n  }\n  incArrow = () => {\n    this.count++;\n  };\n}\n\nconst c = new Counter();\nconst { incArrow } = c;\nincArrow();\nincArrow();\n\ntry {\n  const m = c.incMethod;\n  m();\n} catch (e) {\n  console.log(e.constructor.name);\n}\nconsole.log(c.count);",
+      "options": [
+        "TypeError\n2",
+        "2",
+        "3",
+        "TypeError\n0"
+      ]
+    },
+    "answer": {
+      "output": "TypeError\n2"
+    },
+    "hints": [
+      "Arrow function sebagai class field dibuat per instance dan mengikat `this` saat konstruksi.",
+      "Kode di dalam `class` selalu berjalan dalam strict mode, jadi `this` pada pemanggilan fungsi biasa adalah `undefined`."
+    ],
+    "explanation": "`incArrow` adalah class field berisi arrow function, sehingga `this`-nya terkunci ke instance `c` meskipun fungsi dilepas dari objek: dua panggilan membuat `count` menjadi `2`. `incMethod` adalah method di prototype; saat dipanggil sebagai `m()` tanpa receiver, `this` bernilai `undefined` (class body selalu strict mode), sehingga `this.count++` melempar `TypeError` dan `count` tidak bertambah.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

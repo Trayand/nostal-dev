@@ -1,0 +1,310 @@
+[
+  {
+    "id": "ts-interfaces-001",
+    "track": "typescript",
+    "level": 2,
+    "format": "find-bug",
+    "topic": "interfaces",
+    "tags": [
+      "interface",
+      "optional-property"
+    ],
+    "title": "Objek tidak memenuhi interface",
+    "prompt": "Dengan `strict: true`, baris mana yang menyebabkan **compile error**?",
+    "data": {
+      "language": "typescript",
+      "code": "interface Product {\n  id: number;\n  name: string;\n  price: number;\n  description?: string;\n}\n\nconst item: Product = { id: 1, name: \"Buku\" };\nconsole.log(item.name);"
+    },
+    "answer": {
+      "line": 8,
+      "fixedLine": "const item: Product = { id: 1, name: \"Buku\", price: 50000 };"
+    },
+    "hints": [
+      "Bandingkan property di objek dengan property **wajib** di interface.",
+      "Hanya property bertanda `?` yang boleh dihilangkan."
+    ],
+    "explanation": "`price` wajib (tanpa `?`), jadi objek tanpa `price` ditolak: *Property 'price' is missing in type ... but required in type 'Product'*. `description` boleh tidak ada karena opsional. Interface tidak ada saat runtime; pengecekan ini murni saat kompilasi.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-unions-001",
+    "track": "typescript",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "unions",
+    "tags": [
+      "union",
+      "narrowing",
+      "typeof"
+    ],
+    "title": "Tipe sisa setelah narrowing",
+    "prompt": "Dengan `strict: true`, apa tipe `value` pada baris `return value;` terakhir?",
+    "data": {
+      "language": "typescript",
+      "code": "function format(value: string | number | null) {\n  if (value === null) return \"-\";\n  if (typeof value === \"string\") return value.trim();\n  return value;\n}",
+      "options": [
+        "`string | number`",
+        "`number`",
+        "`number | null`",
+        "`unknown`"
+      ]
+    },
+    "answer": {
+      "index": 1
+    },
+    "hints": [
+      "Setiap `return` di dalam `if` membuang satu anggota union untuk kode di bawahnya.",
+      "`null` dibuang oleh cek pertama, `string` oleh cek kedua."
+    ],
+    "explanation": "TypeScript melakukan *control-flow narrowing*: setelah `if (value === null) return`, tipe menjadi `string | number`; setelah `if (typeof value === \"string\") return`, yang tersisa hanya `number`. Kesalahan umum: mengira tipe tetap union penuh seperti di deklarasi parameter.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-generics-001",
+    "track": "typescript",
+    "level": 2,
+    "format": "code-short",
+    "topic": "generics",
+    "tags": [
+      "generic-function",
+      "fallback"
+    ],
+    "title": "Elemen pertama atau nilai cadangan",
+    "prompt": "Tulis fungsi generic `firstOr<T>(arr: T[], fallback: T): T` yang mengembalikan elemen pertama `arr`, atau `fallback` jika array kosong.\n\nContoh: `firstOr([3, 4], 0)` → `3`, `firstOr([], 0)` → `0`.\n\nHati-hati: elemen pertama bisa bernilai *falsy* seperti `0` atau `\"\"`.",
+    "data": {
+      "language": "typescript",
+      "starter": "function firstOr<T>(arr: T[], fallback: T): T {\n  return fallback;\n}",
+      "entry": "firstOr"
+    },
+    "tests": [
+      {
+        "name": "angka",
+        "input": [
+          [
+            3,
+            4
+          ],
+          0
+        ],
+        "expected": 3
+      },
+      {
+        "name": "array kosong",
+        "input": [
+          [],
+          0
+        ],
+        "expected": 0
+      },
+      {
+        "name": "string",
+        "input": [
+          [
+            "a",
+            "b"
+          ],
+          "z"
+        ],
+        "expected": "a"
+      },
+      {
+        "name": "elemen pertama falsy",
+        "input": [
+          [
+            0,
+            5
+          ],
+          9
+        ],
+        "expected": 0
+      },
+      {
+        "name": "string kosong",
+        "input": [
+          [
+            "",
+            "x"
+          ],
+          "z"
+        ],
+        "expected": ""
+      }
+    ],
+    "referenceSolution": "function firstOr<T>(arr: T[], fallback: T): T {\n  return arr.length > 0 ? arr[0] : fallback;\n}",
+    "hints": [
+      "Cek panjang array, bukan nilai elemennya.",
+      "`arr[0] || fallback` salah untuk `[0, 5]`; pakai `arr.length > 0 ? arr[0] : fallback`."
+    ],
+    "explanation": "Parameter tipe `T` mengikat tipe elemen dan tipe `fallback`, jadi `firstOr([1], \"x\")` ditolak compiler. Cek `arr.length` lebih aman daripada `||`, karena `||` mengganti semua nilai falsy (`0`, `\"\"`, `false`). `??` juga tidak cukup kalau array boleh berisi `undefined`.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-classes-001",
+    "track": "typescript",
+    "level": 2,
+    "format": "predict-output",
+    "topic": "classes",
+    "tags": [
+      "parameter-properties",
+      "private"
+    ],
+    "title": "Parameter property dan private",
+    "prompt": "Class berikut memakai parameter property dengan `public` dan `private`. Apa output-nya saat dijalankan?",
+    "data": {
+      "language": "typescript",
+      "code": "class Point {\n  constructor(public x: number, private y: number) {}\n  sum() {\n    return this.x + this.y;\n  }\n}\nconst p = new Point(1, 2);\nconsole.log(p.x, p.sum(), JSON.stringify(p));",
+      "options": [
+        "1 3 {\"x\":1,\"y\":2}",
+        "1 3 {\"x\":1}",
+        "1 3 {}",
+        "undefined NaN {}"
+      ]
+    },
+    "answer": {
+      "output": "1 3 {\"x\":1,\"y\":2}"
+    },
+    "hints": [
+      "`public`/`private` di parameter constructor otomatis membuat property dan mengisinya.",
+      "`private` di TypeScript hanya dicek saat kompilasi; saat runtime property tetap ada."
+    ],
+    "explanation": "*Parameter property* `constructor(public x, private y)` setara dengan `this.x = x; this.y = y;`. Modifier `private` hilang setelah kompilasi, sehingga `y` tetap property biasa dan ikut ter-serialisasi oleh `JSON.stringify`. Untuk privasi sungguhan saat runtime, pakai `#y`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-utility-types-001",
+    "track": "typescript",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "utility-types",
+    "tags": [
+      "partial",
+      "interface"
+    ],
+    "title": "Partial untuk data update",
+    "prompt": "Dengan `strict: true`, pemanggilan mana yang menyebabkan **compile error**?\n\n```ts\ninterface User {\n  id: number;\n  name: string;\n  email: string;\n}\n\nfunction updateUser(id: number, changes: Partial<User>) {\n  /* ... */\n}\n```",
+    "data": {
+      "options": [
+        "`updateUser(1, {})`",
+        "`updateUser(1, { name: \"Rina\" })`",
+        "`updateUser(1, { id: 2, name: \"Budi\", email: \"budi@mail.id\" })`",
+        "`updateUser(1, { name: 42 })`"
+      ]
+    },
+    "answer": {
+      "index": 3
+    },
+    "hints": [
+      "`Partial<T>` membuat semua property menjadi opsional.",
+      "Opsional tidak berarti tipenya bebas."
+    ],
+    "explanation": "`Partial<User>` setara `{ id?: number; name?: string; email?: string }`. Objek kosong, sebagian property, atau semua property boleh. Tapi setiap property yang **diisi** tetap harus bertipe benar, jadi `name: 42` error (*Type 'number' is not assignable to type 'string'*).",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-narrowing-001",
+    "track": "typescript",
+    "level": 2,
+    "format": "code-short",
+    "topic": "narrowing",
+    "tags": [
+      "typeof",
+      "union"
+    ],
+    "title": "Deskripsikan nilai union",
+    "prompt": "Tulis fungsi `describe(value: string | number | boolean): string`:\n\n- string → `\"teks: \"` + versi huruf besar (`\"halo\"` → `\"teks: HALO\"`)\n- number → `\"angka: \"` + dua angka desimal (`3.14159` → `\"angka: 3.14\"`)\n- boolean → `\"ya\"` jika `true`, `\"tidak\"` jika `false`",
+    "data": {
+      "language": "typescript",
+      "starter": "function describe(value: string | number | boolean): string {\n  return \"\";\n}",
+      "entry": "describe"
+    },
+    "tests": [
+      {
+        "input": [
+          "halo"
+        ],
+        "expected": "teks: HALO"
+      },
+      {
+        "input": [
+          3.14159
+        ],
+        "expected": "angka: 3.14"
+      },
+      {
+        "input": [
+          true
+        ],
+        "expected": "ya"
+      },
+      {
+        "input": [
+          false
+        ],
+        "expected": "tidak"
+      },
+      {
+        "name": "angka nol",
+        "input": [
+          0
+        ],
+        "expected": "angka: 0.00"
+      },
+      {
+        "name": "string kosong",
+        "input": [
+          ""
+        ],
+        "expected": "teks: "
+      }
+    ],
+    "referenceSolution": "function describe(value: string | number | boolean): string {\n  if (typeof value === \"string\") return \"teks: \" + value.toUpperCase();\n  if (typeof value === \"number\") return \"angka: \" + value.toFixed(2);\n  return value ? \"ya\" : \"tidak\";\n}",
+    "hints": [
+      "Pakai `typeof value === \"string\"` dan `typeof value === \"number\"` untuk mempersempit tipe.",
+      "Setelah dua cek itu, sisa tipenya `boolean`; `toFixed(2)` memberi dua desimal."
+    ],
+    "explanation": "`typeof` adalah *type guard*: di dalam cabangnya, TypeScript tahu `value` bertipe `string` (sehingga `toUpperCase` boleh) atau `number` (sehingga `toFixed` boleh). Jangan cek dengan truthiness (`if (value)`), karena `0` dan `\"\"` falsy dan akan salah masuk cabang.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

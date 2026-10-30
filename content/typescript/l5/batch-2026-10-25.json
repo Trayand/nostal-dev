@@ -1,0 +1,231 @@
+[
+  {
+    "id": "ts-generics-003",
+    "track": "typescript",
+    "level": 5,
+    "format": "code-full",
+    "topic": "generics",
+    "tags": [
+      "lru-cache",
+      "map",
+      "generic-class",
+      "interview"
+    ],
+    "title": "LRU cache generic",
+    "prompt": "Implementasikan class generic `LRUCache<K, V>` dengan kapasitas tetap:\n\n- `get(key)` → nilai, atau `undefined` jika tidak ada. Akses `get` menjadikan key itu **paling baru dipakai**.\n- `put(key, value)` → simpan/perbarui nilai (juga menjadikannya paling baru). Jika jumlah item melebihi kapasitas, buang item yang **paling lama tidak dipakai**.\n\nFungsi `runLRU` (sudah jadi) menjalankan daftar operasi dan mengembalikan hasil setiap `get` (`null` jika tidak ada). Contoh: kapasitas 2, `put a 1`, `put b 2`, `get a`, `put c 3`, `get b` → `[1, null]` (`b` dibuang karena `a` baru saja dipakai).\n\nTarget: `get` dan `put` O(1).",
+    "data": {
+      "language": "typescript",
+      "starter": "class LRUCache<K, V> {\n  constructor(private capacity: number) {}\n\n  get(key: K): V | undefined {\n    // tulis kodemu di sini\n    return undefined;\n  }\n\n  put(key: K, value: V): void {\n    // tulis kodemu di sini\n  }\n}\n\ntype Op = [\"get\", string] | [\"put\", string, number];\n\nfunction runLRU(capacity: number, ops: Op[]): Array<number | null> {\n  const cache = new LRUCache<string, number>(capacity);\n  const out: Array<number | null> = [];\n  for (const op of ops) {\n    if (op[0] === \"put\") cache.put(op[1], op[2]);\n    else out.push(cache.get(op[1]) ?? null);\n  }\n  return out;\n}",
+      "entry": "runLRU"
+    },
+    "tests": [
+      {
+        "name": "eviksi item paling lama",
+        "input": [
+          2,
+          [
+            [
+              "put",
+              "a",
+              1
+            ],
+            [
+              "put",
+              "b",
+              2
+            ],
+            [
+              "get",
+              "a"
+            ],
+            [
+              "put",
+              "c",
+              3
+            ],
+            [
+              "get",
+              "b"
+            ],
+            [
+              "get",
+              "c"
+            ]
+          ]
+        ],
+        "expected": [
+          1,
+          null,
+          3
+        ]
+      },
+      {
+        "name": "put ulang menyegarkan key",
+        "input": [
+          2,
+          [
+            [
+              "put",
+              "a",
+              1
+            ],
+            [
+              "put",
+              "b",
+              2
+            ],
+            [
+              "put",
+              "a",
+              10
+            ],
+            [
+              "put",
+              "c",
+              3
+            ],
+            [
+              "get",
+              "a"
+            ],
+            [
+              "get",
+              "b"
+            ]
+          ]
+        ],
+        "expected": [
+          10,
+          null
+        ]
+      },
+      {
+        "name": "kapasitas 1",
+        "input": [
+          1,
+          [
+            [
+              "put",
+              "a",
+              1
+            ],
+            [
+              "put",
+              "b",
+              2
+            ],
+            [
+              "get",
+              "a"
+            ],
+            [
+              "get",
+              "b"
+            ]
+          ]
+        ],
+        "expected": [
+          null,
+          2
+        ]
+      },
+      {
+        "name": "get tanpa put",
+        "input": [
+          2,
+          [
+            [
+              "get",
+              "x"
+            ]
+          ]
+        ],
+        "expected": [
+          null
+        ]
+      },
+      {
+        "name": "nilai nol tetap tersimpan",
+        "input": [
+          2,
+          [
+            [
+              "put",
+              "z",
+              0
+            ],
+            [
+              "get",
+              "z"
+            ]
+          ]
+        ],
+        "expected": [
+          0
+        ]
+      },
+      {
+        "name": "tanpa operasi",
+        "input": [
+          3,
+          []
+        ],
+        "expected": []
+      }
+    ],
+    "referenceSolution": "class LRUCache<K, V> {\n  private map = new Map<K, V>();\n\n  constructor(private capacity: number) {}\n\n  get(key: K): V | undefined {\n    if (!this.map.has(key)) return undefined;\n    const value = this.map.get(key) as V;\n    this.map.delete(key);\n    this.map.set(key, value);\n    return value;\n  }\n\n  put(key: K, value: V): void {\n    if (this.map.has(key)) this.map.delete(key);\n    this.map.set(key, value);\n    if (this.map.size > this.capacity) {\n      const oldest = this.map.keys().next().value as K;\n      this.map.delete(oldest);\n    }\n  }\n}\n\ntype Op = [\"get\", string] | [\"put\", string, number];\n\nfunction runLRU(capacity: number, ops: Op[]): Array<number | null> {\n  const cache = new LRUCache<string, number>(capacity);\n  const out: Array<number | null> = [];\n  for (const op of ops) {\n    if (op[0] === \"put\") cache.put(op[1], op[2]);\n    else out.push(cache.get(op[1]) ?? null);\n  }\n  return out;\n}",
+    "hints": [
+      "`Map` di JavaScript menyimpan urutan penyisipan; key pertama adalah yang paling lama.",
+      "Untuk menandai \"baru dipakai\": `delete` lalu `set` lagi. Item tertua: `map.keys().next().value`."
+    ],
+    "explanation": "`Map` mempertahankan urutan penyisipan, jadi bisa dipakai sebagai antrian LRU: menghapus lalu menyisipkan ulang key memindahkannya ke ujung \"terbaru\", dan `keys().next()` memberi key tertua — semuanya O(1). Kesalahan umum: lupa menyegarkan urutan saat `get`, atau saat `put` key yang sudah ada (tes kedua). Generic `K`/`V` membuat class bisa dipakai untuk tipe apa pun tanpa `any`.",
+    "estimatedMinutes": 15,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-structural-typing-001",
+    "track": "typescript",
+    "level": 5,
+    "format": "multiple-choice",
+    "topic": "structural-typing",
+    "tags": [
+      "structural-typing",
+      "excess-property-check",
+      "object-literal"
+    ],
+    "title": "Excess property check vs structural typing",
+    "prompt": "Dengan `strict: true`, baris bertanda `// A` dan `// B` mana yang menyebabkan **compile error**?",
+    "data": {
+      "language": "typescript",
+      "code": "interface Point {\n  x: number;\n  y: number;\n}\n\nfunction distance(p: Point): number {\n  return Math.hypot(p.x, p.y);\n}\n\nconst p3 = { x: 1, y: 2, z: 3 };\ndistance(p3);                  // A\ndistance({ x: 1, y: 2, z: 3 }); // B",
+      "options": [
+        "Tidak ada yang error",
+        "Hanya A",
+        "Hanya B",
+        "A dan B"
+      ]
+    },
+    "answer": {
+      "index": 2
+    },
+    "hints": [
+      "TypeScript memakai *structural typing*: objek dengan property ekstra tetap kompatibel.",
+      "Ada pengecualian khusus untuk **object literal** yang langsung ditulis di tempat tipe diharapkan."
+    ],
+    "explanation": "Secara struktural, `{ x, y, z }` memenuhi `Point` (punya `x` dan `y`), jadi **A** lolos. Namun object literal \"segar\" yang langsung diberikan ke tipe tertentu terkena *excess property check*: `z` dianggap kemungkinan typo, sehingga **B** error (*Object literal may only specify known properties*). Begitu literal disimpan ke variabel dulu (`p3`), pengecekan ekstra itu tidak berlaku.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

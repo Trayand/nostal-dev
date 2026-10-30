@@ -1,0 +1,394 @@
+[
+  {
+    "id": "logic-complexity-001",
+    "track": "logic",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "complexity",
+    "tags": [
+      "big-o",
+      "nested-loops",
+      "logarithmic"
+    ],
+    "title": "Kompleksitas loop dengan j dikali 2",
+    "prompt": "Berapa kompleksitas waktu (Big-O) fungsi berikut terhadap `n`?",
+    "data": {
+      "code": "function f(n) {\n  let count = 0;\n  for (let i = 0; i < n; i++) {\n    for (let j = 1; j < n; j *= 2) {\n      count++;\n    }\n  }\n  return count;\n}",
+      "language": "javascript",
+      "options": [
+        "O(n)",
+        "O(n log n)",
+        "O(n²)",
+        "O(log n)"
+      ]
+    },
+    "answer": {
+      "index": 1
+    },
+    "hints": [
+      "Hitung loop luar dan loop dalam secara terpisah, lalu kalikan.",
+      "Berapa kali `j` bisa dikali 2 sebelum mencapai `n`?"
+    ],
+    "explanation": "Loop luar berjalan `n` kali. Loop dalam menggandakan `j` (1, 2, 4, 8, ...) sehingga hanya berjalan sekitar `log₂ n` kali. Total: `n × log n` → **O(n log n)**. Kesalahan umum: melihat dua loop bersarang lalu langsung menjawab O(n²) — yang menentukan adalah *bagaimana* variabel loop berubah, bukan jumlah loop-nya.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-searching-001",
+    "track": "logic",
+    "level": 3,
+    "format": "code-full",
+    "topic": "searching",
+    "tags": [
+      "binary-search",
+      "sorted-array"
+    ],
+    "title": "Binary search klasik",
+    "prompt": "Tulis fungsi `binarySearch(arr, target)` yang mencari `target` di array `arr` yang **sudah terurut naik** dan berisi angka unik. Kembalikan index-nya, atau `-1` jika tidak ditemukan.\n\nGunakan binary search (O(log n)), bukan loop linear.\n\nContoh: `binarySearch([1, 3, 5, 7, 9], 7)` → `3`.",
+    "data": {
+      "language": "javascript",
+      "starter": "function binarySearch(arr, target) {\n  let low = 0;\n  let high = arr.length - 1;\n  // tulis kodemu di sini\n  return -1;\n}",
+      "entry": "binarySearch"
+    },
+    "tests": [
+      {
+        "name": "di tengah-kanan",
+        "input": [
+          [
+            1,
+            3,
+            5,
+            7,
+            9
+          ],
+          7
+        ],
+        "expected": 3
+      },
+      {
+        "name": "elemen pertama",
+        "input": [
+          [
+            1,
+            3,
+            5,
+            7,
+            9
+          ],
+          1
+        ],
+        "expected": 0
+      },
+      {
+        "name": "elemen terakhir",
+        "input": [
+          [
+            1,
+            3,
+            5,
+            7,
+            9
+          ],
+          9
+        ],
+        "expected": 4
+      },
+      {
+        "name": "tidak ada (di antara)",
+        "input": [
+          [
+            1,
+            3,
+            5,
+            7,
+            9
+          ],
+          4
+        ],
+        "expected": -1
+      },
+      {
+        "name": "lebih kecil dari semua",
+        "input": [
+          [
+            1,
+            3,
+            5,
+            7,
+            9
+          ],
+          -10
+        ],
+        "expected": -1
+      },
+      {
+        "name": "array kosong",
+        "input": [
+          [],
+          5
+        ],
+        "expected": -1
+      },
+      {
+        "name": "satu elemen, ada",
+        "input": [
+          [
+            5
+          ],
+          5
+        ],
+        "expected": 0
+      },
+      {
+        "name": "satu elemen, tidak ada",
+        "input": [
+          [
+            5
+          ],
+          6
+        ],
+        "expected": -1
+      },
+      {
+        "name": "jumlah elemen genap",
+        "input": [
+          [
+            2,
+            4,
+            6,
+            8
+          ],
+          8
+        ],
+        "expected": 3
+      }
+    ],
+    "referenceSolution": "function binarySearch(arr, target) {\n  let low = 0;\n  let high = arr.length - 1;\n  while (low <= high) {\n    const mid = Math.floor((low + high) / 2);\n    if (arr[mid] === target) return mid;\n    if (arr[mid] < target) low = mid + 1;\n    else high = mid - 1;\n  }\n  return -1;\n}",
+    "hints": [
+      "Ambil elemen tengah `mid`; jika lebih kecil dari target, buang separuh kiri, jika lebih besar buang separuh kanan.",
+      "Loop `while (low <= high)` dengan `low = mid + 1` atau `high = mid - 1`. Pakai `<=` agar rentang satu elemen tetap diperiksa."
+    ],
+    "explanation": "Setiap langkah membuang separuh rentang pencarian, jadi maksimal ~`log₂ n` langkah. Tiga detail yang sering salah: (1) kondisi `low <= high` — dengan `<`, elemen terakhir yang tersisa tidak pernah dicek; (2) `low = mid + 1` / `high = mid - 1` — tanpa `±1` bisa terjadi infinite loop; (3) `Math.floor` agar `mid` selalu bilangan bulat.",
+    "estimatedMinutes": 8,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-sorting-001",
+    "track": "logic",
+    "level": 3,
+    "format": "fill-blank",
+    "topic": "sorting",
+    "tags": [
+      "bubble-sort",
+      "swap",
+      "destructuring"
+    ],
+    "title": "Lengkapi bubble sort",
+    "prompt": "Lengkapi implementasi bubble sort berikut agar mengembalikan array baru yang terurut naik. Blank pertama mengoptimalkan loop dalam (bagian akhir array yang sudah pasti terurut tidak perlu dicek lagi); dua blank berikutnya menukar `a[j]` dan `a[j + 1]`.",
+    "data": {
+      "language": "javascript",
+      "template": "function bubbleSort(arr) {\n  const a = [...arr];\n  for (let i = 0; i < a.length - 1; i++) {\n    for (let j = 0; j < a.length - 1 - {{blank}}; j++) {\n      if (a[j] > a[j + 1]) {\n        [a[j], a[j + 1]] = [{{blank}}, {{blank}}];\n      }\n    }\n  }\n  return a;\n}",
+      "choices": [
+        "i",
+        "j",
+        "1",
+        "a[j]",
+        "a[j + 1]",
+        "a[i]"
+      ],
+      "entry": "bubbleSort"
+    },
+    "answer": {
+      "blanks": [
+        [
+          "i"
+        ],
+        [
+          "a[j + 1]",
+          "a[j+1]"
+        ],
+        [
+          "a[j]"
+        ]
+      ]
+    },
+    "tests": [
+      {
+        "input": [
+          [
+            5,
+            1,
+            4,
+            2,
+            8
+          ]
+        ],
+        "expected": [
+          1,
+          2,
+          4,
+          5,
+          8
+        ]
+      },
+      {
+        "input": [
+          [
+            2,
+            1
+          ]
+        ],
+        "expected": [
+          1,
+          2
+        ]
+      },
+      {
+        "input": [
+          [
+            3,
+            3,
+            1
+          ]
+        ],
+        "expected": [
+          1,
+          3,
+          3
+        ]
+      },
+      {
+        "input": [
+          [
+            1
+          ]
+        ],
+        "expected": [
+          1
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      },
+      {
+        "input": [
+          [
+            9,
+            7,
+            5,
+            3,
+            1
+          ]
+        ],
+        "expected": [
+          1,
+          3,
+          5,
+          7,
+          9
+        ]
+      }
+    ],
+    "hints": [
+      "Setelah putaran ke-`i` dari loop luar, berapa elemen terbesar yang sudah berada di posisi akhirnya?",
+      "Destructuring swap: `[x, y] = [y, x]`. Jadi ruas kanan berisi elemen yang posisinya ditukar."
+    ],
+    "explanation": "Setiap putaran loop luar \"menggelembungkan\" elemen terbesar yang tersisa ke ujung kanan, sehingga setelah `i` putaran, `i` elemen terakhir sudah terurut — loop dalam cukup sampai `a.length - 1 - i`. Penukaran memakai destructuring `[a[j], a[j + 1]] = [a[j + 1], a[j]]`, tanpa variabel sementara. Kompleksitas bubble sort tetap O(n²).",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-sorting-002",
+    "track": "logic",
+    "level": 3,
+    "format": "predict-output",
+    "topic": "sorting",
+    "tags": [
+      "array-sort",
+      "comparator",
+      "pitfall"
+    ],
+    "title": "sort() tanpa comparator pada angka",
+    "prompt": "Array angka diurutkan dengan `sort()` tanpa argumen. Apa output kode berikut?",
+    "data": {
+      "language": "javascript",
+      "code": "const nums = [10, 1, 5, 100, 25];\nnums.sort();\nconsole.log(JSON.stringify(nums));",
+      "options": [
+        "[1,5,10,25,100]",
+        "[1,10,100,25,5]",
+        "[100,25,10,5,1]",
+        "[10,1,5,100,25]"
+      ]
+    },
+    "answer": {
+      "output": "[1,10,100,25,5]"
+    },
+    "hints": [
+      "Tanpa fungsi pembanding, `sort()` mengubah elemen menjadi string dulu.",
+      "Bandingkan `\"100\"` dan `\"25\"` karakter demi karakter: `\"1\"` < `\"2\"`."
+    ],
+    "explanation": "`Array.prototype.sort()` tanpa comparator mengurutkan berdasarkan **string** (urutan kode UTF-16), jadi `\"100\"` datang sebelum `\"25\"` dan `\"5\"` di paling akhir. Untuk angka, selalu beri comparator: `nums.sort((a, b) => a - b)`. Perhatikan juga bahwa `sort()` mengubah array aslinya (in-place).",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-sorting-003",
+    "track": "logic",
+    "level": 3,
+    "format": "find-bug",
+    "topic": "sorting",
+    "tags": [
+      "insertion-sort",
+      "off-by-one",
+      "boundary"
+    ],
+    "title": "Insertion sort melewatkan index 0",
+    "prompt": "Implementasi insertion sort ini hampir benar, tapi `insertionSort([3, 1])` mengembalikan `[3, 1]` dan `insertionSort([4, 2, 3])` mengembalikan `[4, 2, 3]`. Baris mana yang salah?",
+    "data": {
+      "language": "javascript",
+      "code": "function insertionSort(arr) {\n  const a = [...arr];\n  for (let i = 1; i < a.length; i++) {\n    const key = a[i];\n    let j = i - 1;\n    while (j > 0 && a[j] > key) {\n      a[j + 1] = a[j];\n      j--;\n    }\n    a[j + 1] = key;\n  }\n  return a;\n}"
+    },
+    "answer": {
+      "line": 6,
+      "fixedLine": "    while (j >= 0 && a[j] > key) {"
+    },
+    "hints": [
+      "Pada `[3, 1]`, saat `i = 1` nilai `j` dimulai dari 0. Apakah isi loop `while` dijalankan?",
+      "Elemen di index 0 juga harus bisa digeser ke kanan."
+    ],
+    "explanation": "Kondisi `j > 0` membuat elemen di index 0 tidak pernah dibandingkan atau digeser, sehingga elemen yang lebih kecil tidak bisa disisipkan ke posisi paling depan. Kondisi yang benar adalah `j >= 0`. Saat `j` menjadi -1, `a[j + 1] = key` menaruh `key` di index 0. Ini kesalahan batas (*boundary*) yang klasik.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

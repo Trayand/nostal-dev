@@ -1,0 +1,219 @@
+[
+  {
+    "id": "go-interfaces-001",
+    "track": "go",
+    "level": 3,
+    "format": "predict-output",
+    "topic": "interfaces",
+    "tags": [
+      "nil-interface",
+      "typed-nil",
+      "errors"
+    ],
+    "title": "Typed nil di dalam interface error",
+    "prompt": "Apa output program berikut?",
+    "data": {
+      "language": "go",
+      "code": "package main\n\nimport \"fmt\"\n\ntype MyErr struct{}\n\nfunc (*MyErr) Error() string { return \"boom\" }\n\nfunc mayFail(fail bool) error {\n\tvar p *MyErr\n\tif fail {\n\t\tp = &MyErr{}\n\t}\n\treturn p\n}\n\nfunc main() {\n\terr := mayFail(false)\n\tfmt.Println(err == nil)\n\tfmt.Println(err.(*MyErr) == nil)\n}"
+    },
+    "answer": {
+      "output": "false\ntrue"
+    },
+    "hints": [
+      "Nilai interface terdiri dari dua bagian: tipe dinamis dan nilai dinamis. Interface hanya `nil` jika **keduanya** kosong.",
+      "`return p` mengisi interface `error` dengan tipe `*MyErr` dan nilai pointer `nil`. Type assertion ke `*MyErr` berhasil dan mengembalikan pointer nil itu."
+    ],
+    "explanation": "Saat `p` (bertipe `*MyErr`, bernilai `nil`) dikembalikan sebagai `error`, interface yang dihasilkan berisi **(tipe = `*MyErr`, nilai = nil)**. Karena tipe dinamisnya terisi, `err == nil` bernilai `false`, padahal pointer di dalamnya nil. Ini sumber bug klasik: pemanggil mengira terjadi error.\n\n`err.(*MyErr)` berhasil (tipe dinamisnya memang `*MyErr`) dan menghasilkan pointer `nil`, sehingga perbandingannya dengan `nil` bernilai `true`.\n\nPerbaikan idiomatis: kembalikan `nil` secara eksplisit di jalur sukses (`if !fail { return nil }`), jangan mengembalikan variabel pointer bertipe konkret sebagai `error`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics checked by reasoning; not executed"
+    }
+  },
+  {
+    "id": "go-closures-001",
+    "track": "go",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "closures",
+    "tags": [
+      "loop-variable",
+      "go1-22",
+      "closures"
+    ],
+    "title": "Closure dalam loop: Go 1.22 vs sebelumnya",
+    "prompt": "Asumsi versi: perilaku ditentukan oleh direktif `go` di `go.mod`. Apa output kode berikut jika `go.mod` berisi `go 1.22`, dan jika berisi `go 1.21`?",
+    "data": {
+      "language": "go",
+      "code": "var fns []func()\nfor i := 0; i < 3; i++ {\n\tfns = append(fns, func() { fmt.Print(i, \" \") })\n}\nfor _, f := range fns {\n\tf()\n}",
+      "options": [
+        "`0 1 2` dengan `go 1.22`; `3 3 3` dengan `go 1.21`",
+        "`3 3 3` di kedua versi",
+        "`0 1 2` di kedua versi",
+        "`2 2 2` dengan `go 1.22`; `3 3 3` dengan `go 1.21`"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Go 1.22 mengubah semantik variabel loop `for`: setiap iterasi kini punya variabel `i` sendiri.",
+      "Sebelum 1.22, hanya ada **satu** variabel `i` untuk seluruh loop, dan closure menangkap variabel itu (bukan nilainya). Nilainya setelah loop selesai adalah 3."
+    ],
+    "explanation": "Closure di Go menangkap **variabel**, bukan salinan nilainya.\n\n- **`go 1.21` ke bawah:** loop `for i := 0; ...` hanya memiliki satu variabel `i` yang dipakai bersama semua iterasi. Ketiga closure menangkap variabel yang sama, dan saat dipanggil nilainya sudah `3` (kondisi berhenti loop). Output: `3 3 3`.\n- **`go 1.22` ke atas:** setiap iterasi membuat variabel `i` baru (per-iteration), sehingga tiap closure melihat nilainya sendiri. Output: `0 1 2`.\n\nPerubahan ini berlaku per modul berdasarkan direktif `go` di `go.mod`, bukan versi toolchain yang terpasang. Di kode lama, trik `i := i` di dalam loop dipakai untuk mendapatkan efek yang sama.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics checked by reasoning; not executed"
+    }
+  },
+  {
+    "id": "go-select-001",
+    "track": "go",
+    "level": 3,
+    "format": "predict-output",
+    "topic": "select",
+    "tags": [
+      "select",
+      "default",
+      "buffered-channel"
+    ],
+    "title": "select dengan default pada buffered channel",
+    "prompt": "Apa output program berikut?",
+    "data": {
+      "language": "go",
+      "code": "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tch := make(chan int, 1)\n\tfor i := 0; i < 3; i++ {\n\t\tselect {\n\t\tcase ch <- i:\n\t\t\tfmt.Println(\"kirim\", i)\n\t\tdefault:\n\t\t\tfmt.Println(\"penuh\", i)\n\t\t}\n\t}\n\tfmt.Println(<-ch)\n}"
+    },
+    "answer": {
+      "output": "kirim 0\npenuh 1\npenuh 2\n0"
+    },
+    "hints": [
+      "`select` dengan `default` tidak pernah memblokir: jika tidak ada case yang siap, `default` langsung dijalankan.",
+      "Buffer berkapasitas 1 hanya muat satu nilai, dan tidak ada yang membacanya selama loop berjalan."
+    ],
+    "explanation": "Channel punya buffer 1. Pada `i = 0`, buffer kosong sehingga case `ch <- 0` siap dan tercetak `kirim 0`. Pada `i = 1` dan `i = 2`, buffer sudah penuh dan tidak ada penerima, jadi case kirim tidak siap; `select` memilih `default` (`penuh 1`, `penuh 2`) tanpa memblokir. Terakhir `<-ch` mengambil nilai yang tersimpan, yaitu `0`.\n\nTidak ada keacakan di sini: `select` hanya memilih acak jika **lebih dari satu** case siap bersamaan. Tanpa `default`, iterasi `i = 1` akan memblokir selamanya dan program berakhir dengan deadlock.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics checked by reasoning; not executed"
+    }
+  },
+  {
+    "id": "go-channels-002",
+    "track": "go",
+    "level": 3,
+    "format": "parsons",
+    "topic": "channels",
+    "tags": [
+      "generator",
+      "close",
+      "goroutines"
+    ],
+    "title": "Generator channel yang menutup channel-nya",
+    "prompt": "Susun fungsi `gen` yang mengirim semua angka `nums` ke sebuah channel dari goroutine terpisah, lalu **menutup** channel tersebut, sehingga pemanggil bisa memakai `for v := range gen(1, 2, 3) { ... }` dan loop-nya berhenti sendiri.",
+    "data": {
+      "language": "go"
+    },
+    "answer": {
+      "lines": [
+        "func gen(nums ...int) <-chan int {",
+        "\tout := make(chan int)",
+        "\tgo func() {",
+        "\t\tfor _, n := range nums {",
+        "\t\t\tout <- n",
+        "\t\t}",
+        "\t\tclose(out)",
+        "\t}()",
+        "\treturn out",
+        "}"
+      ]
+    },
+    "hints": [
+      "Channel harus dibuat sebelum goroutine memakainya, dan fungsi mengembalikan channel tanpa menunggu goroutine selesai.",
+      "`close(out)` harus dipanggil di dalam goroutine **setelah** loop pengiriman selesai. Menutup lebih awal membuat `out <- n` panic."
+    ],
+    "explanation": "Pola generator: buat channel, jalankan goroutine pengirim, lalu langsung `return out` agar pemanggil bisa mulai menerima. Karena channel unbuffered, setiap `out <- n` menunggu pemanggil menerima, dan hal itu aman karena berjalan di goroutine terpisah. Setelah semua nilai terkirim, `close(out)` memberi sinyal bahwa tidak ada data lagi, sehingga `for range` di sisi pemanggil berhenti.\n\nKesalahan umum: lupa `close` (loop `range` pemanggil menunggu selamanya, lalu deadlock), atau menutup channel sebelum/di luar goroutine (panic `send on closed channel`). Aturan praktis: **pengirim** yang menutup channel, bukan penerima. Tipe kembalian `<-chan int` (receive-only) mencegah pemanggil mengirim atau menutup channel.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics checked by reasoning; not executed"
+    }
+  },
+  {
+    "id": "go-errors-desktop-001",
+    "track": "go",
+    "level": 3,
+    "format": "desktop",
+    "topic": "errors",
+    "tags": [
+      "wrapping",
+      "errors-is",
+      "sentinel-error",
+      "testing"
+    ],
+    "title": "ParsePort dengan sentinel error yang dibungkus",
+    "prompt": "Implementasikan `ParsePort(s string) (int, error)` yang mem-parse nomor port:\n\n- Spasi di awal/akhir diabaikan.\n- String kosong (setelah di-trim) → error yang memenuhi `errors.Is(err, ErrEmpty)`.\n- Bukan angka → `errors.Is(err, ErrNotNumber)`.\n- Di luar rentang 1–65535 → `errors.Is(err, ErrOutOfRange)`.\n- Pesan error untuk input tidak kosong harus **menyebut input** (setelah di-trim), jadi bungkus sentinel error dengan konteks.\n- Saat error, kembalikan `0`.\n\nUnduh starter, lalu jalankan `go test ./...` sampai semua tes lulus. Asumsi: Go 1.22.",
+    "data": {
+      "language": "go",
+      "command": "go test ./...",
+      "files": [
+        {
+          "path": "go.mod",
+          "kind": "other",
+          "content": "module port\n\ngo 1.22\n"
+        },
+        {
+          "path": "port.go",
+          "kind": "starter",
+          "content": "package port\n\nimport \"errors\"\n\nvar (\n\tErrEmpty      = errors.New(\"port kosong\")\n\tErrNotNumber  = errors.New(\"port bukan angka\")\n\tErrOutOfRange = errors.New(\"port di luar rentang 1-65535\")\n)\n\n// ParsePort parses a TCP port number (1-65535), ignoring surrounding spaces.\n// Errors wrap ErrEmpty, ErrNotNumber or ErrOutOfRange and mention the input.\nfunc ParsePort(s string) (int, error) {\n\t// TODO: implement\n\treturn 0, nil\n}\n"
+        },
+        {
+          "path": "port_test.go",
+          "kind": "test",
+          "content": "package port\n\nimport (\n\t\"errors\"\n\t\"strings\"\n\t\"testing\"\n)\n\nfunc TestParsePort(t *testing.T) {\n\tcases := []struct {\n\t\tname    string\n\t\tin      string\n\t\twant    int\n\t\twantErr error\n\t}{\n\t\t{\"valid\", \"8080\", 8080, nil},\n\t\t{\"spasi di tepi\", \"  443 \", 443, nil},\n\t\t{\"batas bawah\", \"1\", 1, nil},\n\t\t{\"batas atas\", \"65535\", 65535, nil},\n\t\t{\"kosong\", \"\", 0, ErrEmpty},\n\t\t{\"hanya spasi\", \"   \", 0, ErrEmpty},\n\t\t{\"huruf\", \"abc\", 0, ErrNotNumber},\n\t\t{\"campuran\", \"80a\", 0, ErrNotNumber},\n\t\t{\"nol\", \"0\", 0, ErrOutOfRange},\n\t\t{\"terlalu besar\", \"70000\", 0, ErrOutOfRange},\n\t\t{\"negatif\", \"-1\", 0, ErrOutOfRange},\n\t}\n\tfor _, c := range cases {\n\t\tt.Run(c.name, func(t *testing.T) {\n\t\t\tgot, err := ParsePort(c.in)\n\t\t\tif c.wantErr == nil {\n\t\t\t\tif err != nil {\n\t\t\t\t\tt.Fatalf(\"ParsePort(%q) error = %v, want nil\", c.in, err)\n\t\t\t\t}\n\t\t\t\tif got != c.want {\n\t\t\t\t\tt.Fatalf(\"ParsePort(%q) = %d, want %d\", c.in, got, c.want)\n\t\t\t\t}\n\t\t\t\treturn\n\t\t\t}\n\t\t\tif !errors.Is(err, c.wantErr) {\n\t\t\t\tt.Fatalf(\"ParsePort(%q) error = %v, want errors.Is(err, %v)\", c.in, err, c.wantErr)\n\t\t\t}\n\t\t\tif got != 0 {\n\t\t\t\tt.Errorf(\"ParsePort(%q) = %d on error, want 0\", c.in, got)\n\t\t\t}\n\t\t\tif in := strings.TrimSpace(c.in); !strings.Contains(err.Error(), in) {\n\t\t\t\tt.Errorf(\"error %q should mention input %q\", err.Error(), in)\n\t\t\t}\n\t\t})\n\t}\n}\n"
+        }
+      ]
+    },
+    "referenceSolution": "package port\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n\t\"strconv\"\n\t\"strings\"\n)\n\nvar (\n\tErrEmpty      = errors.New(\"port kosong\")\n\tErrNotNumber  = errors.New(\"port bukan angka\")\n\tErrOutOfRange = errors.New(\"port di luar rentang 1-65535\")\n)\n\nfunc ParsePort(s string) (int, error) {\n\ts = strings.TrimSpace(s)\n\tif s == \"\" {\n\t\treturn 0, ErrEmpty\n\t}\n\tn, err := strconv.Atoi(s)\n\tif err != nil {\n\t\treturn 0, fmt.Errorf(\"parse port %q: %w\", s, ErrNotNumber)\n\t}\n\tif n < 1 || n > 65535 {\n\t\treturn 0, fmt.Errorf(\"parse port %q: %w\", s, ErrOutOfRange)\n\t}\n\treturn n, nil\n}",
+    "hints": [
+      "Mulai dengan `strings.TrimSpace`, lalu `strconv.Atoi`. Periksa kasus kosong sebelum parsing.",
+      "Bungkus sentinel dengan konteks memakai `fmt.Errorf(\"parse port %q: %w\", s, ErrNotNumber)` agar `errors.Is` tetap bekerja dan pesan menyebut input."
+    ],
+    "explanation": "Sentinel error (`var ErrX = errors.New(...)`) memberi pemanggil cara stabil untuk membedakan jenis kegagalan, sedangkan `fmt.Errorf` dengan `%w` menambah konteks (input yang salah) **tanpa** menghilangkan identitas sentinel-nya, karena `errors.Is` menelusuri rantai unwrap. Tes memastikan keduanya: `errors.Is` harus `true` dan pesan harus memuat input.\n\nKesalahan umum: memakai `%v` (pesan benar, tetapi `errors.Is` gagal), membandingkan dengan `err == ErrNotNumber` (gagal begitu error dibungkus), atau mengembalikan error dari `strconv.Atoi` mentah-mentah (bukan sentinel milik paket). Perhatikan juga `-1` lolos dari `Atoi` sebagai angka valid, jadi harus ditangkap oleh pemeriksaan rentang.",
+    "estimatedMinutes": 20,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics checked by reasoning; not executed"
+    }
+  }
+]

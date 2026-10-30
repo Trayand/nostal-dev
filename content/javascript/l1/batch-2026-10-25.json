@@ -1,0 +1,152 @@
+[
+  {
+    "id": "js-scope-001",
+    "track": "javascript",
+    "level": 1,
+    "format": "predict-output",
+    "topic": "scope",
+    "tags": [
+      "var",
+      "let",
+      "block-scope"
+    ],
+    "title": "var dan let di dalam blok",
+    "prompt": "Variabel `x` dideklarasikan dengan `var` dan `y` dengan `let`, keduanya di dalam blok `if`. Apa output kode berikut?",
+    "data": {
+      "language": "javascript",
+      "code": "if (true) {\n  var x = 1;\n  let y = 2;\n}\nconsole.log(typeof x, typeof y);",
+      "options": [
+        "number number",
+        "number undefined",
+        "undefined undefined",
+        "undefined number"
+      ]
+    },
+    "answer": {
+      "output": "number undefined"
+    },
+    "hints": [
+      "`var` dan `let` punya aturan scope yang berbeda.",
+      "`let` hanya hidup di dalam `{ }` tempat ia dideklarasikan; `var` tidak peduli blok `if`."
+    ],
+    "explanation": "`var` bersifat **function-scoped** (atau global), jadi `x` tetap ada di luar blok `if`. `let` bersifat **block-scoped**, sehingga `y` tidak terlihat di luar `{ }`. `typeof` pada variabel yang tidak dideklarasikan tidak melempar error, melainkan menghasilkan `\"undefined\"`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-objects-001",
+    "track": "javascript",
+    "level": 1,
+    "format": "fill-blank",
+    "topic": "objects",
+    "tags": [
+      "destructuring",
+      "default-values"
+    ],
+    "title": "Nilai default saat destructuring",
+    "prompt": "Lengkapi fungsi agar `age` bernilai `18` jika properti `age` tidak ada di objek `user`.\n\nContoh: `describe({ name: 'Budi' })` → `'Budi (18)'`, `describe({ name: 'Ani', age: 25 })` → `'Ani (25)'`.",
+    "data": {
+      "language": "javascript",
+      "template": "function describe(user) {\n  const { name, age {{blank}} 18 } = user;\n  return name + ' (' + age + ')';\n}",
+      "choices": [
+        "=",
+        ":",
+        "||",
+        "??"
+      ],
+      "entry": "describe"
+    },
+    "answer": {
+      "blanks": [
+        [
+          "="
+        ]
+      ]
+    },
+    "tests": [
+      {
+        "name": "tanpa age",
+        "input": [
+          {
+            "name": "Budi"
+          }
+        ],
+        "expected": "Budi (18)"
+      },
+      {
+        "name": "dengan age",
+        "input": [
+          {
+            "name": "Ani",
+            "age": 25
+          }
+        ],
+        "expected": "Ani (25)"
+      },
+      {
+        "name": "age = 0 tetap dipakai",
+        "input": [
+          {
+            "name": "Caca",
+            "age": 0
+          }
+        ],
+        "expected": "Caca (0)"
+      }
+    ],
+    "hints": [
+      "Sintaksnya mirip dengan parameter default pada fungsi.",
+      "Di destructuring, `:` dipakai untuk mengganti nama variabel, bukan untuk nilai default."
+    ],
+    "explanation": "`const { age = 18 } = user` memakai `18` hanya jika `user.age` bernilai `undefined`. Karena itu `age: 0` tetap menghasilkan `0` (berbeda dengan `user.age || 18` yang akan mengganti `0` menjadi `18`). Tanda `:` di destructuring berarti rename, misalnya `{ age: umur }`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-array-methods-002",
+    "track": "javascript",
+    "level": 1,
+    "format": "multiple-choice",
+    "topic": "array-methods",
+    "tags": [
+      "find",
+      "filter"
+    ],
+    "title": "Ambil satu elemen yang cocok",
+    "prompt": "Kamu ingin mendapatkan **objek user pertama** yang `age`-nya minimal 18 (objeknya langsung, bukan array). Method mana yang tepat?",
+    "data": {
+      "options": [
+        "`users.filter((u) => u.age >= 18)`",
+        "`users.find((u) => u.age >= 18)`",
+        "`users.some((u) => u.age >= 18)`",
+        "`users.findIndex((u) => u.age >= 18)`"
+      ]
+    },
+    "answer": {
+      "index": 1
+    },
+    "hints": [
+      "Perhatikan tipe nilai yang dikembalikan tiap method.",
+      "Satu method mengembalikan array, satu boolean, satu angka, dan satu elemen."
+    ],
+    "explanation": "`find` mengembalikan **elemen pertama** yang memenuhi kondisi (atau `undefined` jika tidak ada) dan berhenti mencari setelah ketemu. `filter` selalu mengembalikan array, `some` mengembalikan `true`/`false`, dan `findIndex` mengembalikan index (atau `-1`).",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

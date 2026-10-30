@@ -1,0 +1,248 @@
+[
+  {
+    "id": "logic-hash-map-001",
+    "track": "logic",
+    "level": 4,
+    "format": "code-full",
+    "topic": "hash-map",
+    "tags": [
+      "two-sum",
+      "map",
+      "interview",
+      "o-n"
+    ],
+    "title": "Two Sum dengan Map dalam O(n)",
+    "prompt": "Tulis fungsi `twoSum(nums, target)` yang mengembalikan index `[i, j]` (dengan `i < j`) dari dua elemen **berbeda posisi** yang jumlahnya sama dengan `target`. Dijamin ada **paling banyak satu** pasangan yang valid; jika tidak ada, kembalikan `[]`.\n\nTargetkan **O(n)** dengan satu kali scan menggunakan `Map` — bukan dua loop bersarang (O(n²)).\n\nContoh: `twoSum([2, 7, 11, 15], 9)` → `[0, 1]`.",
+    "data": {
+      "language": "javascript",
+      "starter": "function twoSum(nums, target) {\n  const seen = new Map(); // nilai -> index\n  // tulis kodemu di sini\n  return [];\n}",
+      "entry": "twoSum"
+    },
+    "tests": [
+      {
+        "name": "contoh dasar",
+        "input": [
+          [
+            2,
+            7,
+            11,
+            15
+          ],
+          9
+        ],
+        "expected": [
+          0,
+          1
+        ]
+      },
+      {
+        "name": "pasangan di akhir",
+        "input": [
+          [
+            3,
+            2,
+            4
+          ],
+          6
+        ],
+        "expected": [
+          1,
+          2
+        ]
+      },
+      {
+        "name": "nilai duplikat",
+        "input": [
+          [
+            3,
+            3
+          ],
+          6
+        ],
+        "expected": [
+          0,
+          1
+        ]
+      },
+      {
+        "name": "tidak boleh pakai elemen yang sama dua kali",
+        "input": [
+          [
+            3,
+            5
+          ],
+          6
+        ],
+        "expected": []
+      },
+      {
+        "name": "tidak ada pasangan",
+        "input": [
+          [
+            1,
+            2,
+            3
+          ],
+          7
+        ],
+        "expected": []
+      },
+      {
+        "name": "array kosong",
+        "input": [
+          [],
+          0
+        ],
+        "expected": []
+      },
+      {
+        "name": "angka negatif",
+        "input": [
+          [
+            -1,
+            -2,
+            -3,
+            -4,
+            -5
+          ],
+          -8
+        ],
+        "expected": [
+          2,
+          4
+        ]
+      },
+      {
+        "name": "nol dan target nol",
+        "input": [
+          [
+            0,
+            4,
+            3,
+            0
+          ],
+          0
+        ],
+        "expected": [
+          0,
+          3
+        ]
+      }
+    ],
+    "referenceSolution": "function twoSum(nums, target) {\n  const seen = new Map(); // nilai -> index\n  for (let j = 0; j < nums.length; j++) {\n    const need = target - nums[j];\n    if (seen.has(need)) return [seen.get(need), j];\n    seen.set(nums[j], j);\n  }\n  return [];\n}",
+    "hints": [
+      "Untuk setiap `nums[j]`, angka pasangan yang dibutuhkan adalah `target - nums[j]`. Bagaimana cara mengecek dalam O(1) apakah angka itu sudah pernah muncul?",
+      "Cek `seen.has(target - nums[j])` **sebelum** `seen.set(nums[j], j)`. Urutan ini mencegah elemen dipasangkan dengan dirinya sendiri dan tetap menangani duplikat seperti `[3, 3]`."
+    ],
+    "explanation": "Simpan setiap nilai yang sudah dilihat beserta index-nya di `Map`. Saat berada di index `j`, cari `target - nums[j]` di Map — lookup Map rata-rata O(1), jadi total **O(n)** waktu dan O(n) memori.\n\nDetail penting: cek dulu, **baru** simpan. Jika disimpan dulu, `twoSum([3, 5], 6)` akan salah memasangkan 3 dengan dirinya sendiri (`[0, 0]`). Dengan urutan yang benar, duplikat `[3, 3]` tetap ditemukan karena 3 pertama sudah ada di Map saat 3 kedua diperiksa. Jangan pakai `if (seen.get(need))` — index 0 bernilai *falsy*; gunakan `seen.has(need)`.",
+    "estimatedMinutes": 10,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-stack-001",
+    "track": "logic",
+    "level": 4,
+    "format": "code-full",
+    "topic": "stack",
+    "tags": [
+      "balanced-brackets",
+      "stack",
+      "interview"
+    ],
+    "title": "Validasi tanda kurung seimbang",
+    "prompt": "Tulis fungsi `isBalanced(s)` yang mengembalikan `true` jika semua tanda kurung `()`, `[]`, dan `{}` di dalam string `s` **seimbang dan bersarang dengan benar**. Karakter lain diabaikan.\n\nContoh:\n- `isBalanced(\"([]{})\")` → `true`\n- `isBalanced(\"([)]\")` → `false` (urutan penutupan salah)\n- `isBalanced(\"fn(a[0]) { return x; }\")` → `true`",
+    "data": {
+      "language": "javascript",
+      "starter": "function isBalanced(s) {\n  const stack = [];\n  // tulis kodemu di sini\n  return false;\n}",
+      "entry": "isBalanced"
+    },
+    "tests": [
+      {
+        "name": "sepasang",
+        "input": [
+          "()"
+        ],
+        "expected": true
+      },
+      {
+        "name": "bersarang campuran",
+        "input": [
+          "([]{})"
+        ],
+        "expected": true
+      },
+      {
+        "name": "jenis tidak cocok",
+        "input": [
+          "(]"
+        ],
+        "expected": false
+      },
+      {
+        "name": "urutan penutupan salah",
+        "input": [
+          "([)]"
+        ],
+        "expected": false
+      },
+      {
+        "name": "string kosong",
+        "input": [
+          ""
+        ],
+        "expected": true
+      },
+      {
+        "name": "tidak ditutup",
+        "input": [
+          "(("
+        ],
+        "expected": false
+      },
+      {
+        "name": "penutup berlebih",
+        "input": [
+          "())"
+        ],
+        "expected": false
+      },
+      {
+        "name": "penutup di awal",
+        "input": [
+          "}{"
+        ],
+        "expected": false
+      },
+      {
+        "name": "dengan karakter lain",
+        "input": [
+          "fn(a[0]) { return x; }"
+        ],
+        "expected": true
+      },
+      {
+        "name": "dalam",
+        "input": [
+          "{[(())]}[]"
+        ],
+        "expected": true
+      }
+    ],
+    "referenceSolution": "function isBalanced(s) {\n  const stack = [];\n  const pairs = { \")\": \"(\", \"]\": \"[\", \"}\": \"{\" };\n  for (const ch of s) {\n    if (ch === \"(\" || ch === \"[\" || ch === \"{\") {\n      stack.push(ch);\n    } else if (ch in pairs) {\n      if (stack.pop() !== pairs[ch]) return false;\n    }\n  }\n  return stack.length === 0;\n}",
+    "hints": [
+      "Kurung yang dibuka **terakhir** harus ditutup **pertama** — struktur data apa yang bersifat LIFO?",
+      "Push setiap kurung buka ke stack. Saat bertemu kurung tutup, `pop()` dan cek pasangannya cocok. Di akhir, stack harus kosong."
+    ],
+    "explanation": "Stack (LIFO) cocok untuk struktur bersarang: kurung buka di-*push*, kurung tutup harus cocok dengan elemen teratas yang di-*pop*. Tiga cara gagal: (1) jenis tidak cocok (`(]`) atau urutan salah (`([)]`); (2) kurung tutup saat stack kosong — `pop()` mengembalikan `undefined` sehingga perbandingan otomatis gagal; (3) masih ada sisa kurung buka di akhir (`((`), karena itu perlu cek `stack.length === 0`. Menghitung jumlah buka/tutup saja tidak cukup — `\"([)]\"` jumlahnya seimbang tapi urutannya salah. Kompleksitas O(n).",
+    "estimatedMinutes": 10,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

@@ -1,0 +1,165 @@
+[
+  {
+    "id": "ts-basic-types-001",
+    "track": "typescript",
+    "level": 1,
+    "format": "find-bug",
+    "topic": "basic-types",
+    "tags": [
+      "annotations",
+      "string",
+      "number"
+    ],
+    "title": "Anotasi tipe yang tidak cocok",
+    "prompt": "Dengan `strict: true`, salah satu baris berikut menyebabkan **compile error**. Baris mana?",
+    "data": {
+      "language": "typescript",
+      "code": "let username: string = \"rina\";\nlet age: number = \"25\";\nlet active: boolean = true;\nlet scores: number[] = [90, 85];"
+    },
+    "answer": {
+      "line": 2,
+      "fixedLine": "let age: number = 25;"
+    },
+    "hints": [
+      "Perhatikan tanda kutip pada nilai yang diberikan.",
+      "`\"25\"` adalah string, bukan number."
+    ],
+    "explanation": "`\"25\"` bertipe `string`, sedangkan `age` dianotasi `number`, sehingga TypeScript melapor *Type 'string' is not assignable to type 'number'*. TypeScript tidak melakukan konversi otomatis seperti JavaScript; tulis angkanya tanpa kutip (`25`) atau konversi eksplisit dengan `Number(\"25\")`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-enums-002",
+    "track": "typescript",
+    "level": 1,
+    "format": "predict-output",
+    "topic": "enums",
+    "tags": [
+      "enum",
+      "string-enum"
+    ],
+    "title": "String enum dan Object.keys",
+    "prompt": "String enum berikut dicetak dan key-nya dihitung. Apa outputnya?",
+    "data": {
+      "language": "typescript",
+      "code": "enum Status { Active = \"ACTIVE\", Inactive = \"INACTIVE\" }\nconsole.log(Status.Active, Object.keys(Status).length);",
+      "options": [
+        "ACTIVE 2",
+        "ACTIVE 4",
+        "Active 2",
+        "0 2"
+      ]
+    },
+    "answer": {
+      "output": "ACTIVE 2"
+    },
+    "hints": [
+      "Nilai member string enum adalah string yang kamu tulis sendiri.",
+      "Hanya numeric enum yang punya reverse mapping (angka → nama)."
+    ],
+    "explanation": "`Status.Active` bernilai `\"ACTIVE\"`. String enum dikompilasi menjadi objek biasa `{ Active: \"ACTIVE\", Inactive: \"INACTIVE\" }` **tanpa** reverse mapping, jadi hanya ada 2 key. Numeric enum dengan 2 member akan punya 4 key (nama → angka dan angka → nama).",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-arrays-001",
+    "track": "typescript",
+    "level": 1,
+    "format": "fill-blank",
+    "topic": "arrays",
+    "tags": [
+      "array-type",
+      "annotations"
+    ],
+    "title": "Tipe parameter array angka",
+    "prompt": "Lengkapi tipe parameter `prices` agar fungsi menerima **array angka dengan panjang berapa pun** dan lolos type-check (`strict: true`).",
+    "data": {
+      "language": "typescript",
+      "template": "function total(prices: {{blank}}): number {\n  return prices.reduce((sum, p) => sum + p, 0);\n}",
+      "choices": [
+        "number[]",
+        "number",
+        "[number]",
+        "Array"
+      ]
+    },
+    "answer": {
+      "blanks": [
+        [
+          "number[]",
+          "Array<number>",
+          "readonly number[]",
+          "ReadonlyArray<number>"
+        ]
+      ]
+    },
+    "hints": [
+      "Tipe array ditulis sebagai tipe elemen diikuti tanda kurung siku.",
+      "`[number]` adalah tuple berisi tepat satu elemen, bukan array bebas panjang."
+    ],
+    "explanation": "`number[]` (atau `Array<number>`) adalah array angka dengan panjang bebas. `number` tidak punya method `reduce`; `[number]` adalah **tuple** dengan tepat satu elemen; `Array` tanpa argumen generic adalah error (*Generic type 'Array<T>' requires 1 type argument*).",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-functions-002",
+    "track": "typescript",
+    "level": 1,
+    "format": "multiple-choice",
+    "topic": "functions",
+    "tags": [
+      "optional-parameter",
+      "undefined"
+    ],
+    "title": "Tipe parameter opsional",
+    "prompt": "Dengan `strict: true`, apa tipe `discount` **di dalam** body fungsi berikut?",
+    "data": {
+      "language": "typescript",
+      "code": "function finalPrice(price: number, discount?: number) {\n  // tipe discount di sini?\n  return price - (discount ?? 0);\n}",
+      "options": [
+        "`number`",
+        "`number | undefined`",
+        "`number | null`",
+        "`any`"
+      ]
+    },
+    "answer": {
+      "index": 1
+    },
+    "hints": [
+      "Apa nilai `discount` jika pemanggil hanya menulis `finalPrice(100)`?",
+      "Parameter yang tidak diisi bernilai `undefined`."
+    ],
+    "explanation": "Tanda `?` membuat parameter opsional, sehingga di dalam fungsi tipenya `number | undefined`. Karena itu kode memakai `discount ?? 0` sebelum dikurangkan. Opsional **bukan** berarti `null`: `finalPrice(100, null)` justru error di mode strict.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

@@ -1,0 +1,223 @@
+[
+  {
+    "id": "concepts-http-001",
+    "track": "concepts",
+    "level": 1,
+    "format": "flashcard",
+    "topic": "http",
+    "tags": [
+      "http",
+      "status-code"
+    ],
+    "title": "Kelompok kode status HTTP",
+    "prompt": "Apa arti tiap **kelompok kode status HTTP** (1xx–5xx)?",
+    "answer": {
+      "back": "- **1xx** Informational — proses berlanjut (mis. `101 Switching Protocols`)\n- **2xx** Sukses — `200 OK`, `201 Created`, `204 No Content`\n- **3xx** Redirect — `301`, `302`, `304 Not Modified`\n- **4xx** Kesalahan **client** — `400`, `401`, `403`, `404`, `429`\n- **5xx** Kesalahan **server** — `500`, `502`, `503`"
+    },
+    "hints": [
+      "Digit pertama menunjukkan siapa yang \"salah\" atau apa yang terjadi."
+    ],
+    "explanation": "Digit pertama sudah memberi tahu kelas respons. Kesalahan umum: membalas error validasi dengan `500` — padahal input buruk dari client seharusnya `4xx` (biasanya `400` atau `422`).",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-http-002",
+    "track": "concepts",
+    "level": 1,
+    "format": "multiple-choice",
+    "topic": "http",
+    "tags": [
+      "http",
+      "status-code",
+      "rest"
+    ],
+    "title": "Kode status setelah membuat resource",
+    "prompt": "Client mengirim `POST /users` dan server **berhasil membuat user baru**. Kode status apa yang paling tepat?",
+    "data": {
+      "options": [
+        "`200 OK`",
+        "`201 Created`",
+        "`204 No Content`",
+        "`302 Found`"
+      ]
+    },
+    "answer": {
+      "index": 1
+    },
+    "hints": [
+      "Ada kode 2xx yang khusus untuk \"sesuatu yang baru telah dibuat\".",
+      "Biasanya disertai header `Location` yang menunjuk ke resource baru."
+    ],
+    "explanation": "`201 Created` menandakan resource baru berhasil dibuat; idealnya disertai header `Location: /users/42`. `200 OK` tidak salah secara teknis tapi kurang spesifik, `204` berarti sukses tanpa body, dan `302` adalah redirect.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-git-001",
+    "track": "concepts",
+    "level": 1,
+    "format": "flashcard",
+    "topic": "git",
+    "tags": [
+      "git",
+      "staging"
+    ],
+    "title": "Tiga area di Git",
+    "prompt": "Apa saja **tiga area utama** di Git dan perintah yang memindahkan perubahan di antaranya?",
+    "answer": {
+      "back": "1. **Working directory** — file yang sedang kamu edit\n2. **Staging area / index** — snapshot yang *akan* di-commit\n3. **Repository** — riwayat commit\n\n```sh\ngit add app.js            # working → staging\ngit commit -m \"fix login\" # staging → repository\ngit restore --staged app.js  # batal stage (perubahan tetap ada)\n```"
+    },
+    "hints": [
+      "Ada satu tempat \"antara\" sebelum perubahan masuk ke commit."
+    ],
+    "explanation": "Staging area memungkinkan kamu memilih perubahan mana yang masuk ke satu commit, sehingga commit tetap kecil dan fokus. `git status` menunjukkan isi ketiga area ini.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-event-loop-001",
+    "track": "concepts",
+    "level": 1,
+    "format": "flashcard",
+    "topic": "event-loop",
+    "tags": [
+      "javascript",
+      "async"
+    ],
+    "title": "Apa itu event loop?",
+    "prompt": "Apa itu **event loop** di JavaScript?",
+    "answer": {
+      "back": "Mekanisme yang membuat JS (satu thread) bisa menangani kerja async.\n\n- Kode sinkron berjalan di **call stack**.\n- Operasi async (timer, I/O, fetch) dikerjakan oleh runtime; callback-nya masuk **antrean**.\n- Saat call stack **kosong**, event loop mengambil callback berikutnya dari antrean dan menjalankannya.\n\nKarena itu kode sinkron yang berat akan **memblokir** semua callback."
+    },
+    "hints": [
+      "JavaScript hanya punya satu call stack — lalu siapa yang menjalankan callback?"
+    ],
+    "explanation": "JS tidak menjalankan dua potong kode bersamaan di thread yang sama. Event loop hanya mengambil callback baru ketika call stack kosong, sehingga `setTimeout(fn, 0)` tetap menunggu kode sinkron selesai.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-promises-001",
+    "track": "concepts",
+    "level": 1,
+    "format": "flashcard",
+    "topic": "promises",
+    "tags": [
+      "javascript",
+      "async"
+    ],
+    "title": "State sebuah Promise",
+    "prompt": "Apa saja **state** sebuah Promise?",
+    "answer": {
+      "back": "- **pending** — belum selesai\n- **fulfilled** — berhasil, punya *value* (`.then`)\n- **rejected** — gagal, punya *reason* (`.catch`)\n\n*Settled* = fulfilled atau rejected. Sekali settled, state **tidak bisa berubah** lagi.\n\n```js\nconst p = new Promise((resolve) => resolve(42));\np.then((v) => console.log(v)); // 42\n```"
+    },
+    "hints": [
+      "Ada satu state awal dan dua state akhir."
+    ],
+    "explanation": "Memanggil `resolve`/`reject` lagi setelah promise settled tidak berpengaruh. Perhatikan: \"resolved\" tidak selalu sama dengan \"fulfilled\" — promise yang di-resolve dengan promise lain masih pending sampai promise itu selesai.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-complexity-001",
+    "track": "concepts",
+    "level": 1,
+    "format": "flashcard",
+    "topic": "complexity",
+    "tags": [
+      "big-o",
+      "algorithms"
+    ],
+    "title": "Kelas Big-O yang umum",
+    "prompt": "Sebutkan **kelas Big-O yang umum** beserta contoh operasinya, dari tercepat ke terlambat.",
+    "answer": {
+      "back": "- `O(1)` — akses array by index, lookup `Map`/hash (rata-rata)\n- `O(log n)` — binary search\n- `O(n)` — loop sekali atas array\n- `O(n log n)` — sorting yang efisien (merge sort)\n- `O(n²)` — loop bersarang atas data yang sama\n- `O(2ⁿ)` — rekursi naif `fib(n)` (batas atas), semua subset sebuah himpunan"
+    },
+    "hints": [
+      "Mulai dari konstan, lalu logaritmik, linear, …"
+    ],
+    "explanation": "Big-O menggambarkan bagaimana waktu/memori **bertumbuh** saat ukuran input `n` membesar, bukan waktu absolut. Konstanta dan suku kecil diabaikan: `O(2n + 5)` = `O(n)`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-databases-001",
+    "track": "concepts",
+    "level": 1,
+    "format": "flashcard",
+    "topic": "databases",
+    "tags": [
+      "sql",
+      "index",
+      "performance"
+    ],
+    "title": "Apa itu index database?",
+    "prompt": "Apa itu **index** di database, dan apa harganya?",
+    "answer": {
+      "back": "Struktur data tambahan (biasanya **B-tree**) yang membuat pencarian berdasarkan kolom tertentu cepat — kira-kira `O(log n)` alih-alih memindai seluruh tabel.\n\n```sql\nCREATE INDEX idx_users_email ON users(email);\n```\n\n**Harganya:** butuh ruang disk dan memperlambat `INSERT`/`UPDATE`/`DELETE`, karena index ikut diperbarui."
+    },
+    "hints": [
+      "Mirip daftar indeks di belakang buku."
+    ],
+    "explanation": "Index membantu query yang memfilter, join, atau mengurutkan berdasarkan kolom itu. Jangan meng-index semua kolom: setiap index menambah biaya tulis. Index paling berguna untuk kolom yang sering dicari dan selektif.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

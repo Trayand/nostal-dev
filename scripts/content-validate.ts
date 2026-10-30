@@ -24,6 +24,7 @@ async function main() {
     ...broken,
     ...(await validateBank(files, {
       trackIds: readTracks().map((t) => t.id),
+      trackLanguages: Object.fromEntries(readTracks().map((t) => [t.id, t.language])),
       exec: nodeExecutor,
       skipExecution: noExec,
       executeOnly: selected,

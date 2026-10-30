@@ -1,0 +1,326 @@
+[
+  {
+    "id": "logic-conditionals-001",
+    "track": "logic",
+    "level": 1,
+    "format": "multiple-choice",
+    "topic": "conditionals",
+    "tags": [
+      "else-if",
+      "order"
+    ],
+    "title": "Urutan else-if pada penilaian",
+    "prompt": "Apa hasil dari `grade(95)`?",
+    "data": {
+      "code": "function grade(score) {\n  if (score >= 60) return \"C\";\n  else if (score >= 75) return \"B\";\n  else if (score >= 90) return \"A\";\n  return \"D\";\n}\n\ngrade(95);",
+      "language": "javascript",
+      "options": [
+        "`\"A\"`",
+        "`\"B\"`",
+        "`\"C\"`",
+        "`\"D\"`"
+      ]
+    },
+    "answer": {
+      "index": 2
+    },
+    "hints": [
+      "Kondisi dicek dari atas ke bawah, dan berhenti di kondisi pertama yang benar.",
+      "Apakah `95 >= 60` bernilai `true`?"
+    ],
+    "explanation": "Rantai `if / else if` berhenti di kondisi **pertama** yang benar. `95 >= 60` sudah `true`, jadi fungsi langsung mengembalikan `\"C\"` dan kondisi `>= 75` serta `>= 90` tidak pernah dicek. Saat memakai batas bawah (`>=`), urutkan dari batas **terbesar** dulu: `>= 90`, lalu `>= 75`, lalu `>= 60`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-loops-001",
+    "track": "logic",
+    "level": 1,
+    "format": "predict-output",
+    "topic": "loops",
+    "tags": [
+      "nested-loops",
+      "counting"
+    ],
+    "title": "Hitung iterasi loop bersarang",
+    "prompt": "Berapa nilai `count` yang dicetak setelah kedua loop selesai?",
+    "data": {
+      "language": "javascript",
+      "code": "let count = 0;\nfor (let i = 0; i < 3; i++) {\n  for (let j = i; j < 3; j++) {\n    count++;\n  }\n}\nconsole.log(count);",
+      "options": [
+        "9",
+        "6",
+        "3",
+        "5"
+      ]
+    },
+    "answer": {
+      "output": "6"
+    },
+    "hints": [
+      "Loop dalam tidak selalu mulai dari 0 — ia mulai dari `i`.",
+      "Hitung per nilai `i`: saat `i = 0` ada 3 iterasi, saat `i = 1` ada 2, saat `i = 2` ada ..."
+    ],
+    "explanation": "Karena `j` mulai dari `i`, jumlah iterasi loop dalam berkurang: 3 (i=0) + 2 (i=1) + 1 (i=2) = **6**. Jawaban 9 hanya benar jika `j` selalu mulai dari 0. Pola `j = i` ini sering dipakai untuk memeriksa setiap pasangan elemen tanpa mengulang.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-loops-002",
+    "track": "logic",
+    "level": 1,
+    "format": "code-short",
+    "topic": "loops",
+    "tags": [
+      "for-loop",
+      "accumulator"
+    ],
+    "title": "Jumlah bilangan dalam rentang",
+    "prompt": "Tulis fungsi `sumRange(a, b)` yang mengembalikan jumlah semua bilangan bulat dari `a` sampai `b` (inklusif). Jika `a > b`, kembalikan `0`.\n\nContoh: `sumRange(1, 5)` → `15`.",
+    "data": {
+      "language": "javascript",
+      "starter": "function sumRange(a, b) {\n  // tulis kodemu di sini\n}",
+      "entry": "sumRange"
+    },
+    "tests": [
+      {
+        "name": "1 sampai 5",
+        "input": [
+          1,
+          5
+        ],
+        "expected": 15
+      },
+      {
+        "name": "a sama dengan b",
+        "input": [
+          3,
+          3
+        ],
+        "expected": 3
+      },
+      {
+        "name": "rentang negatif ke positif",
+        "input": [
+          -2,
+          2
+        ],
+        "expected": 0
+      },
+      {
+        "name": "a lebih besar dari b",
+        "input": [
+          5,
+          1
+        ],
+        "expected": 0
+      },
+      {
+        "name": "rentang negatif",
+        "input": [
+          -3,
+          -1
+        ],
+        "expected": -6
+      }
+    ],
+    "referenceSolution": "function sumRange(a, b) {\n  let total = 0;\n  for (let i = a; i <= b; i++) {\n    total += i;\n  }\n  return total;\n}",
+    "hints": [
+      "Siapkan variabel `total = 0`, lalu loop dari `a` sampai `b`.",
+      "Gunakan `i <= b` agar `b` ikut dijumlahkan; jika `a > b`, loop tidak berjalan sama sekali dan `total` tetap 0."
+    ],
+    "explanation": "Pola **accumulator**: mulai dari `total = 0`, tambahkan setiap `i` dari `a` sampai `b`. Kondisi `i <= b` (bukan `<`) memastikan batas atas ikut dihitung. Bonus: loop otomatis tidak berjalan ketika `a > b`, jadi kasus itu tidak perlu `if` khusus.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-conditionals-002",
+    "track": "logic",
+    "level": 1,
+    "format": "find-bug",
+    "topic": "conditionals",
+    "tags": [
+      "comparison",
+      "max"
+    ],
+    "title": "Nilai terbesar dari tiga angka",
+    "prompt": "Fungsi ini seharusnya mengembalikan angka terbesar dari tiga argumen, tapi `maxOfThree(1, 5, 3)` menghasilkan `3`. Baris mana yang salah?",
+    "data": {
+      "language": "javascript",
+      "code": "function maxOfThree(a, b, c) {\n  let max = a;\n  if (b > max) max = b;\n  if (c > a) max = c;\n  return max;\n}"
+    },
+    "answer": {
+      "line": 4,
+      "fixedLine": "  if (c > max) max = c;"
+    },
+    "hints": [
+      "Setelah baris 3, variabel `max` sudah berisi nilai terbesar dari `a` dan `b`.",
+      "`c` harus dibandingkan dengan nilai terbesar sejauh ini, bukan dengan `a`."
+    ],
+    "explanation": "Baris 4 membandingkan `c` dengan `a`, padahal `max` mungkin sudah diganti menjadi `b`. Pada `maxOfThree(1, 5, 3)`: `max` menjadi 5, lalu `3 > 1` benar sehingga `max` tertimpa menjadi 3. Selalu bandingkan dengan **nilai terbaik sejauh ini** (`max`).",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-loops-003",
+    "track": "logic",
+    "level": 1,
+    "format": "fill-blank",
+    "topic": "loops",
+    "tags": [
+      "strings",
+      "reverse",
+      "index"
+    ],
+    "title": "Balik string dengan loop mundur",
+    "prompt": "Lengkapi fungsi agar mengembalikan string yang dibalik. Contoh: `reverseString(\"abc\")` → `\"cba\"`.",
+    "data": {
+      "language": "javascript",
+      "template": "function reverseString(str) {\n  let result = \"\";\n  for (let i = {{blank}}; i >= 0; i--) {\n    result += str[{{blank}}];\n  }\n  return result;\n}",
+      "choices": [
+        "str.length - 1",
+        "str.length",
+        "0",
+        "i",
+        "i - 1"
+      ],
+      "entry": "reverseString"
+    },
+    "answer": {
+      "blanks": [
+        [
+          "str.length - 1",
+          "str.length-1"
+        ],
+        [
+          "i"
+        ]
+      ]
+    },
+    "tests": [
+      {
+        "input": [
+          "abc"
+        ],
+        "expected": "cba"
+      },
+      {
+        "input": [
+          "halo"
+        ],
+        "expected": "olah"
+      },
+      {
+        "input": [
+          "a"
+        ],
+        "expected": "a"
+      },
+      {
+        "input": [
+          ""
+        ],
+        "expected": ""
+      }
+    ],
+    "hints": [
+      "Index karakter terakhir bukan `str.length`.",
+      "Index terakhir adalah `str.length - 1`, dan setiap iterasi mengambil karakter di posisi `i`."
+    ],
+    "explanation": "Loop mundur mulai dari index terakhir `str.length - 1` sampai 0, dan menambahkan `str[i]` ke hasil. Jika mulai dari `str.length`, `str[str.length]` adalah `undefined` sehingga hasilnya `\"undefinedcba\"` — contoh klasik kesalahan *off-by-one*.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-conditionals-003",
+    "track": "logic",
+    "level": 1,
+    "format": "parsons",
+    "topic": "conditionals",
+    "tags": [
+      "modulo",
+      "leap-year",
+      "early-return"
+    ],
+    "title": "Cek tahun kabisat",
+    "prompt": "Susun baris-baris berikut menjadi fungsi `isLeapYear(year)`. Aturan tahun kabisat: habis dibagi 400 → kabisat; habis dibagi 100 (tapi tidak 400) → bukan kabisat; habis dibagi 4 → kabisat; selain itu bukan.",
+    "data": {
+      "language": "javascript",
+      "entry": "isLeapYear"
+    },
+    "answer": {
+      "lines": [
+        "function isLeapYear(year) {",
+        "  if (year % 400 === 0) return true;",
+        "  if (year % 100 === 0) return false;",
+        "  return year % 4 === 0;",
+        "}"
+      ]
+    },
+    "tests": [
+      {
+        "input": [
+          2000
+        ],
+        "expected": true
+      },
+      {
+        "input": [
+          1900
+        ],
+        "expected": false
+      },
+      {
+        "input": [
+          2024
+        ],
+        "expected": true
+      },
+      {
+        "input": [
+          2023
+        ],
+        "expected": false
+      }
+    ],
+    "hints": [
+      "Aturan yang paling khusus (400) harus dicek paling awal.",
+      "Jika cek `% 100` diletakkan sebelum `% 400`, tahun 2000 akan salah dianggap bukan kabisat."
+    ],
+    "explanation": "Dengan *early return*, urutan pengecekan menentukan hasil: kasus paling khusus dulu (`% 400`), lalu pengecualiannya (`% 100`), terakhir aturan umum (`% 4`). Tahun 2000 habis dibagi 400 → kabisat; 1900 habis dibagi 100 tapi tidak 400 → bukan kabisat.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

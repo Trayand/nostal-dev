@@ -1,0 +1,520 @@
+[
+  {
+    "id": "sql-group-by-001",
+    "track": "sql",
+    "level": 2,
+    "format": "code-short",
+    "topic": "group-by",
+    "tags": [
+      "group-by",
+      "count",
+      "sum"
+    ],
+    "title": "Jumlah karyawan dan total gaji per departemen",
+    "prompt": "Tabel `employees(id, name, dept, salary)`.\n\nUntuk setiap departemen tampilkan:\n- `dept`\n- `employee_count`: jumlah karyawan\n- `total_salary`: total gaji\n\nUrutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE employees (id INTEGER PRIMARY KEY, name TEXT NOT NULL, dept TEXT NOT NULL, salary INTEGER NOT NULL);",
+      "seed": "INSERT INTO employees (id, name, dept, salary) VALUES (1, 'Andi', 'IT', 15000000), (2, 'Sari', 'IT', 12000000), (3, 'Budi', 'HR', 8000000), (4, 'Dewi', 'Finance', 11000000), (5, 'Rina', 'IT', 9000000), (6, 'Joko', 'HR', 7000000), (7, 'Tono', 'Finance', 13000000);"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "dept",
+            "employee_count",
+            "total_salary"
+          ],
+          "rows": [
+            [
+              "IT",
+              3,
+              36000000
+            ],
+            [
+              "HR",
+              2,
+              15000000
+            ],
+            [
+              "Finance",
+              2,
+              24000000
+            ]
+          ]
+        }
+      },
+      {
+        "name": "departemen baru dengan satu orang",
+        "setup": "INSERT INTO employees (name, dept, salary) VALUES ('Lina', 'Marketing', 10000000);",
+        "expected": {
+          "columns": [
+            "dept",
+            "employee_count",
+            "total_salary"
+          ],
+          "rows": [
+            [
+              "IT",
+              3,
+              36000000
+            ],
+            [
+              "HR",
+              2,
+              15000000
+            ],
+            [
+              "Finance",
+              2,
+              24000000
+            ],
+            [
+              "Marketing",
+              1,
+              10000000
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "SELECT dept, COUNT(*) AS employee_count, SUM(salary) AS total_salary FROM employees GROUP BY dept;",
+    "hints": [
+      "`GROUP BY dept` membuat satu kelompok per departemen; agregat dihitung per kelompok.",
+      "`SELECT dept, COUNT(*) AS employee_count, SUM(salary) AS total_salary FROM employees GROUP BY dept;`"
+    ],
+    "explanation": "`GROUP BY` memecah baris menjadi kelompok berdasarkan nilai `dept`, lalu `COUNT` dan `SUM` dihitung untuk tiap kelompok. Kolom di `SELECT` yang bukan agregat sebaiknya juga ada di `GROUP BY`; SQLite mengizinkan kolom lain tetapi nilainya diambil dari baris acak dalam kelompok.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-having-001",
+    "track": "sql",
+    "level": 2,
+    "format": "code-short",
+    "topic": "group-by",
+    "tags": [
+      "having",
+      "avg"
+    ],
+    "title": "Departemen dengan rata-rata gaji di atas 10 juta",
+    "prompt": "Tabel `employees(id, name, dept, salary)`.\n\nTampilkan `dept` dan `avg_salary` (rata-rata gaji **seluruh** karyawan departemen itu) hanya untuk departemen yang rata-rata gajinya **lebih dari** 10000000. Urutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE employees (id INTEGER PRIMARY KEY, name TEXT NOT NULL, dept TEXT NOT NULL, salary INTEGER NOT NULL);",
+      "seed": "INSERT INTO employees (id, name, dept, salary) VALUES (1, 'Andi', 'IT', 15000000), (2, 'Sari', 'IT', 12000000), (3, 'Budi', 'HR', 8000000), (4, 'Dewi', 'Finance', 11000000), (5, 'Rina', 'IT', 9000000), (6, 'Joko', 'HR', 7000000), (7, 'Tono', 'Finance', 13000000);"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "dept",
+            "avg_salary"
+          ],
+          "rows": [
+            [
+              "IT",
+              12000000
+            ],
+            [
+              "Finance",
+              12000000
+            ]
+          ]
+        }
+      },
+      {
+        "name": "rata-rata tepat 10 juta tidak ikut",
+        "setup": "UPDATE employees SET salary = 13000000 WHERE name = 'Budi';",
+        "expected": {
+          "columns": [
+            "dept",
+            "avg_salary"
+          ],
+          "rows": [
+            [
+              "IT",
+              12000000
+            ],
+            [
+              "Finance",
+              12000000
+            ]
+          ]
+        }
+      },
+      {
+        "name": "HR naik di atas 10 juta",
+        "setup": "UPDATE employees SET salary = 14000000 WHERE name = 'Budi';",
+        "expected": {
+          "columns": [
+            "dept",
+            "avg_salary"
+          ],
+          "rows": [
+            [
+              "IT",
+              12000000
+            ],
+            [
+              "Finance",
+              12000000
+            ],
+            [
+              "HR",
+              10500000
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "SELECT dept, AVG(salary) AS avg_salary FROM employees GROUP BY dept HAVING AVG(salary) > 10000000;",
+    "hints": [
+      "Kondisi pada hasil agregat tidak bisa ditaruh di `WHERE`, karena `WHERE` dijalankan sebelum pengelompokan.",
+      "Pakai `GROUP BY dept HAVING AVG(salary) > 10000000`."
+    ],
+    "explanation": "`WHERE` memfilter **baris** sebelum `GROUP BY`; `HAVING` memfilter **kelompok** setelah agregat dihitung. Kesalahan umum: `WHERE salary > 10000000` lalu `AVG`, yang menghitung rata-rata hanya dari karyawan bergaji tinggi (IT jadi 13,5 juta) sehingga angkanya salah.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-joins-001",
+    "track": "sql",
+    "level": 2,
+    "format": "code-short",
+    "topic": "joins",
+    "tags": [
+      "inner-join",
+      "where"
+    ],
+    "title": "Nama pelanggan untuk pesanan lunas",
+    "prompt": "Tabel `customers(id, name, city)` dan `orders(id, customer_id, total, status)`. `orders.customer_id` merujuk ke `customers.id` (bisa `NULL` untuk pesanan tamu).\n\nUntuk setiap pesanan berstatus `'paid'` milik pelanggan terdaftar, tampilkan `name` pelanggan dan `total` pesanan. Urutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT NOT NULL, city TEXT NOT NULL);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER, total INTEGER NOT NULL, status TEXT NOT NULL);",
+      "seed": "INSERT INTO customers (id, name, city) VALUES (1, 'Budi', 'Jakarta'), (2, 'Sari', 'Bandung'), (3, 'Andi', 'Jakarta'), (4, 'Dewi', 'Surabaya'), (5, 'Rina', 'Bandung');\nINSERT INTO orders (id, customer_id, total, status) VALUES (1, 1, 150000, 'paid'), (2, 2, 75000, 'pending'), (3, 1, 200000, 'paid'), (4, 3, 50000, 'cancelled'), (5, 4, 125000, 'paid');"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "name",
+            "total"
+          ],
+          "rows": [
+            [
+              "Budi",
+              150000
+            ],
+            [
+              "Budi",
+              200000
+            ],
+            [
+              "Dewi",
+              125000
+            ]
+          ]
+        }
+      },
+      {
+        "name": "pesanan tamu tidak ikut",
+        "setup": "INSERT INTO orders (id, customer_id, total, status) VALUES (6, NULL, 90000, 'paid'), (7, 5, 50000, 'paid');",
+        "expected": {
+          "columns": [
+            "name",
+            "total"
+          ],
+          "rows": [
+            [
+              "Budi",
+              150000
+            ],
+            [
+              "Budi",
+              200000
+            ],
+            [
+              "Dewi",
+              125000
+            ],
+            [
+              "Rina",
+              50000
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "SELECT c.name, o.total\nFROM orders o\nJOIN customers c ON c.id = o.customer_id\nWHERE o.status = 'paid';",
+    "hints": [
+      "Gabungkan kedua tabel dengan `JOIN ... ON c.id = o.customer_id`.",
+      "`SELECT c.name, o.total FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = 'paid';`"
+    ],
+    "explanation": "`INNER JOIN` (cukup ditulis `JOIN`) hanya menghasilkan pasangan baris yang memenuhi kondisi `ON`. Pesanan tamu (`customer_id` NULL) tidak punya pasangan sehingga otomatis tidak tampil. Alias tabel (`o`, `c`) membuat query ringkas dan menghindari kolom ambigu seperti `id`.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-joins-002",
+    "track": "sql",
+    "level": 2,
+    "format": "code-short",
+    "topic": "joins",
+    "tags": [
+      "left-join",
+      "anti-join",
+      "is-null"
+    ],
+    "title": "Pelanggan yang belum pernah memesan",
+    "prompt": "Tabel `customers(id, name, city)` dan `orders(id, customer_id, total, status)`.\n\nTampilkan `name` pelanggan yang **belum pernah membuat pesanan apa pun** (status apa saja dihitung sebagai pesanan). Urutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT NOT NULL, city TEXT NOT NULL);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER, total INTEGER NOT NULL, status TEXT NOT NULL);",
+      "seed": "INSERT INTO customers (id, name, city) VALUES (1, 'Budi', 'Jakarta'), (2, 'Sari', 'Bandung'), (3, 'Andi', 'Jakarta'), (4, 'Dewi', 'Surabaya'), (5, 'Rina', 'Bandung'), (6, 'Agus', 'Medan');\nINSERT INTO orders (id, customer_id, total, status) VALUES (1, 1, 150000, 'paid'), (2, 2, 75000, 'pending'), (3, 1, 200000, 'paid'), (4, 3, 50000, 'cancelled'), (5, 4, 125000, 'paid');"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "name"
+          ],
+          "rows": [
+            [
+              "Rina"
+            ],
+            [
+              "Agus"
+            ]
+          ]
+        }
+      },
+      {
+        "name": "Rina mulai memesan",
+        "setup": "INSERT INTO orders (id, customer_id, total, status) VALUES (6, 5, 40000, 'pending');",
+        "expected": {
+          "columns": [
+            "name"
+          ],
+          "rows": [
+            [
+              "Agus"
+            ]
+          ]
+        }
+      },
+      {
+        "name": "pesanan Andi dihapus",
+        "setup": "DELETE FROM orders WHERE customer_id = 3;",
+        "expected": {
+          "columns": [
+            "name"
+          ],
+          "rows": [
+            [
+              "Andi"
+            ],
+            [
+              "Rina"
+            ],
+            [
+              "Agus"
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "SELECT c.name\nFROM customers c\nLEFT JOIN orders o ON o.customer_id = c.id\nWHERE o.id IS NULL;",
+    "hints": [
+      "`LEFT JOIN` tetap menampilkan pelanggan walau tidak punya pesanan; kolom dari `orders` lalu bernilai NULL.",
+      "`LEFT JOIN orders o ON o.customer_id = c.id WHERE o.id IS NULL`."
+    ],
+    "explanation": "Pola *anti-join*: `LEFT JOIN` mempertahankan semua baris tabel kiri, dan pelanggan tanpa pasangan mendapat NULL di semua kolom `orders`. Menyaring `o.id IS NULL` (kolom yang tidak mungkin NULL jika ada pasangan) menyisakan pelanggan yang belum pernah memesan. Alternatif setara: `WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id)`.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-null-003",
+    "track": "sql",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "null-handling",
+    "tags": [
+      "count",
+      "null"
+    ],
+    "title": "COUNT(*) vs COUNT(kolom)",
+    "prompt": "Tabel `customers` berisi 5 baris. Kolom `phone` bernilai `NULL` pada 2 baris dan terisi pada 3 baris.\n\nApa hasil query berikut?",
+    "data": {
+      "language": "sql",
+      "code": "SELECT COUNT(*) AS a, COUNT(phone) AS b FROM customers;",
+      "options": [
+        "`a = 5`, `b = 3`",
+        "`a = 5`, `b = 5`",
+        "`a = 3`, `b = 3`",
+        "`a = 5`, `b = 2`"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Salah satu bentuk COUNT menghitung baris, bentuk lainnya menghitung nilai.",
+      "`COUNT(kolom)` melewati nilai NULL; `COUNT(*)` tidak."
+    ],
+    "explanation": "`COUNT(*)` menghitung **semua baris** (5). `COUNT(phone)` hanya menghitung baris yang `phone`-nya **tidak NULL** (3). Perbedaan ini penting setelah `LEFT JOIN`: untuk menghitung pesanan per pelanggan gunakan `COUNT(o.id)`, bukan `COUNT(*)`, agar pelanggan tanpa pesanan bernilai 0, bukan 1.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Confirmed in sql.js on the stated data: COUNT(*)=5, COUNT(phone)=3."
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-case-001",
+    "track": "sql",
+    "level": 2,
+    "format": "code-short",
+    "topic": "case",
+    "tags": [
+      "case",
+      "conditional"
+    ],
+    "title": "Kategori ukuran pesanan dengan CASE",
+    "prompt": "Tabel `orders(id, customer_id, total, status)`.\n\nUntuk setiap pesanan tampilkan `id`, `total`, dan kolom `size`:\n- `'besar'` jika `total` ≥ 150000\n- `'sedang'` jika `total` ≥ 75000 (dan di bawah 150000)\n- `'kecil'` untuk sisanya\n\nUrutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER, total INTEGER NOT NULL, status TEXT NOT NULL);",
+      "seed": "INSERT INTO orders (id, customer_id, total, status) VALUES (1, 1, 150000, 'paid'), (2, 2, 75000, 'pending'), (3, 1, 200000, 'paid'), (4, 3, 50000, 'cancelled'), (5, 4, 125000, 'paid');"
+    },
+    "tests": [
+      {
+        "name": "data awal (batas tepat)",
+        "expected": {
+          "columns": [
+            "id",
+            "total",
+            "size"
+          ],
+          "rows": [
+            [
+              1,
+              150000,
+              "besar"
+            ],
+            [
+              2,
+              75000,
+              "sedang"
+            ],
+            [
+              3,
+              200000,
+              "besar"
+            ],
+            [
+              4,
+              50000,
+              "kecil"
+            ],
+            [
+              5,
+              125000,
+              "sedang"
+            ]
+          ]
+        }
+      },
+      {
+        "name": "tepat di bawah batas",
+        "setup": "INSERT INTO orders (id, customer_id, total, status) VALUES (6, 5, 74999, 'paid'), (7, 5, 149999, 'paid');",
+        "expected": {
+          "columns": [
+            "id",
+            "total",
+            "size"
+          ],
+          "rows": [
+            [
+              1,
+              150000,
+              "besar"
+            ],
+            [
+              2,
+              75000,
+              "sedang"
+            ],
+            [
+              3,
+              200000,
+              "besar"
+            ],
+            [
+              4,
+              50000,
+              "kecil"
+            ],
+            [
+              5,
+              125000,
+              "sedang"
+            ],
+            [
+              6,
+              74999,
+              "kecil"
+            ],
+            [
+              7,
+              149999,
+              "sedang"
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "SELECT id, total,\n  CASE\n    WHEN total >= 150000 THEN 'besar'\n    WHEN total >= 75000 THEN 'sedang'\n    ELSE 'kecil'\n  END AS size\nFROM orders;",
+    "hints": [
+      "`CASE WHEN ... THEN ... ELSE ... END` mengevaluasi kondisi dari atas ke bawah dan berhenti di yang pertama benar.",
+      "Mulai dari batas tertinggi: `WHEN total >= 150000 THEN 'besar' WHEN total >= 75000 THEN 'sedang' ELSE 'kecil'`."
+    ],
+    "explanation": "`CASE` mengambil cabang **pertama** yang benar, jadi urutan `WHEN` penting: jika `total >= 75000` ditulis duluan, pesanan 200000 akan masuk 'sedang'. Perhatikan juga `>=` vs `>` pada batas tepat 75000 dan 150000.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

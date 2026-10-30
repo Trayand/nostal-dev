@@ -45,7 +45,8 @@ async function main() {
   const status = argValue("--status");
   const all = process.argv.includes("--all");
   const { files } = readContentFiles();
-  const results = await validateBank(files, { trackIds: readTracks().map((t) => t.id), skipExecution: true });
+  const results = await validateBank(files, { trackIds: readTracks().map((t) => t.id),
+      trackLanguages: Object.fromEntries(readTracks().map((t) => [t.id, t.language])), skipExecution: true });
 
   const items = results
     .filter((r) => r.question && !r.executed)

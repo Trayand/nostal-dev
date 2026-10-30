@@ -1,0 +1,248 @@
+[
+  {
+    "id": "sql-window-002",
+    "track": "sql",
+    "level": 5,
+    "format": "code-full",
+    "topic": "window-functions",
+    "tags": [
+      "top-n-per-group",
+      "dense-rank",
+      "ties",
+      "interview"
+    ],
+    "title": "Dua nilai gaji teratas per departemen",
+    "prompt": "Tabel `employees(id, name, dept, salary)`.\n\nUntuk setiap departemen, tampilkan karyawan yang gajinya termasuk **dua nilai gaji tertinggi yang berbeda** di departemen itu. Gaji yang sama dihitung sebagai satu nilai, dan semua karyawan dengan nilai tersebut ikut tampil (jadi satu departemen bisa menghasilkan lebih dari 2 orang).\n\nKolom: `dept`, `name`, `salary`. Urutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE employees (id INTEGER PRIMARY KEY, name TEXT NOT NULL, dept TEXT NOT NULL, salary INTEGER NOT NULL);",
+      "seed": "INSERT INTO employees (id, name, dept, salary) VALUES (1, 'Andi', 'IT', 15000000), (2, 'Sari', 'IT', 12000000), (3, 'Rina', 'IT', 9000000), (4, 'Bayu', 'IT', 12000000), (5, 'Budi', 'HR', 8000000), (6, 'Joko', 'HR', 7000000), (7, 'Dewi', 'Finance', 11000000), (8, 'Tono', 'Finance', 13000000), (9, 'Wati', 'Finance', 11000000), (10, 'Putri', 'Finance', 10000000), (11, 'Lina', 'Marketing', 10000000);"
+    },
+    "tests": [
+      {
+        "name": "seri di nilai kedua",
+        "expected": {
+          "columns": [
+            "dept",
+            "name",
+            "salary"
+          ],
+          "rows": [
+            [
+              "IT",
+              "Andi",
+              15000000
+            ],
+            [
+              "IT",
+              "Sari",
+              12000000
+            ],
+            [
+              "IT",
+              "Bayu",
+              12000000
+            ],
+            [
+              "HR",
+              "Budi",
+              8000000
+            ],
+            [
+              "HR",
+              "Joko",
+              7000000
+            ],
+            [
+              "Finance",
+              "Tono",
+              13000000
+            ],
+            [
+              "Finance",
+              "Dewi",
+              11000000
+            ],
+            [
+              "Finance",
+              "Wati",
+              11000000
+            ],
+            [
+              "Marketing",
+              "Lina",
+              10000000
+            ]
+          ]
+        }
+      },
+      {
+        "name": "seri di nilai pertama",
+        "setup": "UPDATE employees SET salary = 12000000 WHERE name = 'Andi';",
+        "expected": {
+          "columns": [
+            "dept",
+            "name",
+            "salary"
+          ],
+          "rows": [
+            [
+              "IT",
+              "Andi",
+              12000000
+            ],
+            [
+              "IT",
+              "Sari",
+              12000000
+            ],
+            [
+              "IT",
+              "Bayu",
+              12000000
+            ],
+            [
+              "IT",
+              "Rina",
+              9000000
+            ],
+            [
+              "HR",
+              "Budi",
+              8000000
+            ],
+            [
+              "HR",
+              "Joko",
+              7000000
+            ],
+            [
+              "Finance",
+              "Tono",
+              13000000
+            ],
+            [
+              "Finance",
+              "Dewi",
+              11000000
+            ],
+            [
+              "Finance",
+              "Wati",
+              11000000
+            ],
+            [
+              "Marketing",
+              "Lina",
+              10000000
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "WITH ranked AS (\n  SELECT dept, name, salary,\n    DENSE_RANK() OVER (PARTITION BY dept ORDER BY salary DESC) AS rnk\n  FROM employees\n)\nSELECT dept, name, salary\nFROM ranked\nWHERE rnk <= 2;",
+    "hints": [
+      "Beri peringkat gaji per departemen dengan window function, lalu filter peringkatnya di query luar (window function tidak boleh dipakai langsung di `WHERE`).",
+      "Pilih fungsi peringkat yang tidak melompati angka saat seri: `DENSE_RANK() OVER (PARTITION BY dept ORDER BY salary DESC)`, lalu `WHERE rnk <= 2` dari sebuah CTE."
+    ],
+    "explanation": "Tiga fungsi peringkat berbeda perilakunya saat seri (contoh IT setelah Andi diubah: 12, 12, 12, 9 juta):\n- `ROW_NUMBER()` → 1, 2, 3, 4: memotong sembarang orang yang seri.\n- `RANK()` → 1, 1, 1, 4: melompati angka, sehingga Rina (nilai berbeda kedua) hilang.\n- `DENSE_RANK()` → 1, 1, 1, 2: tepat \"dua nilai berbeda teratas\".\n\nKarena window function dihitung setelah `WHERE`, peringkat harus dihitung di CTE/subquery dulu baru difilter. Ini pola klasik *top N per group* di wawancara.",
+    "estimatedMinutes": 10,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-window-003",
+    "track": "sql",
+    "level": 5,
+    "format": "code-full",
+    "topic": "window-functions",
+    "tags": [
+      "gaps-and-islands",
+      "row-number",
+      "julianday",
+      "dates",
+      "interview"
+    ],
+    "title": "Streak login terpanjang per user",
+    "prompt": "Tabel `logins(id, username, login_date)`. `login_date` berupa teks `'YYYY-MM-DD'`. Seorang user bisa login **lebih dari sekali** di hari yang sama.\n\nUntuk setiap user, hitung `longest_streak`: jumlah hari kalender **berturut-turut** terpanjang di mana user itu login setidaknya sekali per hari. Perhatikan pergantian bulan (misalnya 28 Februari → 1 Maret 2026 adalah hari berturut-turut).\n\nKolom: `username`, `longest_streak`. Urutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE logins (id INTEGER PRIMARY KEY, username TEXT NOT NULL, login_date TEXT NOT NULL);",
+      "seed": "INSERT INTO logins (username, login_date) VALUES ('andi', '2026-03-01'), ('andi', '2026-03-02'), ('andi', '2026-03-03'), ('andi', '2026-03-05'), ('andi', '2026-03-06'), ('budi', '2026-03-01'), ('budi', '2026-03-03'), ('budi', '2026-03-03'), ('budi', '2026-03-04'), ('sari', '2026-03-10'), ('dewi', '2026-02-27'), ('dewi', '2026-02-28'), ('dewi', '2026-03-01'), ('dewi', '2026-03-02');"
+    },
+    "tests": [
+      {
+        "name": "login ganda di hari sama dan lintas bulan",
+        "expected": {
+          "columns": [
+            "username",
+            "longest_streak"
+          ],
+          "rows": [
+            [
+              "andi",
+              3
+            ],
+            [
+              "budi",
+              2
+            ],
+            [
+              "sari",
+              1
+            ],
+            [
+              "dewi",
+              4
+            ]
+          ]
+        }
+      },
+      {
+        "name": "celah terisi",
+        "setup": "INSERT INTO logins (username, login_date) VALUES ('andi', '2026-03-04'), ('andi', '2026-03-04'), ('budi', '2026-03-02');",
+        "expected": {
+          "columns": [
+            "username",
+            "longest_streak"
+          ],
+          "rows": [
+            [
+              "andi",
+              6
+            ],
+            [
+              "budi",
+              4
+            ],
+            [
+              "sari",
+              1
+            ],
+            [
+              "dewi",
+              4
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "WITH days AS (\n  SELECT DISTINCT username, login_date FROM logins\n),\ngrouped AS (\n  SELECT username,\n    julianday(login_date) - ROW_NUMBER() OVER (PARTITION BY username ORDER BY login_date) AS grp\n  FROM days\n),\nstreaks AS (\n  SELECT username, grp, COUNT(*) AS len\n  FROM grouped\n  GROUP BY username, grp\n)\nSELECT username, MAX(len) AS longest_streak\nFROM streaks\nGROUP BY username;",
+    "hints": [
+      "Hapus dulu login ganda di hari yang sama (`DISTINCT`). Lalu cari cara memberi \"label grup\" yang sama untuk semua hari dalam satu streak.",
+      "Trik *gaps and islands*: untuk hari berturut-turut, `julianday(login_date) - ROW_NUMBER() OVER (PARTITION BY username ORDER BY login_date)` bernilai konstan. Kelompokkan berdasarkan nilai itu, hitung panjangnya, lalu ambil `MAX` per user."
+    ],
+    "explanation": "Pola *gaps and islands*: jika tanggal naik 1 hari setiap kali nomor urut naik 1, selisih `tanggal − nomor_urut` tetap sama di sepanjang satu streak dan berubah begitu ada celah. `julianday` mengubah tanggal ke angka hari sehingga pergantian bulan/tahun ditangani dengan benar; mengambil `strftime('%d', ...)` (tanggal dalam bulan) akan memutus streak Dewi di 1 Maret. `DISTINCT` di awal wajib: tanpanya login ganda Budi pada 3 Maret memberi dua nomor urut untuk satu hari dan merusak labelnya. Terakhir, `COUNT(*)` per (user, grup) memberi panjang tiap streak dan `MAX` memilih yang terpanjang.",
+    "estimatedMinutes": 15,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

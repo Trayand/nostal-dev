@@ -1,0 +1,94 @@
+[
+  {
+    "id": "go-slices-003",
+    "track": "go",
+    "level": 5,
+    "format": "predict-output",
+    "topic": "slices",
+    "tags": [
+      "append",
+      "aliasing",
+      "capacity",
+      "interview"
+    ],
+    "title": "Dua append dari slice yang sama",
+    "prompt": "Pertanyaan wawancara klasik. Apa output program berikut?",
+    "data": {
+      "language": "go",
+      "code": "package main\n\nimport \"fmt\"\n\nfunc add(s []int, v int) []int {\n\ts = append(s, v)\n\treturn s\n}\n\nfunc main() {\n\tbase := make([]int, 3, 4)\n\ta := add(base, 1)\n\tb := add(base, 2)\n\tfmt.Println(a[3], b[3])\n\n\tc := add(a, 3)\n\tc[0] = 9\n\tfmt.Println(base[0], a[0], len(c), cap(c) >= 5)\n}"
+    },
+    "answer": {
+      "output": "2 2\n0 0 5 true"
+    },
+    "hints": [
+      "`base` punya `len 3`, `cap 4`: masih ada satu slot kosong di array dasar. Kedua pemanggilan `add(base, ...)` menulis ke slot yang **sama**.",
+      "`a` sudah penuh (`len 4`, `cap 4`), jadi `append` di `add(a, 3)` harus mengalokasi array baru. Perubahan pada `c` tidak lagi terlihat oleh `a` maupun `base`."
+    ],
+    "explanation": "Slice yang dikirim ke fungsi adalah salinan **header** (pointer, len, cap), tetapi array dasarnya sama.\n\n1. `add(base, 1)`: kapasitas cukup, `1` ditulis ke indeks 3 array dasar; `a` = header baru dengan `len 4` di array yang sama.\n2. `add(base, 2)`: `base` masih `len 3`, jadi `2` **menimpa** indeks 3 yang sama. Kini `a[3]` dan `b[3]` sama-sama `2`. Baris pertama: `2 2`.\n3. `add(a, 3)`: `a` sudah penuh (`len 4 = cap 4`), sehingga `append` mengalokasi array baru, menyalin `[0 0 0 2]`, lalu menambah `3`. `c` punya `len 5` dan kapasitas baru minimal 5 (implementasi saat ini menggandakannya menjadi 8, tetapi angka persisnya bukan jaminan spesifikasi).\n4. `c[0] = 9` hanya mengubah array baru, jadi `base[0]` dan `a[0]` tetap `0`.\n\nPelajaran: jangan pernah mengandalkan apakah `append` mengalokasi ulang atau tidak. Selalu pakai nilai kembaliannya, dan salin (`slices.Clone`) jika slice dibagi ke beberapa pemilik.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics checked by reasoning; not executed"
+    }
+  },
+  {
+    "id": "go-goroutines-desktop-001",
+    "track": "go",
+    "level": 5,
+    "format": "desktop",
+    "topic": "goroutines",
+    "tags": [
+      "worker-pool",
+      "generics",
+      "channels",
+      "waitgroup",
+      "testing"
+    ],
+    "title": "ParallelMap generik dengan batas worker",
+    "prompt": "Implementasikan fungsi generik\n\n```go\nfunc ParallelMap[T, R any](in []T, workers int, f func(T) R) []R\n```\n\nyang menerapkan `f` ke setiap elemen `in` secara **paralel** dengan paling banyak `workers` goroutine berjalan bersamaan, lalu mengembalikan hasil dengan **urutan yang sama** seperti input.\n\n- `workers < 1` diperlakukan sebagai 1.\n- Input kosong → slice dengan panjang 0.\n- Fungsi baru kembali setelah semua pekerjaan selesai (tanpa goroutine yang bocor).\n- Harus lolos `go test -race ./...` (tanpa data race).\n\nUnduh starter, lalu jalankan `go test ./...` sampai semua tes lulus. Asumsi: Go 1.22.",
+    "data": {
+      "language": "go",
+      "command": "go test ./...",
+      "files": [
+        {
+          "path": "go.mod",
+          "kind": "other",
+          "content": "module pmap\n\ngo 1.22\n"
+        },
+        {
+          "path": "pmap.go",
+          "kind": "starter",
+          "content": "package pmap\n\n// ParallelMap applies f to every element of in using at most `workers`\n// concurrent goroutines and returns the results in input order.\n// workers < 1 is treated as 1.\nfunc ParallelMap[T, R any](in []T, workers int, f func(T) R) []R {\n\t// TODO: implement\n\treturn nil\n}\n"
+        },
+        {
+          "path": "pmap_test.go",
+          "kind": "test",
+          "content": "package pmap\n\nimport (\n\t\"strconv\"\n\t\"sync/atomic\"\n\t\"testing\"\n\t\"time\"\n)\n\nfunc seq(n int) []int {\n\ts := make([]int, n)\n\tfor i := range s {\n\t\ts[i] = i\n\t}\n\treturn s\n}\n\nfunc TestParallelMapOrder(t *testing.T) {\n\tcases := []struct {\n\t\tname    string\n\t\tin      []int\n\t\tworkers int\n\t}{\n\t\t{\"kosong\", []int{}, 3},\n\t\t{\"satu worker\", []int{1, 2, 3}, 1},\n\t\t{\"worker lebih banyak dari item\", []int{4, 5}, 10},\n\t\t{\"banyak item\", seq(50), 4},\n\t\t{\"worker nol dianggap satu\", []int{7, 8, 9}, 0},\n\t\t{\"worker negatif dianggap satu\", []int{2, 3}, -5},\n\t}\n\tfor _, c := range cases {\n\t\tt.Run(c.name, func(t *testing.T) {\n\t\t\tgot := ParallelMap(c.in, c.workers, func(n int) string { return strconv.Itoa(n * n) })\n\t\t\tif len(got) != len(c.in) {\n\t\t\t\tt.Fatalf(\"len(got) = %d, want %d\", len(got), len(c.in))\n\t\t\t}\n\t\t\tfor i, n := range c.in {\n\t\t\t\tif want := strconv.Itoa(n * n); got[i] != want {\n\t\t\t\t\tt.Errorf(\"got[%d] = %q, want %q\", i, got[i], want)\n\t\t\t\t}\n\t\t\t}\n\t\t})\n\t}\n}\n\nfunc TestParallelMapLimit(t *testing.T) {\n\tcases := []struct {\n\t\tname    string\n\t\tworkers int\n\t\tminPeak int32\n\t}{\n\t\t{\"satu worker berjalan berurutan\", 1, 1},\n\t\t{\"tiga worker berjalan paralel\", 3, 2},\n\t}\n\tfor _, c := range cases {\n\t\tt.Run(c.name, func(t *testing.T) {\n\t\t\tvar running, peak int32\n\t\t\tParallelMap(seq(20), c.workers, func(n int) int {\n\t\t\t\tcur := atomic.AddInt32(&running, 1)\n\t\t\t\tfor {\n\t\t\t\t\told := atomic.LoadInt32(&peak)\n\t\t\t\t\tif cur <= old || atomic.CompareAndSwapInt32(&peak, old, cur) {\n\t\t\t\t\t\tbreak\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\ttime.Sleep(5 * time.Millisecond)\n\t\t\t\tatomic.AddInt32(&running, -1)\n\t\t\t\treturn n\n\t\t\t})\n\t\t\tp := atomic.LoadInt32(&peak)\n\t\t\tif p > int32(c.workers) {\n\t\t\t\tt.Errorf(\"peak concurrency = %d, want <= %d\", p, c.workers)\n\t\t\t}\n\t\t\tif p < c.minPeak {\n\t\t\t\tt.Errorf(\"peak concurrency = %d, want >= %d\", p, c.minPeak)\n\t\t\t}\n\t\t\tif r := atomic.LoadInt32(&running); r != 0 {\n\t\t\t\tt.Errorf(\"%d calls still running after ParallelMap returned\", r)\n\t\t\t}\n\t\t})\n\t}\n}\n"
+        }
+      ]
+    },
+    "referenceSolution": "package pmap\n\nimport \"sync\"\n\nfunc ParallelMap[T, R any](in []T, workers int, f func(T) R) []R {\n\tif workers < 1 {\n\t\tworkers = 1\n\t}\n\tout := make([]R, len(in))\n\tjobs := make(chan int)\n\tvar wg sync.WaitGroup\n\tfor w := 0; w < workers; w++ {\n\t\twg.Add(1)\n\t\tgo func() {\n\t\t\tdefer wg.Done()\n\t\t\tfor i := range jobs {\n\t\t\t\tout[i] = f(in[i])\n\t\t\t}\n\t\t}()\n\t}\n\tfor i := range in {\n\t\tjobs <- i\n\t}\n\tclose(jobs)\n\twg.Wait()\n\treturn out\n}",
+    "hints": [
+      "Alokasikan `out := make([]R, len(in))` di awal. Setiap pekerjaan cukup membawa **indeks**, dan worker menulis ke `out[i]`, sehingga urutan terjaga tanpa perlu sorting.",
+      "Buat `workers` goroutine yang membaca indeks dari satu channel `jobs`. Kirim semua indeks, `close(jobs)`, lalu `wg.Wait()` sebelum `return out`."
+    ],
+    "explanation": "Pola **worker pool**: sejumlah tetap goroutine membaca pekerjaan dari satu channel, sehingga konkurensi tidak pernah melebihi `workers`. Menyimpan hasil berdasarkan indeks (`out[i] = f(in[i])`) menjaga urutan sekaligus bebas data race, karena setiap goroutine menulis ke elemen slice yang berbeda (elemen berbeda adalah lokasi memori berbeda). `close(jobs)` menghentikan loop `for range jobs` di tiap worker, dan `wg.Wait()` menjamin semua hasil sudah ditulis (ada relasi *happens-before*) sebelum `out` dikembalikan.\n\nKesalahan umum:\n- Menjalankan satu goroutine per elemen tanpa batas, sehingga gagal di tes batas worker.\n- Mengumpulkan hasil lewat channel lalu `append` sesuai urutan selesai, sehingga urutan acak.\n- `append` ke slice bersama dari beberapa goroutine, menyebabkan data race.\n- Lupa `close(jobs)`, sehingga worker tidak pernah berhenti dan `wg.Wait()` deadlock.\n\nTes kosong lolos bahkan untuk starter (`nil` punya `len 0`), tetapi tes lain gagal sampai implementasi lengkap.",
+    "estimatedMinutes": 35,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics checked by reasoning; not executed"
+    }
+  }
+]

@@ -1,0 +1,330 @@
+[
+  {
+    "id": "logic-recursion-001",
+    "track": "logic",
+    "level": 2,
+    "format": "predict-output",
+    "topic": "recursion",
+    "tags": [
+      "call-stack",
+      "base-case"
+    ],
+    "title": "Urutan cetak pada rekursi",
+    "prompt": "Apa output kode berikut? Perhatikan baris yang dijalankan **setelah** panggilan rekursif.",
+    "data": {
+      "language": "javascript",
+      "code": "function countdown(n) {\n  if (n === 0) {\n    console.log(\"selesai\");\n    return;\n  }\n  console.log(n);\n  countdown(n - 1);\n  console.log(\"kembali \" + n);\n}\ncountdown(2);",
+      "options": [
+        "2\n1\nselesai\nkembali 1\nkembali 2",
+        "2\n1\nselesai\nkembali 2\nkembali 1",
+        "2\nkembali 2\n1\nkembali 1\nselesai",
+        "2\n1\nselesai"
+      ]
+    },
+    "answer": {
+      "output": "2\n1\nselesai\nkembali 1\nkembali 2"
+    },
+    "hints": [
+      "`console.log(\"kembali \" + n)` baru dijalankan setelah `countdown(n - 1)` selesai seluruhnya.",
+      "Panggilan terdalam selesai paling dulu, jadi \"kembali\" dicetak dari `n` kecil ke besar."
+    ],
+    "explanation": "Setiap panggilan menunggu panggilan di dalamnya selesai (call stack). Urutannya: cetak 2 → panggil `countdown(1)` → cetak 1 → panggil `countdown(0)` → cetak `selesai` dan return. Lalu stack \"membuka\": `countdown(1)` melanjutkan dan mencetak `kembali 1`, baru kemudian `countdown(2)` mencetak `kembali 2`. Kode setelah panggilan rekursif berjalan dalam urutan **terbalik**.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-recursion-002",
+    "track": "logic",
+    "level": 2,
+    "format": "code-short",
+    "topic": "recursion",
+    "tags": [
+      "digits",
+      "modulo",
+      "base-case"
+    ],
+    "title": "Jumlah digit secara rekursif",
+    "prompt": "Tulis fungsi **rekursif** `sumDigits(n)` yang mengembalikan jumlah semua digit dari bilangan bulat non-negatif `n`.\n\nContoh: `sumDigits(1234)` → `10`.",
+    "data": {
+      "language": "javascript",
+      "starter": "function sumDigits(n) {\n  // base case: ...\n  // langkah rekursif: ...\n}",
+      "entry": "sumDigits"
+    },
+    "tests": [
+      {
+        "name": "nol",
+        "input": [
+          0
+        ],
+        "expected": 0
+      },
+      {
+        "name": "satu digit",
+        "input": [
+          7
+        ],
+        "expected": 7
+      },
+      {
+        "name": "1234",
+        "input": [
+          1234
+        ],
+        "expected": 10
+      },
+      {
+        "name": "9999",
+        "input": [
+          9999
+        ],
+        "expected": 36
+      },
+      {
+        "name": "ada nol di tengah",
+        "input": [
+          1005
+        ],
+        "expected": 6
+      }
+    ],
+    "referenceSolution": "function sumDigits(n) {\n  if (n < 10) return n;\n  return (n % 10) + sumDigits(Math.floor(n / 10));\n}",
+    "hints": [
+      "`n % 10` memberi digit terakhir, `Math.floor(n / 10)` membuang digit terakhir.",
+      "Base case: jika `n < 10`, jawabannya `n` itu sendiri. Selain itu: `n % 10 + sumDigits(Math.floor(n / 10))`."
+    ],
+    "explanation": "Pecah masalah menjadi **digit terakhir** + **jumlah digit sisanya**. `n % 10` mengambil digit terakhir, `Math.floor(n / 10)` menghasilkan bilangan yang lebih kecil sehingga rekursi pasti mencapai base case (`n < 10`). Kesalahan umum: memakai `n / 10` tanpa `Math.floor`, sehingga hasilnya pecahan dan rekursi tidak berhenti dengan benar.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-arrays-001",
+    "track": "logic",
+    "level": 2,
+    "format": "predict-output",
+    "topic": "arrays",
+    "tags": [
+      "tracing",
+      "second-largest"
+    ],
+    "title": "Telusuri fungsi misteri dua variabel",
+    "prompt": "Telusuri (trace) fungsi berikut. Apa outputnya?",
+    "data": {
+      "language": "javascript",
+      "code": "function mystery(arr) {\n  let a = -Infinity;\n  let b = -Infinity;\n  for (const x of arr) {\n    if (x > a) {\n      b = a;\n      a = x;\n    } else if (x > b && x < a) {\n      b = x;\n    }\n  }\n  return b;\n}\nconsole.log(mystery([4, 9, 2, 9, 7]));",
+      "options": [
+        "9",
+        "7",
+        "4",
+        "-Infinity"
+      ]
+    },
+    "answer": {
+      "output": "7"
+    },
+    "hints": [
+      "`a` menyimpan nilai terbesar sejauh ini. Apa peran `b`?",
+      "Saat `x = 9` yang kedua, kedua kondisi bernilai `false` karena `9 > 9` salah dan `9 < 9` juga salah."
+    ],
+    "explanation": "Fungsi ini mencari **nilai terbesar kedua yang berbeda**. Trace: 4 → a=4; 9 → b=4, a=9; 2 → tidak berubah; 9 → tidak berubah (duplikat diabaikan karena `x < a` salah); 7 → `7 > 4 && 7 < 9`, jadi b=7. Hasilnya **7**. Tanpa syarat `x < a`, 9 yang kedua akan masuk ke `b` (karena `9 > 4`) dan hasilnya menjadi 9 — itulah fungsi syarat tersebut.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-recursion-003",
+    "track": "logic",
+    "level": 2,
+    "format": "find-bug",
+    "topic": "recursion",
+    "tags": [
+      "base-case",
+      "power"
+    ],
+    "title": "Base case fungsi pangkat",
+    "prompt": "Fungsi ini seharusnya menghitung `base` pangkat `exp` (dengan `exp` bilangan bulat ≥ 0), tapi `power(2, 3)` menghasilkan `4`, dan `power(2, 0)` menyebabkan stack overflow. Baris mana yang salah?",
+    "data": {
+      "language": "javascript",
+      "code": "function power(base, exp) {\n  if (exp === 1) return 1;\n  return base * power(base, exp - 1);\n}"
+    },
+    "answer": {
+      "line": 2,
+      "fixedLine": "  if (exp === 0) return 1;"
+    },
+    "hints": [
+      "Berapa nilai bilangan apa pun pangkat 0? Dan pangkat 1?",
+      "Base case harus `exp === 0` dengan nilai 1 — `x⁰ = 1`."
+    ],
+    "explanation": "Base case-nya salah: `x¹` seharusnya `x`, bukan 1. Akibatnya setiap hasil kekurangan satu perkalian (`2 * 2 * 1 = 4`). Lebih parah, `power(2, 0)` memanggil `power(2, -1)`, `power(2, -2)`, ... tanpa pernah mencapai `exp === 1` → stack overflow. Base case yang tepat adalah kasus terkecil yang valid: `exp === 0` → `1`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-strings-001",
+    "track": "logic",
+    "level": 2,
+    "format": "code-short",
+    "topic": "strings",
+    "tags": [
+      "palindrome",
+      "normalization"
+    ],
+    "title": "Palindrom abaikan spasi dan tanda baca",
+    "prompt": "Tulis fungsi `isPalindrome(str)` yang mengembalikan `true` jika `str` sama dibaca dari depan maupun belakang, dengan **mengabaikan huruf besar/kecil** dan semua karakter selain huruf `a-z` dan angka `0-9`.\n\nContoh: `isPalindrome(\"Kasur ini rusak\")` → `true`.",
+    "data": {
+      "language": "javascript",
+      "starter": "function isPalindrome(str) {\n  // tulis kodemu di sini\n}",
+      "entry": "isPalindrome"
+    },
+    "tests": [
+      {
+        "name": "kalimat palindrom",
+        "input": [
+          "Kasur ini rusak"
+        ],
+        "expected": true
+      },
+      {
+        "name": "dengan tanda baca",
+        "input": [
+          "A man, a plan, a canal: Panama"
+        ],
+        "expected": true
+      },
+      {
+        "name": "bukan palindrom",
+        "input": [
+          "Hello"
+        ],
+        "expected": false
+      },
+      {
+        "name": "string kosong",
+        "input": [
+          ""
+        ],
+        "expected": true
+      },
+      {
+        "name": "angka",
+        "input": [
+          "12321"
+        ],
+        "expected": true
+      },
+      {
+        "name": "dua huruf berbeda",
+        "input": [
+          "ab"
+        ],
+        "expected": false
+      }
+    ],
+    "referenceSolution": "function isPalindrome(str) {\n  const s = str.toLowerCase().replace(/[^a-z0-9]/g, \"\");\n  let left = 0;\n  let right = s.length - 1;\n  while (left < right) {\n    if (s[left] !== s[right]) return false;\n    left++;\n    right--;\n  }\n  return true;\n}",
+    "hints": [
+      "Langkah 1: bersihkan string (huruf kecil, buang karakter non-alfanumerik). Langkah 2: bandingkan.",
+      "`str.toLowerCase().replace(/[^a-z0-9]/g, \"\")`, lalu bandingkan dengan dua pointer dari ujung kiri dan kanan."
+    ],
+    "explanation": "Masalah ini menggabungkan dua ide: **normalisasi** data lalu **perbandingan dua pointer**. Setelah dibersihkan, `left` bergerak ke kanan dan `right` ke kiri; jika ada pasangan karakter yang berbeda, langsung `false`. Alternatif yang juga benar: bandingkan dengan `s.split(\"\").reverse().join(\"\")`. Kesalahan umum: lupa `toLowerCase()`, sehingga `\"K\"` dan `\"k\"` dianggap berbeda.",
+    "estimatedMinutes": 4,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-arrays-002",
+    "track": "logic",
+    "level": 2,
+    "format": "parsons",
+    "topic": "arrays",
+    "tags": [
+      "frequency",
+      "object",
+      "counting"
+    ],
+    "title": "Hitung frekuensi kata",
+    "prompt": "Susun baris-baris berikut menjadi fungsi `countWords(words)` yang menerima array string dan mengembalikan objek berisi jumlah kemunculan tiap kata.\n\nContoh: `countWords([\"a\", \"b\", \"a\"])` → `{ a: 2, b: 1 }`.",
+    "data": {
+      "language": "javascript",
+      "entry": "countWords"
+    },
+    "answer": {
+      "lines": [
+        "function countWords(words) {",
+        "  const counts = {};",
+        "  for (const w of words) {",
+        "    if (counts[w] === undefined) counts[w] = 0;",
+        "    counts[w]++;",
+        "  }",
+        "  return counts;",
+        "}"
+      ]
+    },
+    "tests": [
+      {
+        "input": [
+          [
+            "a",
+            "b",
+            "a"
+          ]
+        ],
+        "expected": {
+          "a": 2,
+          "b": 1
+        }
+      },
+      {
+        "input": [
+          [
+            "kopi",
+            "teh",
+            "kopi",
+            "kopi"
+          ]
+        ],
+        "expected": {
+          "kopi": 3,
+          "teh": 1
+        }
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": {}
+      }
+    ],
+    "hints": [
+      "Objek penghitung dibuat sekali, sebelum loop.",
+      "Di dalam loop: pastikan dulu `counts[w]` ada (inisialisasi 0), baru tambahkan 1."
+    ],
+    "explanation": "Pola **frequency map**: objek kosong → untuk setiap kata, inisialisasi hitungan ke 0 jika belum ada → tambah 1. Jika `counts[w]++` dijalankan sebelum inisialisasi, `undefined + 1` menghasilkan `NaN`. Pola ini dasar dari banyak soal (anagram, elemen terbanyak, duplikat).",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

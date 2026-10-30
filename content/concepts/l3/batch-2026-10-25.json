@@ -1,0 +1,168 @@
+[
+  {
+    "id": "concepts-event-loop-002",
+    "track": "concepts",
+    "level": 3,
+    "format": "multiple-choice",
+    "topic": "event-loop",
+    "tags": [
+      "javascript",
+      "microtask",
+      "promises"
+    ],
+    "title": "Urutan microtask vs macrotask",
+    "prompt": "Apa urutan output kode berikut?",
+    "data": {
+      "language": "javascript",
+      "code": "console.log('A');\nsetTimeout(() => console.log('B'), 0);\nPromise.resolve().then(() => console.log('C'));\nconsole.log('D');",
+      "options": [
+        "`A B C D`",
+        "`A D B C`",
+        "`A D C B`",
+        "`A C D B`"
+      ]
+    },
+    "answer": {
+      "index": 2
+    },
+    "hints": [
+      "Kode sinkron selalu selesai lebih dulu.",
+      "Callback `.then` masuk antrean microtask, `setTimeout` masuk antrean task (macrotask)."
+    ],
+    "explanation": "`A` dan `D` sinkron. Setelah call stack kosong, event loop **mengosongkan semua microtask** (`C`) sebelum mengambil task berikutnya (`B`). Kesalahan umum: mengira `setTimeout(..., 0)` berjalan \"langsung\" — ia tetap menunggu semua microtask.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-http-004",
+    "track": "concepts",
+    "level": 3,
+    "format": "flashcard",
+    "topic": "http",
+    "tags": [
+      "http",
+      "cors",
+      "browser",
+      "security"
+    ],
+    "title": "Cara kerja CORS",
+    "prompt": "Apa itu **CORS**, siapa yang menegakkannya, dan kapan terjadi **preflight**?",
+    "answer": {
+      "back": "**Cross-Origin Resource Sharing**: cara server memberi izin agar JS di origin lain boleh **membaca** responsnya.\n\n- Ditegakkan oleh **browser**, bukan server (curl/Postman tidak peduli CORS).\n- Server mengizinkan lewat header, mis. `Access-Control-Allow-Origin: https://app.example.com`.\n- **Preflight** (`OPTIONS`) dikirim dulu untuk request \"non-simple\": method selain GET/HEAD/POST, header custom (mis. `Authorization`), atau `Content-Type: application/json`."
+    },
+    "hints": [
+      "Kenapa request yang sama berhasil di curl tapi gagal di browser?"
+    ],
+    "explanation": "CORS melonggarkan *same-origin policy* browser; ia bukan mekanisme keamanan server. Error CORS diperbaiki di **server** (menambah header yang benar), bukan di client. Dengan cookie/credentials, `Access-Control-Allow-Origin` tidak boleh `*`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-auth-002",
+    "track": "concepts",
+    "level": 3,
+    "format": "flashcard",
+    "topic": "auth",
+    "tags": [
+      "auth",
+      "session",
+      "jwt"
+    ],
+    "title": "Session vs JWT",
+    "prompt": "Apa trade-off utama antara **session berbasis server** dan **JWT**?",
+    "answer": {
+      "back": "- **Session**: server menyimpan data sesi (DB/Redis), client hanya pegang ID di cookie. ✔ mudah di-*revoke* (hapus sesi). ✘ butuh storage bersama.\n- **JWT**: token **ditandatangani** berisi klaim, server cukup verifikasi signature. ✔ stateless. ✘ sulit dicabut sebelum `exp`.\n\nPraktik umum JWT: access token berumur pendek + refresh token; simpan di cookie `HttpOnly` agar tidak bisa dicuri lewat XSS (plus `SameSite` untuk menahan CSRF)."
+    },
+    "hints": [
+      "Pikirkan apa yang terjadi saat user logout atau akunnya diblokir."
+    ],
+    "explanation": "JWT standar (JWS) hanya **ditandatangani, tidak dienkripsi** — isinya bisa dibaca siapa saja, jadi jangan taruh data rahasia. Untuk mencabut JWT sebelum kedaluwarsa, kamu perlu denylist, yang mengembalikan state ke server.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-databases-003",
+    "track": "concepts",
+    "level": 3,
+    "format": "flashcard",
+    "topic": "databases",
+    "tags": [
+      "sql",
+      "normalization",
+      "schema-design"
+    ],
+    "title": "Normalisasi 1NF, 2NF, 3NF",
+    "prompt": "Jelaskan singkat **1NF, 2NF, dan 3NF**, dan kapan orang sengaja **denormalisasi**.",
+    "answer": {
+      "back": "- **1NF** — setiap kolom berisi nilai atomik, tanpa grup berulang (bukan `tags = 'a,b,c'`).\n- **2NF** — 1NF + kolom non-key bergantung pada **seluruh** primary key (bukan sebagian dari composite key).\n- **3NF** — 2NF + tidak ada ketergantungan transitif: kolom non-key tidak bergantung pada kolom non-key lain (mis. `kota` bergantung pada `kode_pos`, jadi pasangan itu dipindah ke tabel sendiri).\n\n**Denormalisasi**: menggandakan data demi kecepatan baca (laporan, cache), dengan konsekuensi menjaga konsistensinya."
+    },
+    "hints": [
+      "Tujuannya: setiap fakta disimpan di satu tempat saja."
+    ],
+    "explanation": "Normalisasi mencegah anomali update (mengubah satu fakta di banyak baris). Ringkasan klasik untuk 3NF: setiap kolom non-key bergantung pada \"the key, the whole key, and nothing but the key\".",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-testing-001",
+    "track": "concepts",
+    "level": 3,
+    "format": "flashcard",
+    "topic": "testing",
+    "tags": [
+      "testing",
+      "test-pyramid"
+    ],
+    "title": "Piramida testing",
+    "prompt": "Apa itu **piramida testing**, dan beda unit, integration, serta end-to-end test?",
+    "answer": {
+      "back": "- **Unit** (paling banyak) — satu fungsi/modul terisolasi; cepat, dependensi di-*mock*.\n- **Integration** (sedang) — beberapa bagian bersama, mis. service + database sungguhan.\n- **E2E** (sedikit) — seluruh aplikasi dari sudut pandang user (browser, API publik); paling lambat dan rapuh.\n\nMakin ke atas: makin realistis, tapi makin lambat dan mahal dirawat."
+    },
+    "hints": [
+      "Bentuk piramida menunjukkan jumlah relatif tiap jenis test."
+    ],
+    "explanation": "Banyak unit test memberi umpan balik cepat; sedikit E2E memastikan alur penting benar-benar jalan. Kesalahan umum: \"piramida terbalik\" — mengandalkan banyak E2E yang lambat dan sering flaky.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

@@ -1,0 +1,85 @@
+[
+  {
+    "id": "go-channels-003",
+    "track": "go",
+    "level": 4,
+    "format": "multiple-choice",
+    "topic": "channels",
+    "tags": [
+      "waitgroup",
+      "deadlock",
+      "unbuffered",
+      "goroutines"
+    ],
+    "title": "WaitGroup sebelum membaca unbuffered channel",
+    "prompt": "Asumsi: Go 1.22 (variabel loop per-iterasi). Apa yang terjadi saat program berikut dijalankan?",
+    "data": {
+      "language": "go",
+      "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"sync\"\n)\n\nfunc main() {\n\tch := make(chan int)\n\tvar wg sync.WaitGroup\n\tfor i := 1; i <= 3; i++ {\n\t\twg.Add(1)\n\t\tgo func() {\n\t\t\tdefer wg.Done()\n\t\t\tch <- i * i\n\t\t}()\n\t}\n\twg.Wait()\n\tclose(ch)\n\tsum := 0\n\tfor v := range ch {\n\t\tsum += v\n\t}\n\tfmt.Println(sum)\n}",
+      "options": [
+        "Mencetak `14`",
+        "Mencetak `0` karena channel sudah ditutup sebelum dibaca",
+        "`fatal error: all goroutines are asleep - deadlock!`",
+        "Panic: `send on closed channel`",
+        "Hasilnya bervariasi tergantung penjadwalan goroutine"
+      ]
+    },
+    "answer": {
+      "index": 2
+    },
+    "hints": [
+      "Kapan `wg.Done()` dipanggil di setiap goroutine? Apakah pengiriman `ch <- i * i` bisa selesai?",
+      "Pengiriman ke unbuffered channel menunggu penerima, tetapi satu-satunya penerima (`main`) baru membaca **setelah** `wg.Wait()` selesai."
+    ],
+    "explanation": "Ketiga goroutine terblokir di `ch <- i * i` karena channel unbuffered dan belum ada yang menerima. Akibatnya `wg.Done()` (yang di-defer) tidak pernah berjalan. Sementara itu `main` terblokir di `wg.Wait()` menunggu ketiga `Done`. Semua goroutine saling menunggu, sehingga runtime menghentikan program dengan `fatal error: all goroutines are asleep - deadlock!`. Hasilnya deterministik, tidak bergantung penjadwalan, dan `close(ch)` tidak pernah tercapai (jadi tidak ada panic `send on closed channel`).\n\nPerbaikan:\n- Beri buffer yang cukup: `make(chan int, 3)`, atau\n- Jalankan `wg.Wait(); close(ch)` di goroutine terpisah supaya `main` langsung membaca dengan `for range`.\n\nDengan salah satu perbaikan dan semantik Go 1.22, output-nya `14` (1 + 4 + 9).",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics checked by reasoning; not executed"
+    }
+  },
+  {
+    "id": "go-generics-001",
+    "track": "go",
+    "level": 4,
+    "format": "find-bug",
+    "topic": "generics",
+    "tags": [
+      "constraints",
+      "type-sets",
+      "underlying-type"
+    ],
+    "title": "Constraint generik tanpa tilde",
+    "prompt": "Program ini gagal dikompilasi di baris `fmt.Println(Sum(temps))`. Baris mana yang harus diubah agar berhasil **tanpa** mengubah signature `Sum`, tipe `Celsius`, maupun isi `main`?",
+    "data": {
+      "language": "go",
+      "code": "package main\n\nimport \"fmt\"\n\ntype Number interface {\n\tint | float64\n}\n\nfunc Sum[T Number](xs []T) T {\n\tvar total T\n\tfor _, x := range xs {\n\t\ttotal += x\n\t}\n\treturn total\n}\n\ntype Celsius float64\n\nfunc main() {\n\ttemps := []Celsius{20.5, 21.5}\n\tfmt.Println(Sum(temps))\n}"
+    },
+    "answer": {
+      "line": 6,
+      "fixedLine": "\t~int | ~float64"
+    },
+    "hints": [
+      "`Celsius` adalah tipe baru (defined type) yang **underlying type**-nya `float64`, tetapi bukan `float64` itu sendiri.",
+      "Type set `int | float64` hanya berisi tepat dua tipe tersebut. Tanda `~` memperluasnya ke semua tipe dengan underlying type yang sama."
+    ],
+    "explanation": "Union `int | float64` dalam constraint hanya mencakup tipe `int` dan `float64` persis. `Celsius` didefinisikan dengan `type Celsius float64`, jadi ia tipe yang berbeda dan compiler menolak: `Celsius does not satisfy Number (possibly missing ~ for float64 in Number)`.\n\nDengan `~int | ~float64`, type set mencakup **semua tipe yang underlying type-nya** `int` atau `float64`, termasuk `Celsius`. Setelah diperbaiki, `Sum` mengembalikan `Celsius(42)` dan program mencetak `42`.\n\nItulah sebabnya constraint di paket standar seperti `cmp.Ordered` ditulis dengan `~` (`~int | ~int8 | ... | ~string`).",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics checked by reasoning; not executed"
+    }
+  }
+]

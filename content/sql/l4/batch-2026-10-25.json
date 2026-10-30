@@ -1,0 +1,234 @@
+[
+  {
+    "id": "sql-window-001",
+    "track": "sql",
+    "level": 4,
+    "format": "code-full",
+    "topic": "window-functions",
+    "tags": [
+      "window",
+      "running-total",
+      "sum-over",
+      "partition-by"
+    ],
+    "title": "Total kumulatif belanja per pelanggan",
+    "prompt": "Tabel `orders(id, customer_id, order_date, total)`. `order_date` berupa teks `'YYYY-MM-DD'`; satu pelanggan bisa punya beberapa pesanan di tanggal yang sama.\n\nUntuk setiap pesanan tampilkan `customer_id`, `order_date`, `total`, dan `running_total`: jumlah kumulatif `total` pesanan pelanggan itu **sampai dan termasuk** pesanan ini, dengan urutan pesanan berdasarkan `order_date`, lalu `id` jika tanggalnya sama.\n\nUrutkan output berdasarkan `customer_id`, `order_date`, lalu `id`.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER NOT NULL, order_date TEXT NOT NULL, total INTEGER NOT NULL);",
+      "seed": "INSERT INTO orders (id, customer_id, order_date, total) VALUES (1, 1, '2026-01-03', 100000), (2, 2, '2026-01-04', 50000), (3, 1, '2026-01-10', 70000), (4, 1, '2026-01-10', 30000), (5, 2, '2026-01-15', 20000), (6, 1, '2026-02-01', 40000);"
+    },
+    "tests": [
+      {
+        "name": "dua pesanan di tanggal yang sama",
+        "expected": {
+          "columns": [
+            "customer_id",
+            "order_date",
+            "total",
+            "running_total"
+          ],
+          "rows": [
+            [
+              1,
+              "2026-01-03",
+              100000,
+              100000
+            ],
+            [
+              1,
+              "2026-01-10",
+              70000,
+              170000
+            ],
+            [
+              1,
+              "2026-01-10",
+              30000,
+              200000
+            ],
+            [
+              1,
+              "2026-02-01",
+              40000,
+              240000
+            ],
+            [
+              2,
+              "2026-01-04",
+              50000,
+              50000
+            ],
+            [
+              2,
+              "2026-01-15",
+              20000,
+              70000
+            ]
+          ]
+        },
+        "ordered": true
+      },
+      {
+        "name": "id lebih besar tapi tanggal lebih awal",
+        "setup": "INSERT INTO orders (id, customer_id, order_date, total) VALUES (7, 2, '2026-01-01', 10000);",
+        "expected": {
+          "columns": [
+            "customer_id",
+            "order_date",
+            "total",
+            "running_total"
+          ],
+          "rows": [
+            [
+              1,
+              "2026-01-03",
+              100000,
+              100000
+            ],
+            [
+              1,
+              "2026-01-10",
+              70000,
+              170000
+            ],
+            [
+              1,
+              "2026-01-10",
+              30000,
+              200000
+            ],
+            [
+              1,
+              "2026-02-01",
+              40000,
+              240000
+            ],
+            [
+              2,
+              "2026-01-01",
+              10000,
+              10000
+            ],
+            [
+              2,
+              "2026-01-04",
+              50000,
+              60000
+            ],
+            [
+              2,
+              "2026-01-15",
+              20000,
+              80000
+            ]
+          ]
+        },
+        "ordered": true
+      }
+    ],
+    "referenceSolution": "SELECT customer_id, order_date, total,\n  SUM(total) OVER (\n    PARTITION BY customer_id\n    ORDER BY order_date, id\n  ) AS running_total\nFROM orders\nORDER BY customer_id, order_date, id;",
+    "hints": [
+      "Gunakan window function `SUM(total) OVER (PARTITION BY customer_id ORDER BY ...)`. Pikirkan apa yang terjadi pada dua baris dengan `order_date` yang sama.",
+      "Dengan `ORDER BY order_date` saja, frame default `RANGE` menganggap baris bertanggal sama sebagai *peer* dan menjumlahkan keduanya sekaligus. Tambahkan `id` ke `ORDER BY` di dalam `OVER`, atau pakai `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` dengan urutan `order_date, id`."
+    ],
+    "explanation": "`SUM(...) OVER (PARTITION BY ... ORDER BY ...)` menghitung total berjalan per pelanggan tanpa meringkas baris. Detail halus: jika `ORDER BY` ada tanpa frame eksplisit, frame default adalah `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`, yang menyertakan **semua baris dengan nilai urutan sama** (peer). Dengan `ORDER BY order_date` saja, pesanan id 3 dan 4 (sama-sama 2026-01-10) keduanya mendapat 200000. Menambahkan `id` sebagai tie-breaker membuat urutan unik sehingga setiap baris punya total kumulatifnya sendiri. `ORDER BY` di luar `OVER` hanya mengatur urutan tampilan, bukan perhitungan.",
+    "estimatedMinutes": 8,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-subquery-002",
+    "track": "sql",
+    "level": 4,
+    "format": "code-short",
+    "topic": "subqueries",
+    "tags": [
+      "second-highest",
+      "max",
+      "null",
+      "interview"
+    ],
+    "title": "Gaji tertinggi kedua",
+    "prompt": "Tabel `employees(id, name, salary)`.\n\nKembalikan **tepat satu baris** dengan kolom `second_highest`: nilai gaji **berbeda** tertinggi kedua (jika dua orang sama-sama bergaji tertinggi, itu tetap dihitung satu nilai). Jika tidak ada gaji tertinggi kedua, kembalikan `NULL` (tetap satu baris, bukan nol baris).",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE employees (id INTEGER PRIMARY KEY, name TEXT NOT NULL, salary INTEGER NOT NULL);",
+      "seed": "INSERT INTO employees (id, name, salary) VALUES (1, 'Andi', 15000000), (2, 'Sari', 12000000), (3, 'Budi', 8000000), (4, 'Dewi', 11000000), (5, 'Rina', 9000000), (6, 'Joko', 7000000), (7, 'Tono', 13000000);"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "second_highest"
+          ],
+          "rows": [
+            [
+              13000000
+            ]
+          ]
+        }
+      },
+      {
+        "name": "dua orang seri di posisi teratas",
+        "setup": "UPDATE employees SET salary = 15000000 WHERE name = 'Tono';",
+        "expected": {
+          "columns": [
+            "second_highest"
+          ],
+          "rows": [
+            [
+              12000000
+            ]
+          ]
+        }
+      },
+      {
+        "name": "hanya satu karyawan",
+        "setup": "DELETE FROM employees WHERE id <> 1;",
+        "expected": {
+          "columns": [
+            "second_highest"
+          ],
+          "rows": [
+            [
+              null
+            ]
+          ]
+        }
+      },
+      {
+        "name": "semua gaji sama",
+        "setup": "UPDATE employees SET salary = 10000000;",
+        "expected": {
+          "columns": [
+            "second_highest"
+          ],
+          "rows": [
+            [
+              null
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "SELECT MAX(salary) AS second_highest\nFROM employees\nWHERE salary < (SELECT MAX(salary) FROM employees);",
+    "hints": [
+      "Gaji tertinggi kedua = gaji tertinggi di antara gaji yang **lebih kecil** dari gaji maksimum.",
+      "`SELECT MAX(salary) AS second_highest FROM employees WHERE salary < (SELECT MAX(salary) FROM employees);` Agregat tanpa GROUP BY selalu menghasilkan satu baris, NULL bila tidak ada data."
+    ],
+    "explanation": "Solusi naif `ORDER BY salary DESC LIMIT 1 OFFSET 1` gagal dua kali: saat dua orang seri di atas, ia mengembalikan nilai tertinggi lagi (15 juta), dan saat tidak ada gaji kedua ia mengembalikan **nol baris**, bukan NULL. `MAX(...)` dengan filter `salary < MAX` menangani keduanya: nilai seri otomatis tersaring, dan agregat atas himpunan kosong menghasilkan satu baris berisi NULL. Varian lain yang juga benar: `SELECT (SELECT DISTINCT salary FROM employees ORDER BY salary DESC LIMIT 1 OFFSET 1) AS second_highest;` (scalar subquery kosong bernilai NULL).",
+    "estimatedMinutes": 4,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

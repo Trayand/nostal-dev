@@ -83,6 +83,14 @@ describe("SQL sandbox", () => {
     expect(r.passed).toBe(true);
   });
 
+  it("keeps column names for an empty result set", async () => {
+    const r = await runCodeTests(exec, {
+      language: "sql", code: "SELECT name FROM t WHERE v > 99", schema, seed,
+      tests: [{ expected: { columns: ["name"], rows: [] }, ordered: false }],
+    });
+    expect(r.passed).toBe(true);
+  });
+
   it("returns SQL errors per test", async () => {
     const r = await runCodeTests(exec, {
       language: "sql", code: "SELEC nope", schema, seed,

@@ -1,0 +1,208 @@
+[
+  {
+    "id": "js-promises-003",
+    "track": "javascript",
+    "level": 5,
+    "format": "code-full",
+    "topic": "promises",
+    "tags": [
+      "promise-all",
+      "implementation",
+      "interview"
+    ],
+    "title": "Implementasi Promise.all sendiri",
+    "prompt": "Implementasikan `promiseAll(promises)` yang berperilaku seperti `Promise.all`, **tanpa** memakai `Promise.all`, `allSettled`, `any`, atau `race`:\n\n- resolve ke array hasil dengan **urutan sesuai input** (bukan urutan selesai),\n- elemen yang bukan Promise diperlakukan sebagai nilai yang langsung resolve,\n- array kosong → resolve ke `[]`,\n- reject segera dengan error dari Promise **pertama yang reject**.\n\nFungsi `check(specs)` di bawah adalah helper untuk test; jangan diubah.",
+    "data": {
+      "language": "javascript",
+      "starter": "function promiseAll(promises) {\n  // tulis kodemu di sini\n  return Promise.resolve([]);\n}\n\n// Helper untuk test: jangan diubah\nasync function check(specs) {\n  const inputs = specs.map((s) =>\n    s.delay === undefined\n      ? s.value\n      : new Promise((resolve, reject) =>\n          setTimeout(() => (s.fail ? reject(new Error(s.value)) : resolve(s.value)), s.delay),\n        ),\n  );\n  try {\n    return { ok: true, values: await promiseAll(inputs) };\n  } catch (e) {\n    return { ok: false, error: e.message };\n  }\n}",
+      "entry": "check"
+    },
+    "tests": [
+      {
+        "name": "urutan input dipertahankan",
+        "input": [
+          [
+            {
+              "value": 1,
+              "delay": 30
+            },
+            {
+              "value": 2,
+              "delay": 5
+            },
+            {
+              "value": 3,
+              "delay": 15
+            }
+          ]
+        ],
+        "expected": {
+          "ok": true,
+          "values": [
+            1,
+            2,
+            3
+          ]
+        }
+      },
+      {
+        "name": "array kosong",
+        "input": [
+          []
+        ],
+        "expected": {
+          "ok": true,
+          "values": []
+        }
+      },
+      {
+        "name": "nilai biasa dicampur Promise",
+        "input": [
+          [
+            {
+              "value": 4
+            },
+            {
+              "value": 5,
+              "delay": 5
+            }
+          ]
+        ],
+        "expected": {
+          "ok": true,
+          "values": [
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "name": "satu reject",
+        "input": [
+          [
+            {
+              "value": 1,
+              "delay": 20
+            },
+            {
+              "value": "boom",
+              "delay": 5,
+              "fail": true
+            }
+          ]
+        ],
+        "expected": {
+          "ok": false,
+          "error": "boom"
+        }
+      },
+      {
+        "name": "reject pertama yang menang",
+        "input": [
+          [
+            {
+              "value": "lambat",
+              "delay": 30,
+              "fail": true
+            },
+            {
+              "value": "cepat",
+              "delay": 5,
+              "fail": true
+            }
+          ]
+        ],
+        "expected": {
+          "ok": false,
+          "error": "cepat"
+        }
+      }
+    ],
+    "referenceSolution": "function promiseAll(promises) {\n  return new Promise((resolve, reject) => {\n    const results = new Array(promises.length);\n    let remaining = promises.length;\n    if (remaining === 0) {\n      resolve(results);\n      return;\n    }\n    promises.forEach((p, i) => {\n      Promise.resolve(p).then((value) => {\n        results[i] = value;\n        remaining--;\n        if (remaining === 0) resolve(results);\n      }, reject);\n    });\n  });\n}\n\n// Helper untuk test: jangan diubah\nasync function check(specs) {\n  const inputs = specs.map((s) =>\n    s.delay === undefined\n      ? s.value\n      : new Promise((resolve, reject) =>\n          setTimeout(() => (s.fail ? reject(new Error(s.value)) : resolve(s.value)), s.delay),\n        ),\n  );\n  try {\n    return { ok: true, values: await promiseAll(inputs) };\n  } catch (e) {\n    return { ok: false, error: e.message };\n  }\n}",
+    "hints": [
+      "Bungkus semuanya dalam `new Promise((resolve, reject) => ...)`, lalu pasang `.then` pada setiap elemen. Gunakan `Promise.resolve(p)` agar nilai biasa juga bisa di-`.then`.",
+      "Simpan hasil di `results[i]` (bukan `push`) dan hitung berapa yang belum selesai; `resolve(results)` saat penghitungnya mencapai 0. Teruskan `reject` langsung sebagai handler kedua."
+    ],
+    "explanation": "Kunci implementasinya:\n\n1. **Urutan**: tulis ke `results[i]` memakai index asli. `results.push(value)` akan menghasilkan urutan selesai, bukan urutan input.\n2. **Kapan selesai**: hitung sisa Promise (`remaining`); jangan pakai `results.length`, karena `new Array(n)` sudah punya panjang `n`.\n3. **Nilai biasa**: `Promise.resolve(p)` menormalkan nilai non-Promise.\n4. **Reject**: memanggil `reject` pada error pertama sudah cukup; panggilan `resolve`/`reject` berikutnya diabaikan karena Promise hanya bisa settle sekali.\n5. **Array kosong**: harus di-resolve secara eksplisit, karena tidak ada `.then` yang akan pernah dipanggil.",
+    "estimatedMinutes": 15,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-recursion-003",
+    "track": "javascript",
+    "level": 5,
+    "format": "code-full",
+    "topic": "recursion",
+    "tags": [
+      "backtracking",
+      "interview",
+      "strings"
+    ],
+    "title": "Semua kombinasi kurung seimbang",
+    "prompt": "Tulis fungsi `generateParenthesis(n)` yang mengembalikan **semua** string berisi `n` pasang kurung `()` yang seimbang (valid), terurut secara leksikografis (`'('` dianggap lebih kecil dari `')'`).\n\nContoh: `generateParenthesis(2)` → `[\"(())\", \"()()\"]`. Untuk `n = 0`, kembalikan `[\"\"]`.",
+    "data": {
+      "language": "javascript",
+      "starter": "function generateParenthesis(n) {\n  const result = [];\n  // tulis kodemu di sini\n  return result;\n}",
+      "entry": "generateParenthesis"
+    },
+    "tests": [
+      {
+        "name": "n = 0",
+        "input": [
+          0
+        ],
+        "expected": [
+          ""
+        ]
+      },
+      {
+        "name": "n = 1",
+        "input": [
+          1
+        ],
+        "expected": [
+          "()"
+        ]
+      },
+      {
+        "name": "n = 2",
+        "input": [
+          2
+        ],
+        "expected": [
+          "(())",
+          "()()"
+        ]
+      },
+      {
+        "name": "n = 3",
+        "input": [
+          3
+        ],
+        "expected": [
+          "((()))",
+          "(()())",
+          "(())()",
+          "()(())",
+          "()()()"
+        ]
+      }
+    ],
+    "referenceSolution": "function generateParenthesis(n) {\n  const result = [];\n  function build(current, open, close) {\n    if (current.length === 2 * n) {\n      result.push(current);\n      return;\n    }\n    if (open < n) build(current + '(', open + 1, close);\n    if (close < open) build(current + ')', open, close + 1);\n  }\n  build('', 0, 0);\n  return result;\n}",
+    "hints": [
+      "Bangun string karakter demi karakter dengan fungsi rekursif yang mengingat berapa `(` dan `)` yang sudah dipakai.",
+      "Boleh menambah `(` jika `open < n`, dan boleh menambah `)` hanya jika `close < open`. Coba `(` dulu agar hasilnya otomatis terurut."
+    ],
+    "explanation": "Ini pola **backtracking**: di setiap langkah ada paling banyak dua pilihan, dan cabang yang tidak valid dipangkas sejak awal. Aturan `close < open` menjamin tidak pernah ada `)` tanpa pasangan, sedangkan `open < n` membatasi jumlah `(`. Base case: panjang string mencapai `2n`. Karena cabang `(` selalu dicoba sebelum `)` dan `'(' < ')'`, hasilnya otomatis terurut leksikografis. Pendekatan naif (membuat semua `2^(2n)` string lalu memfilter yang valid) benar tapi jauh lebih lambat. Untuk `n = 0`, base case langsung terpenuhi dengan string kosong, sehingga hasilnya `[\"\"]`.",
+    "estimatedMinutes": 15,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

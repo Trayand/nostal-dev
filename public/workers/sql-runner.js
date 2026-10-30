@@ -58,10 +58,21 @@ function runQuery(SQL, { schema, seed, setup, query }) {
     db.run(schema || "");
     if (seed) db.run(seed);
     if (setup) db.run(setup);
-    const sets = db.exec(query || "");
-    // Use the last statement that returned rows (lets learners write helper statements first).
-    const last = sets.length ? sets[sets.length - 1] : { columns: [], values: [] };
-    return { columns: last.columns, rows: last.values };
+    // Step through statements one by one (unlike db.exec, this keeps column
+    // names when a SELECT returns zero rows). The last statement that has
+    // columns is the result, so learners may write helper statements first.
+    let last = { columns: [], rows: [] };
+    for (const stmt of db.iterateStatements(query || "")) {
+      try {
+        const columns = stmt.getColumnNames();
+        const rows = [];
+        while (stmt.step()) rows.push(stmt.get());
+        if (columns.length) last = { columns, rows };
+      } finally {
+        stmt.free();
+      }
+    }
+    return last;
   } finally {
     db.close();
   }

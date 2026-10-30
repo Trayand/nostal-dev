@@ -1,0 +1,335 @@
+[
+  {
+    "id": "sql-select-002",
+    "track": "sql",
+    "level": 1,
+    "format": "code-short",
+    "topic": "select-where",
+    "tags": [
+      "where",
+      "order-by",
+      "limit"
+    ],
+    "title": "3 produk termahal di bawah 100 ribu",
+    "prompt": "Tabel `products(id, name, price)`.\n\nTampilkan `name` dan `price` dari **3 produk termahal** yang harganya **di bawah** 100000 (100000 tidak termasuk). Urutkan dari harga tertinggi ke terendah.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL);",
+      "seed": "INSERT INTO products (name, price) VALUES ('Kopi Gayo 250g', 85000), ('Teh Melati', 25000), ('Gula Aren 1kg', 45000), ('Sambal Bu Rudy', 60000), ('Rendang Kaleng', 120000), ('Keripik Balado', 30000);"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "name",
+            "price"
+          ],
+          "rows": [
+            [
+              "Kopi Gayo 250g",
+              85000
+            ],
+            [
+              "Sambal Bu Rudy",
+              60000
+            ],
+            [
+              "Gula Aren 1kg",
+              45000
+            ]
+          ]
+        },
+        "ordered": true
+      },
+      {
+        "name": "harga tepat 100000 tidak ikut",
+        "setup": "INSERT INTO products (name, price) VALUES ('Madu Hutan', 100000), ('Kecap Manis Premium', 95000);",
+        "expected": {
+          "columns": [
+            "name",
+            "price"
+          ],
+          "rows": [
+            [
+              "Kecap Manis Premium",
+              95000
+            ],
+            [
+              "Kopi Gayo 250g",
+              85000
+            ],
+            [
+              "Sambal Bu Rudy",
+              60000
+            ]
+          ]
+        },
+        "ordered": true
+      }
+    ],
+    "referenceSolution": "SELECT name, price FROM products WHERE price < 100000 ORDER BY price DESC LIMIT 3;",
+    "hints": [
+      "Filter dulu dengan `WHERE price < 100000`, lalu urutkan.",
+      "`ORDER BY price DESC LIMIT 3` mengambil 3 baris teratas setelah diurutkan."
+    ],
+    "explanation": "Urutan eksekusi logis: `WHERE` memfilter baris, `ORDER BY` mengurutkan, baru `LIMIT` memotong hasil. Kesalahan umum: memakai `<=` (Madu Hutan seharga tepat 100000 ikut terambil) atau lupa `DESC` sehingga yang terambil justru produk termurah.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-distinct-001",
+    "track": "sql",
+    "level": 1,
+    "format": "code-short",
+    "topic": "distinct",
+    "tags": [
+      "distinct"
+    ],
+    "title": "Daftar kota pelanggan tanpa duplikat",
+    "prompt": "Tabel `customers(id, name, city, phone)`.\n\nTampilkan kolom `city` berisi daftar kota tempat pelanggan tinggal, **tanpa duplikat**. Urutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT NOT NULL, city TEXT NOT NULL, phone TEXT);",
+      "seed": "INSERT INTO customers (id, name, city, phone) VALUES (1, 'Budi', 'Jakarta', '081211110001'), (2, 'Sari', 'Bandung', NULL), (3, 'Andi', 'Jakarta', '081311110002'), (4, 'Dewi', 'Surabaya', NULL), (5, 'Rina', 'Bandung', '085711110003');"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "city"
+          ],
+          "rows": [
+            [
+              "Jakarta"
+            ],
+            [
+              "Bandung"
+            ],
+            [
+              "Surabaya"
+            ]
+          ]
+        }
+      },
+      {
+        "name": "kota baru dan kota yang sudah ada",
+        "setup": "INSERT INTO customers (name, city, phone) VALUES ('Agus', 'Medan', NULL), ('Wati', 'Jakarta', '081811110004');",
+        "expected": {
+          "columns": [
+            "city"
+          ],
+          "rows": [
+            [
+              "Jakarta"
+            ],
+            [
+              "Bandung"
+            ],
+            [
+              "Surabaya"
+            ],
+            [
+              "Medan"
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "SELECT DISTINCT city FROM customers;",
+    "hints": [
+      "Ada kata kunci yang menghapus baris duplikat dari hasil `SELECT`.",
+      "Tulis `SELECT DISTINCT city FROM customers;`."
+    ],
+    "explanation": "`DISTINCT` menghapus baris hasil yang identik. Ia bekerja pada **seluruh kombinasi kolom** yang dipilih: `SELECT DISTINCT city, name` akan tetap menampilkan Jakarta berkali-kali karena pasangan (kota, nama)-nya berbeda.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-null-001",
+    "track": "sql",
+    "level": 1,
+    "format": "code-short",
+    "topic": "null-handling",
+    "tags": [
+      "null",
+      "is-null"
+    ],
+    "title": "Pelanggan tanpa nomor telepon",
+    "prompt": "Tabel `customers(id, name, city, phone)`. Kolom `phone` bernilai `NULL` jika pelanggan belum mengisi nomor telepon.\n\nTampilkan `name` semua pelanggan yang **belum punya** nomor telepon. Urutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT NOT NULL, city TEXT NOT NULL, phone TEXT);",
+      "seed": "INSERT INTO customers (id, name, city, phone) VALUES (1, 'Budi', 'Jakarta', '081211110001'), (2, 'Sari', 'Bandung', NULL), (3, 'Andi', 'Jakarta', '081311110002'), (4, 'Dewi', 'Surabaya', NULL), (5, 'Rina', 'Bandung', '085711110003');"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "name"
+          ],
+          "rows": [
+            [
+              "Sari"
+            ],
+            [
+              "Dewi"
+            ]
+          ]
+        }
+      },
+      {
+        "name": "nomor Budi dihapus",
+        "setup": "UPDATE customers SET phone = NULL WHERE name = 'Budi';",
+        "expected": {
+          "columns": [
+            "name"
+          ],
+          "rows": [
+            [
+              "Budi"
+            ],
+            [
+              "Sari"
+            ],
+            [
+              "Dewi"
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "SELECT name FROM customers WHERE phone IS NULL;",
+    "hints": [
+      "Perbandingan `phone = NULL` tidak pernah bernilai benar. Ada operator khusus untuk NULL.",
+      "Gunakan `WHERE phone IS NULL`."
+    ],
+    "explanation": "`NULL` berarti \"nilai tidak diketahui\", sehingga `phone = NULL` menghasilkan `NULL` (bukan TRUE) dan tidak ada baris yang lolos. Untuk mengecek NULL selalu pakai `IS NULL` / `IS NOT NULL`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-aggregate-001",
+    "track": "sql",
+    "level": 1,
+    "format": "code-short",
+    "topic": "aggregates",
+    "tags": [
+      "count",
+      "sum",
+      "where"
+    ],
+    "title": "Jumlah dan nilai pesanan lunas",
+    "prompt": "Tabel `orders(id, customer_id, total, status)`. Status bisa `'paid'`, `'pending'`, atau `'cancelled'`.\n\nTampilkan **satu baris** berisi:\n- `paid_orders`: jumlah pesanan berstatus `'paid'`\n- `revenue`: total nilai (`total`) pesanan berstatus `'paid'`",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER, total INTEGER NOT NULL, status TEXT NOT NULL);",
+      "seed": "INSERT INTO orders (id, customer_id, total, status) VALUES (1, 1, 150000, 'paid'), (2, 2, 75000, 'pending'), (3, 1, 200000, 'paid'), (4, 3, 50000, 'cancelled'), (5, 4, 125000, 'paid');"
+    },
+    "tests": [
+      {
+        "name": "data awal",
+        "expected": {
+          "columns": [
+            "paid_orders",
+            "revenue"
+          ],
+          "rows": [
+            [
+              3,
+              475000
+            ]
+          ]
+        }
+      },
+      {
+        "name": "pesanan baru dan pelunasan",
+        "setup": "INSERT INTO orders (id, customer_id, total, status) VALUES (6, 5, 80000, 'paid'); UPDATE orders SET status = 'paid' WHERE id = 2;",
+        "expected": {
+          "columns": [
+            "paid_orders",
+            "revenue"
+          ],
+          "rows": [
+            [
+              5,
+              630000
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "SELECT COUNT(*) AS paid_orders, SUM(total) AS revenue FROM orders WHERE status = 'paid';",
+    "hints": [
+      "Fungsi agregat `COUNT` dan `SUM` meringkas banyak baris menjadi satu.",
+      "`SELECT COUNT(*) AS paid_orders, SUM(total) AS revenue FROM orders WHERE status = 'paid';`"
+    ],
+    "explanation": "Tanpa `GROUP BY`, fungsi agregat meringkas **semua** baris yang lolos `WHERE` menjadi satu baris. `AS` memberi nama kolom hasil. Lupa `WHERE status = 'paid'` akan ikut menghitung pesanan pending dan batal.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-null-002",
+    "track": "sql",
+    "level": 1,
+    "format": "multiple-choice",
+    "topic": "null-handling",
+    "tags": [
+      "null",
+      "where"
+    ],
+    "title": "Hasil WHERE kolom = NULL",
+    "prompt": "Tabel `customers` berisi 5 baris; 2 di antaranya (Sari dan Dewi) memiliki `phone` bernilai `NULL`.\n\nBerapa baris yang dikembalikan query berikut di SQLite?",
+    "data": {
+      "language": "sql",
+      "code": "SELECT name FROM customers WHERE phone = NULL;",
+      "options": [
+        "0 baris",
+        "2 baris (Sari dan Dewi)",
+        "3 baris (pelanggan yang punya nomor)",
+        "Error: sintaks tidak valid"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Apa hasil perbandingan apa pun dengan nilai yang \"tidak diketahui\"?",
+      "`NULL = NULL` bernilai `NULL`, bukan TRUE, dan `WHERE` hanya meloloskan baris yang TRUE."
+    ],
+    "explanation": "Query ini valid secara sintaks, tetapi setiap perbandingan `= NULL` menghasilkan `NULL` (logika tiga nilai), jadi tidak ada baris yang lolos `WHERE`: hasilnya **0 baris**. Untuk mencari Sari dan Dewi gunakan `WHERE phone IS NULL`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Confirmed in sql.js: WHERE phone = NULL returns 0 rows, no syntax error."
+    },
+    "status": "verified"
+  }
+]

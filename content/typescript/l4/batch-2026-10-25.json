@@ -1,0 +1,82 @@
+[
+  {
+    "id": "ts-conditional-types-001",
+    "track": "typescript",
+    "level": 4,
+    "format": "multiple-choice",
+    "topic": "conditional-types",
+    "tags": [
+      "conditional-types",
+      "distributive",
+      "union"
+    ],
+    "title": "Conditional type yang distributif",
+    "prompt": "Apa hasil tipe `R`?",
+    "data": {
+      "language": "typescript",
+      "code": "type ToArray<T> = T extends unknown ? T[] : never;\n\ntype R = ToArray<string | number>;",
+      "options": [
+        "`(string | number)[]`",
+        "`string[] | number[]`",
+        "`never`",
+        "`string[] & number[]`"
+      ]
+    },
+    "answer": {
+      "index": 1
+    },
+    "hints": [
+      "Conditional type pada parameter tipe *telanjang* (`T extends ...`) diterapkan ke setiap anggota union satu per satu.",
+      "`ToArray<string | number>` = `ToArray<string> | ToArray<number>`."
+    ],
+    "explanation": "Karena `T` muncul telanjang di sisi kiri `extends`, conditional type bersifat **distributif**: union dipecah, tiap anggota diproses, lalu hasilnya digabung lagi → `string[] | number[]` (array yang isinya semua string **atau** semua number). Untuk mendapatkan `(string | number)[]`, cegah distribusi dengan membungkus: `[T] extends [unknown] ? T[] : never`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-classes-002",
+    "track": "typescript",
+    "level": 4,
+    "format": "predict-output",
+    "topic": "classes",
+    "tags": [
+      "private",
+      "private-fields",
+      "runtime"
+    ],
+    "title": "private vs #private saat runtime",
+    "prompt": "Apa output kode TypeScript berikut? (Ingat: `as any` hanya mematikan type-check.)",
+    "data": {
+      "language": "typescript",
+      "code": "class Account {\n  private pin = 1234;\n  #balance = 500;\n  getBalance() {\n    return this.#balance;\n  }\n}\nconst acc = new Account();\nconsole.log(Object.keys(acc).join(\",\"), (acc as any).pin, (acc as any).balance, acc.getBalance());",
+      "options": [
+        "pin 1234 undefined 500",
+        "pin,balance 1234 500 500",
+        " undefined undefined 500",
+        "pin,#balance 1234 undefined 500"
+      ]
+    },
+    "answer": {
+      "output": "pin 1234 undefined 500"
+    },
+    "hints": [
+      "Modifier `private` dihapus saat kompilasi; field-nya tetap property biasa.",
+      "`#balance` adalah private field JavaScript asli, bukan property bernama `balance`."
+    ],
+    "explanation": "`private pin` hanya dicek oleh compiler; saat runtime `pin` adalah property biasa, jadi muncul di `Object.keys` dan bisa dibaca lewat `as any`. `#balance` adalah *ECMAScript private field*: tidak muncul di `Object.keys`, tidak bisa diakses dari luar class (`acc.balance` adalah property lain yang tidak ada → `undefined`), tapi bisa dibaca oleh method di dalam class.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

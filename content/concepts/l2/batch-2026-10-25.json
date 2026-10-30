@@ -1,0 +1,228 @@
+[
+  {
+    "id": "concepts-http-003",
+    "track": "concepts",
+    "level": 2,
+    "format": "flashcard",
+    "topic": "http",
+    "tags": [
+      "http",
+      "idempotency",
+      "methods"
+    ],
+    "title": "Method safe vs idempotent",
+    "prompt": "Apa beda method HTTP yang **safe** dan yang **idempotent**? Method mana masuk ke mana?",
+    "answer": {
+      "back": "- **Safe** = tidak mengubah state server: `GET`, `HEAD`, `OPTIONS`\n- **Idempotent** = dipanggil 1× atau 10× hasil akhirnya sama: semua method safe + `PUT`, `DELETE`\n- **Tidak dijamin idempotent**: `POST`, `PATCH`\n\n```http\nDELETE /orders/7   # kedua kalinya: order tetap terhapus\nPOST   /orders     # dua kali = dua order\n```"
+    },
+    "hints": [
+      "Semua method safe otomatis idempotent, tapi tidak sebaliknya."
+    ],
+    "explanation": "Idempotensi penting untuk **retry**: client/proxy boleh mengulang `PUT`/`DELETE` dengan aman saat koneksi putus. Untuk `POST` (mis. pembayaran), pakai *idempotency key* agar retry tidak membuat transaksi ganda. Idempotent soal state server, bukan kode respons (DELETE kedua boleh membalas `404`).",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-rest-001",
+    "track": "concepts",
+    "level": 2,
+    "format": "flashcard",
+    "topic": "rest",
+    "tags": [
+      "rest",
+      "api-design",
+      "http"
+    ],
+    "title": "Penamaan endpoint REST",
+    "prompt": "Apa prinsip dasar **penamaan endpoint REST** untuk resource `articles` dan komentarnya?",
+    "answer": {
+      "back": "Pakai **kata benda jamak** untuk resource, dan biarkan **method** yang menyatakan aksi:\n\n```http\nGET    /articles            # daftar\nPOST   /articles            # buat baru\nGET    /articles/12         # detail\nPATCH  /articles/12         # ubah sebagian\nDELETE /articles/12         # hapus\nGET    /articles/12/comments  # sub-resource\n```\n\nHindari kata kerja di URL: `/getArticles`, `/deleteArticle?id=12`."
+    },
+    "hints": [
+      "URL = *apa* (resource), method = *apa yang dilakukan*."
+    ],
+    "explanation": "Dengan URL berbasis resource, API konsisten dan mudah ditebak. Filter/paginasi lewat query string (`/articles?tag=go&page=2`). Nesting cukup satu level; lebih dalam dari itu biasanya lebih baik dijadikan resource sendiri.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-git-002",
+    "track": "concepts",
+    "level": 2,
+    "format": "flashcard",
+    "topic": "git",
+    "tags": [
+      "git",
+      "merge",
+      "rebase"
+    ],
+    "title": "Merge vs rebase",
+    "prompt": "Apa beda **`git merge`** dan **`git rebase`** saat menggabungkan `main` ke branch fitur?",
+    "answer": {
+      "back": "- **merge** — membuat *merge commit*; riwayat asli tetap utuh (bercabang).\n- **rebase** — memutar ulang commit fiturmu di atas `main` terbaru; riwayat jadi **linear**, tapi commit-nya mendapat **hash baru**.\n\n```sh\ngit switch feature\ngit rebase main   # atau: git merge main\n```\n\n**Aturan emas:** jangan rebase commit yang sudah dipakai orang lain."
+    },
+    "hints": [
+      "Salah satunya menulis ulang riwayat."
+    ],
+    "explanation": "Karena rebase mengganti hash commit, rekan yang sudah menarik commit lama akan mengalami riwayat bentrok. Rebase cocok untuk merapikan branch lokal/pribadi sebelum PR; merge aman untuk branch bersama.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-git-003",
+    "track": "concepts",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "git",
+    "tags": [
+      "git",
+      "revert",
+      "reset"
+    ],
+    "title": "Membatalkan commit yang sudah di-push",
+    "prompt": "Sebuah commit berisi bug sudah di-**push ke `main`** dan rekan tim sudah menariknya. Cara paling aman untuk membatalkan perubahannya?",
+    "data": {
+      "options": [
+        "`git reset --hard HEAD~1` lalu `git push --force`",
+        "`git revert <hash>` lalu `git push`",
+        "`git commit --amend` lalu `git push --force`",
+        "`git checkout HEAD~1` lalu `git push`"
+      ]
+    },
+    "answer": {
+      "index": 1
+    },
+    "hints": [
+      "Hindari apa pun yang menulis ulang riwayat yang sudah dibagikan.",
+      "Ada perintah yang membuat commit *baru* berisi kebalikan dari perubahan lama."
+    ],
+    "explanation": "`git revert` membuat commit baru yang membalik perubahan, sehingga riwayat bersama tidak diubah dan rekan cukup `pull`. `reset --hard` + force push menghapus commit dari riwayat dan merusak salinan rekan. `--amend` juga menulis ulang commit, dan `checkout HEAD~1` hanya memindahkan HEAD lokal (detached) tanpa membatalkan apa pun di `main`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-databases-002",
+    "track": "concepts",
+    "level": 2,
+    "format": "flashcard",
+    "topic": "databases",
+    "tags": [
+      "sql",
+      "transactions",
+      "acid"
+    ],
+    "title": "ACID pada transaksi",
+    "prompt": "Apa kepanjangan dan arti **ACID** pada transaksi database?",
+    "answer": {
+      "back": "- **Atomicity** — semua langkah berhasil atau tidak ada sama sekali (rollback)\n- **Consistency** — transaksi membawa DB dari state valid ke state valid (constraint tetap terpenuhi)\n- **Isolation** — transaksi yang berjalan bersamaan tidak saling mengganggu\n- **Durability** — setelah `COMMIT`, data tidak hilang walau server crash\n\n```sql\nBEGIN;\nUPDATE accounts SET saldo = saldo - 100 WHERE id = 1;\nUPDATE accounts SET saldo = saldo + 100 WHERE id = 2;\nCOMMIT;\n```"
+    },
+    "hints": [
+      "Contoh klasik: transfer uang antar dua rekening."
+    ],
+    "explanation": "Pada contoh transfer, atomicity menjamin uang tidak \"hilang\" bila update kedua gagal. Isolation punya beberapa level (READ COMMITTED, REPEATABLE READ, SERIALIZABLE) — makin ketat makin aman tapi makin mahal.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-auth-001",
+    "track": "concepts",
+    "level": 2,
+    "format": "flashcard",
+    "topic": "auth",
+    "tags": [
+      "security",
+      "passwords",
+      "hashing"
+    ],
+    "title": "Menyimpan password dengan benar",
+    "prompt": "Bagaimana cara yang benar **menyimpan password** user di database?",
+    "answer": {
+      "back": "Simpan **hash** dari password memakai algoritma yang **sengaja lambat** dan **ber-salt**: **Argon2id** (rekomendasi OWASP), **bcrypt**, atau **scrypt**.\n\n```js\nconst hash = await argon2.hash(password);      // simpan ini\nconst ok = await argon2.verify(hash, input);   // saat login\n```\n\nJangan: plaintext, enkripsi yang bisa dibalik, atau hash cepat seperti MD5/SHA-256 polos."
+    },
+    "hints": [
+      "Hash cepat itu buruk di sini — kenapa?"
+    ],
+    "explanation": "Hash cepat bisa dicoba miliaran kali per detik di GPU saat database bocor. Algoritma lambat + salt unik per user membuat brute force mahal dan menggagalkan rainbow table. Library-nya sudah menyimpan salt dan parameter di dalam string hash.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-closures-002",
+    "track": "concepts",
+    "level": 2,
+    "format": "flashcard",
+    "topic": "closures",
+    "tags": [
+      "javascript",
+      "scope",
+      "var-let"
+    ],
+    "title": "Closure di dalam loop: var vs let",
+    "prompt": "Apa yang dicetak kode ini, dan bagaimana memperbaikinya?\n\n```js\nfor (var i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0);\n}\n```",
+    "answer": {
+      "back": "Mencetak **`3 3 3`**.\n\n`var` hanya punya **satu** binding `i` untuk seluruh loop; ketiga callback menutup variabel yang sama, yang nilainya sudah `3` saat timer berjalan.\n\n**Perbaikan:** ganti dengan `let` — setiap iterasi mendapat binding `i` baru, sehingga tercetak `0 1 2`."
+    },
+    "hints": [
+      "Callback berjalan setelah loop selesai. Berapa banyak variabel `i` yang ada?"
+    ],
+    "explanation": "Closure menangkap **variabel**, bukan salinan nilainya. Dengan `let` di header `for`, JS membuat binding baru per iterasi, jadi tiap callback menutup `i` yang berbeda.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

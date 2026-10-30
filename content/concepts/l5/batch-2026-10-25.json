@@ -1,0 +1,34 @@
+[
+  {
+    "id": "concepts-complexity-002",
+    "track": "concepts",
+    "level": 5,
+    "format": "flashcard",
+    "topic": "complexity",
+    "tags": [
+      "big-o",
+      "amortized",
+      "dynamic-array"
+    ],
+    "title": "Push ke dynamic array: amortized O(1)",
+    "prompt": "`array.push()` kadang harus menyalin seluruh isi array ke memori baru (`O(n)`). Kenapa push tetap disebut **amortized `O(1)`**?",
+    "answer": {
+      "back": "Saat penuh, kapasitas **dikali** (mis. 2×), bukan ditambah konstan.\n\nUntuk `n` push, total salinan ≈ `1 + 2 + 4 + … + n` < `2n` → rata-rata **< 2 salinan per push** = `O(1)` amortized.\n\n- Push terburuk tunggal tetap `O(n)`.\n- Jika kapasitas hanya ditambah `+k` tiap kali, total salinan jadi `O(n²)` → `O(n)` per push."
+    },
+    "hints": [
+      "Hitung total biaya `n` operasi, lalu bagi dengan `n`.",
+      "Deret 1 + 2 + 4 + … + n kurang dari 2n."
+    ],
+    "explanation": "Amortized analysis melihat biaya rata-rata sepanjang **rangkaian** operasi, bukan satu operasi terburuk. Kunci jawabannya adalah pertumbuhan **geometris** (faktor 1,5× atau 2× sama-sama memberi `O(1)`). Dalam interview, sebut juga bahwa ini berbeda dari *average case* probabilistik: amortized adalah jaminan untuk rangkaian operasi apa pun.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

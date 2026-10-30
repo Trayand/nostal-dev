@@ -1,0 +1,294 @@
+[
+  {
+    "id": "js-closures-001",
+    "track": "javascript",
+    "level": 2,
+    "format": "predict-output",
+    "topic": "closures",
+    "tags": [
+      "counter",
+      "factory-function"
+    ],
+    "title": "Dua counter dari pabrik yang sama",
+    "prompt": "Dua counter dibuat dari fungsi `makeCounter` yang sama. Apa yang dicetak oleh `console.log`?",
+    "data": {
+      "language": "javascript",
+      "code": "function makeCounter() {\n  let count = 0;\n  return () => ++count;\n}\n\nconst a = makeCounter();\nconst b = makeCounter();\na();\na();\nconsole.log(a(), b());",
+      "options": [
+        "3 1",
+        "3 4",
+        "1 1",
+        "2 1"
+      ]
+    },
+    "answer": {
+      "output": "3 1"
+    },
+    "hints": [
+      "Setiap pemanggilan `makeCounter()` membuat variabel `count` yang baru.",
+      "`a` sudah dipanggil dua kali sebelum `console.log`; `b` belum pernah."
+    ],
+    "explanation": "Setiap kali `makeCounter()` dipanggil, terbentuk scope baru dengan `count` sendiri, dan fungsi yang dikembalikan **menutup (closure)** variabel itu. `a` dan `b` tidak berbagi state: `a()` yang ketiga menghasilkan `3`, sedangkan `b()` yang pertama menghasilkan `1`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-array-methods-003",
+    "track": "javascript",
+    "level": 2,
+    "format": "code-short",
+    "topic": "array-methods",
+    "tags": [
+      "reduce",
+      "objects"
+    ],
+    "title": "Total belanja dengan reduce",
+    "prompt": "Tulis fungsi `totalPrice(items)` yang menerima array item `{ name, price, qty }` dan mengembalikan total `price * qty` semua item. Array kosong → `0`.\n\nContoh: `totalPrice([{ name: 'kopi', price: 15000, qty: 2 }, { name: 'roti', price: 8000, qty: 1 }])` → `38000`.",
+    "data": {
+      "language": "javascript",
+      "starter": "function totalPrice(items) {\n  // tulis kodemu di sini\n}",
+      "entry": "totalPrice"
+    },
+    "tests": [
+      {
+        "name": "dua item",
+        "input": [
+          [
+            {
+              "name": "kopi",
+              "price": 15000,
+              "qty": 2
+            },
+            {
+              "name": "roti",
+              "price": 8000,
+              "qty": 1
+            }
+          ]
+        ],
+        "expected": 38000
+      },
+      {
+        "name": "array kosong",
+        "input": [
+          []
+        ],
+        "expected": 0
+      },
+      {
+        "name": "qty nol",
+        "input": [
+          [
+            {
+              "name": "teh",
+              "price": 5000,
+              "qty": 0
+            },
+            {
+              "name": "air",
+              "price": 3000,
+              "qty": 3
+            }
+          ]
+        ],
+        "expected": 9000
+      }
+    ],
+    "referenceSolution": "function totalPrice(items) {\n  return items.reduce((sum, item) => sum + item.price * item.qty, 0);\n}",
+    "hints": [
+      "`reduce` menggabungkan seluruh array menjadi satu nilai.",
+      "Jangan lupa nilai awal `0` sebagai argumen kedua `reduce`, supaya array kosong tidak error."
+    ],
+    "explanation": "`items.reduce((sum, item) => sum + item.price * item.qty, 0)` menjumlahkan subtotal setiap item. Nilai awal `0` penting: tanpa nilai awal, `reduce` pada array kosong melempar `TypeError`, dan pada array berisi objek, akumulator pertama akan berupa objek, bukan angka.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-this-001",
+    "track": "javascript",
+    "level": 2,
+    "format": "find-bug",
+    "topic": "this",
+    "tags": [
+      "arrow-function",
+      "callbacks",
+      "setInterval"
+    ],
+    "title": "Timer yang tidak pernah bertambah",
+    "prompt": "Setelah `timer.start()` dipanggil, `timer.seconds` seharusnya bertambah setiap detik, tapi nilainya tetap `0`. Baris mana yang menyebabkan bug?",
+    "data": {
+      "language": "javascript",
+      "code": "const timer = {\n  seconds: 0,\n  start() {\n    setInterval(function () {\n      this.seconds++;\n    }, 1000);\n  },\n};"
+    },
+    "answer": {
+      "line": 4,
+      "fixedLine": "    setInterval(() => {"
+    },
+    "hints": [
+      "Siapa nilai `this` di dalam callback yang dipanggil oleh `setInterval`?",
+      "Arrow function tidak punya `this` sendiri; ia memakai `this` dari scope di sekitarnya."
+    ],
+    "explanation": "Callback `function () {}` dipanggil oleh `setInterval`, bukan sebagai method `timer`, sehingga `this` di dalamnya bukan `timer` (di sloppy mode ia adalah objek global). Akibatnya yang bertambah adalah `globalThis.seconds`. Dengan arrow function, `this` diambil dari `start()`, yaitu `timer`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-promises-001",
+    "track": "javascript",
+    "level": 2,
+    "format": "predict-output",
+    "topic": "promises",
+    "tags": [
+      "then",
+      "catch",
+      "chaining"
+    ],
+    "title": "Error di tengah rantai then",
+    "prompt": "Sebuah rantai Promise melempar error di tengah jalan. Apa output kode berikut?",
+    "data": {
+      "language": "javascript",
+      "code": "Promise.resolve(1)\n  .then((x) => x * 2)\n  .then((x) => {\n    throw new Error('gagal: ' + x);\n  })\n  .then(() => console.log('tidak dipanggil'))\n  .catch((e) => e.message)\n  .then((v) => console.log(v));",
+      "options": [
+        "gagal: 2",
+        "gagal: 1",
+        "tidak dipanggil",
+        "undefined"
+      ]
+    },
+    "answer": {
+      "output": "gagal: 2"
+    },
+    "hints": [
+      "Saat sebuah `then` melempar error, `then` berikutnya dilewati sampai ketemu `catch`.",
+      "Nilai yang di-`return` oleh `catch` menjadi nilai untuk `then` setelahnya."
+    ],
+    "explanation": "`1` → `2`, lalu `then` ketiga melempar error dengan pesan `'gagal: 2'`. Promise berubah menjadi rejected, sehingga `then` yang mencetak `'tidak dipanggil'` dilewati. `catch` menangani error dan **mengembalikan** `e.message`, yang membuat rantai kembali fulfilled dengan nilai itu, lalu dicetak oleh `then` terakhir.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-recursion-001",
+    "track": "javascript",
+    "level": 2,
+    "format": "code-short",
+    "topic": "recursion",
+    "tags": [
+      "base-case",
+      "math"
+    ],
+    "title": "Jumlah digit secara rekursif",
+    "prompt": "Tulis fungsi **rekursif** `sumDigits(n)` yang mengembalikan jumlah semua digit dari bilangan bulat non-negatif `n`.\n\nContoh: `sumDigits(1234)` → `10`, `sumDigits(0)` → `0`.",
+    "data": {
+      "language": "javascript",
+      "starter": "function sumDigits(n) {\n  // tulis kodemu di sini\n}",
+      "entry": "sumDigits"
+    },
+    "tests": [
+      {
+        "input": [
+          1234
+        ],
+        "expected": 10
+      },
+      {
+        "input": [
+          0
+        ],
+        "expected": 0
+      },
+      {
+        "input": [
+          7
+        ],
+        "expected": 7
+      },
+      {
+        "input": [
+          9999
+        ],
+        "expected": 36
+      },
+      {
+        "input": [
+          1000
+        ],
+        "expected": 1
+      }
+    ],
+    "referenceSolution": "function sumDigits(n) {\n  if (n < 10) return n;\n  return (n % 10) + sumDigits(Math.floor(n / 10));\n}",
+    "hints": [
+      "Base case: bilangan satu digit (`n < 10`) jumlah digitnya adalah dirinya sendiri.",
+      "`n % 10` memberi digit terakhir, `Math.floor(n / 10)` membuang digit terakhir."
+    ],
+    "explanation": "Rekursi butuh **base case** dan langkah yang memperkecil masalah. Di sini base case-nya `n < 10`, dan setiap langkah mengambil digit terakhir (`n % 10`) lalu memanggil diri sendiri dengan sisa digit (`Math.floor(n / 10)`). Kesalahan umum: memakai `n / 10` tanpa `Math.floor`, sehingga hasilnya pecahan dan rekursi tidak berhenti dengan benar.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-scope-002",
+    "track": "javascript",
+    "level": 2,
+    "format": "multiple-choice",
+    "topic": "scope",
+    "tags": [
+      "hoisting",
+      "tdz",
+      "var",
+      "let"
+    ],
+    "title": "Hoisting var vs let",
+    "prompt": "Apa yang terjadi saat kode berikut dijalankan?",
+    "data": {
+      "language": "javascript",
+      "code": "console.log(x);\nconsole.log(y);\nvar x = 1;\nlet y = 2;",
+      "options": [
+        "Mencetak `undefined`, lalu melempar `ReferenceError` di baris 2",
+        "Mencetak `undefined` dua kali",
+        "Langsung melempar `ReferenceError` di baris 1",
+        "Mencetak `1` lalu `2`"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Kedua deklarasi di-hoist, tapi perlakuannya berbeda sebelum baris deklarasinya dijalankan.",
+      "`let` berada di *Temporal Dead Zone* sampai baris deklarasinya dieksekusi."
+    ],
+    "explanation": "Deklarasi `var x` di-hoist dan langsung diinisialisasi dengan `undefined`, jadi baris 1 mencetak `undefined` (nilai `1` baru di-assign di baris 3). `let y` juga di-hoist, tetapi **tidak diinisialisasi**: mengaksesnya sebelum baris deklarasi berada di Temporal Dead Zone dan melempar `ReferenceError`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

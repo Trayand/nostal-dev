@@ -1,0 +1,74 @@
+[
+  {
+    "id": "concepts-http-005",
+    "track": "concepts",
+    "level": 4,
+    "format": "flashcard",
+    "topic": "http",
+    "tags": [
+      "http",
+      "caching",
+      "headers",
+      "etag"
+    ],
+    "title": "Cache-Control dan ETag",
+    "prompt": "Apa beda `Cache-Control: no-cache` dan `no-store`, dan bagaimana **ETag** menghasilkan `304`?",
+    "answer": {
+      "back": "- `max-age=600` — respons boleh dipakai dari cache selama 600 detik.\n- `no-cache` — **boleh disimpan**, tapi wajib divalidasi ulang ke server sebelum dipakai.\n- `no-store` — **jangan disimpan** sama sekali (data sensitif).\n\n**Revalidasi dengan ETag:**\n```http\n200 OK          ETag: \"v42\"\n# request berikutnya:\nIf-None-Match: \"v42\"\n304 Not Modified   # tanpa body, pakai salinan cache\n```"
+    },
+    "hints": [
+      "Namanya menipu: `no-cache` tidak berarti \"jangan cache\"."
+    ],
+    "explanation": "`no-cache` + ETag tetap hemat bandwidth: server hanya mengirim `304` tanpa body bila konten belum berubah. Untuk aset ber-hash di nama file (`app.3f9a.js`), pakai `max-age` panjang + `immutable`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-databases-004",
+    "track": "concepts",
+    "level": 4,
+    "format": "multiple-choice",
+    "topic": "databases",
+    "tags": [
+      "sql",
+      "transactions",
+      "isolation"
+    ],
+    "title": "Anomali yang dicegah READ COMMITTED",
+    "prompt": "Menurut standar SQL, anomali mana yang **sudah dicegah** oleh isolation level `READ COMMITTED`?",
+    "data": {
+      "options": [
+        "Dirty read",
+        "Non-repeatable read",
+        "Phantom read",
+        "Write skew"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Namanya sudah memberi petunjuk: kamu hanya membaca data yang sudah ...",
+      "Membaca perubahan transaksi lain yang belum di-commit disebut apa?"
+    ],
+    "explanation": "`READ COMMITTED` hanya menjamin kamu tidak membaca data yang belum di-commit (**dirty read**). Membaca baris yang sama dua kali bisa memberi nilai berbeda (non-repeatable read), query range bisa memunculkan baris baru (phantom), dan write skew baru dicegah di `SERIALIZABLE`. `READ COMMITTED` adalah default di PostgreSQL; MySQL InnoDB default-nya `REPEATABLE READ`.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

@@ -27,6 +27,8 @@ export interface ItemResult {
 
 export interface ValidateOptions {
   trackIds: string[];
+  /** Track id → language from tracks.json. Executable formats need javascript/typescript/sql. */
+  trackLanguages?: Record<string, string>;
   exec?: Executor;
   /** Skip running code (fast structural check). */
   skipExecution?: boolean;
@@ -35,6 +37,7 @@ export interface ValidateOptions {
   onProgress?: (done: number, total: number) => void;
 }
 
+const RUNNABLE_TRACK_LANGS = ["javascript", "typescript", "sql"];
 const PATH_RE = /^content\/([^/]+)\/l([1-5])\/[^/]+\.json$/;
 
 function titleTokens(title: string): Set<string> {
@@ -77,6 +80,10 @@ export async function validateBank(files: SourceFile[], opts: ValidateOptions): 
         res.executed = isExecutionVerified(q);
         res.errors.push(...semanticErrors(q));
         if (!opts.trackIds.includes(q.track)) res.errors.push(`unknown track "${q.track}" (add it to content/tracks.json)`);
+        const trackLang = opts.trackLanguages?.[q.track];
+        if (trackLang && !RUNNABLE_TRACK_LANGS.includes(trackLang) && (q.format === "code-short" || q.format === "code-full")) {
+          res.errors.push(`track "${q.track}" (language ${trackLang}) cannot use executable formats`);
+        }
         if (!pathMatch) {
           res.errors.push("file must live in content/<track>/l<level>/<name>.json");
         } else if (pathMatch[1] !== q.track || Number(pathMatch[2]) !== q.level) {
@@ -106,8 +113,9 @@ export async function validateBank(files: SourceFile[], opts: ValidateOptions): 
         withQ[i].warnings.push(`near-duplicate title of "${b.id}" (${Math.round(sim * 100)}% similar)`);
         withQ[j].warnings.push(`near-duplicate title of "${a.id}" (${Math.round(sim * 100)}% similar)`);
       }
-      if (a.prompt.trim() === b.prompt.trim() && a.format === b.format) {
-        withQ[i].errors.push(`same prompt as "${b.id}"`);
+      // Short generic prompts ("What does this print?") are fine when the code differs.
+      if (a.format === b.format && a.prompt.trim() === b.prompt.trim() && JSON.stringify(a.data) === JSON.stringify(b.data)) {
+        withQ[i].errors.push(`same prompt and data as "${b.id}"`);
       }
     }
   }

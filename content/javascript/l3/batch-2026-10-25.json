@@ -1,0 +1,339 @@
+[
+  {
+    "id": "js-event-loop-001",
+    "track": "javascript",
+    "level": 3,
+    "format": "predict-output",
+    "topic": "event-loop",
+    "tags": [
+      "setTimeout",
+      "microtask",
+      "macrotask"
+    ],
+    "title": "Microtask di dalam macrotask",
+    "prompt": "Tuliskan output kode berikut, satu angka per baris.",
+    "data": {
+      "language": "javascript",
+      "code": "console.log('1');\n\nsetTimeout(() => {\n  console.log('2');\n  Promise.resolve().then(() => console.log('3'));\n}, 0);\n\nPromise.resolve().then(() => {\n  console.log('4');\n  setTimeout(() => console.log('5'), 0);\n});\n\nconsole.log('6');"
+    },
+    "answer": {
+      "output": "1\n6\n4\n2\n3\n5"
+    },
+    "hints": [
+      "Kode sinkron selesai dulu, lalu **semua** microtask (Promise), baru satu macrotask (setTimeout).",
+      "Setelah setiap macrotask, antrean microtask dikosongkan lagi sebelum macrotask berikutnya. Timer `5` didaftarkan setelah timer `2`."
+    ],
+    "explanation": "Urutannya:\n\n1. Sinkron: `1`, `6`.\n2. Microtask: `4` (sekaligus mendaftarkan timer `5`).\n3. Macrotask pertama (timer yang didaftarkan lebih dulu): `2`, yang menambah microtask `3`.\n4. Microtask dikosongkan: `3`.\n5. Macrotask berikutnya: `5`.\n\nKesalahan umum: mengira `3` dicetak setelah `5`, padahal microtask selalu dijalankan sebelum event loop mengambil macrotask berikutnya.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-closures-002",
+    "track": "javascript",
+    "level": 3,
+    "format": "predict-output",
+    "topic": "closures",
+    "tags": [
+      "loops",
+      "var",
+      "let"
+    ],
+    "title": "Closure di loop var vs let",
+    "prompt": "Closure dibuat di dalam dua loop: satu memakai `var`, satu memakai `let`. Apa output kode berikut?",
+    "data": {
+      "language": "javascript",
+      "code": "const fns = [];\n\nfor (var i = 0; i < 3; i++) {\n  fns.push(() => i);\n}\nfor (let j = 0; j < 3; j++) {\n  fns.push(() => j);\n}\n\nconsole.log(fns.map((f) => f()).join(','));",
+      "options": [
+        "0,1,2,0,1,2",
+        "3,3,3,0,1,2",
+        "3,3,3,3,3,3",
+        "2,2,2,0,1,2"
+      ]
+    },
+    "answer": {
+      "output": "3,3,3,0,1,2"
+    },
+    "hints": [
+      "Berapa banyak variabel `i` yang ada? Berapa banyak `j`?",
+      "`let` di header `for` membuat binding baru untuk setiap iterasi; `var` hanya satu untuk seluruh loop."
+    ],
+    "explanation": "Ketiga closure pertama menutup **satu** variabel `var i` yang sama. Saat fungsi dipanggil, loop sudah selesai dan `i` bernilai `3` (nilai yang membuat kondisi `i < 3` false). Dengan `let j`, setiap iterasi punya binding `j` sendiri, sehingga closure-nya mengingat `0`, `1`, `2`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-promises-002",
+    "track": "javascript",
+    "level": 3,
+    "format": "code-full",
+    "topic": "promises",
+    "tags": [
+      "async-await",
+      "promise-all",
+      "error-handling"
+    ],
+    "title": "Total skor dari banyak request",
+    "prompt": "Fungsi `fetchScore(id)` (sudah tersedia) mengembalikan Promise yang resolve ke `id * 10` setelah 10 ms, atau **reject** jika `id` negatif.\n\nTulis `async function totalScore(ids)` yang:\n\n- mengambil skor semua `ids` **secara paralel**,\n- mengembalikan jumlah semua skor (array kosong → `0`),\n- mengembalikan `null` jika ada satu saja request yang gagal.",
+    "data": {
+      "language": "javascript",
+      "starter": "function fetchScore(id) {\n  return new Promise((resolve, reject) => {\n    setTimeout(() => {\n      if (id < 0) reject(new Error('id tidak valid: ' + id));\n      else resolve(id * 10);\n    }, 10);\n  });\n}\n\nasync function totalScore(ids) {\n  // tulis kodemu di sini\n}",
+      "entry": "totalScore"
+    },
+    "tests": [
+      {
+        "name": "tiga id",
+        "input": [
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "expected": 60
+      },
+      {
+        "name": "array kosong",
+        "input": [
+          []
+        ],
+        "expected": 0
+      },
+      {
+        "name": "satu id",
+        "input": [
+          [
+            5
+          ]
+        ],
+        "expected": 50
+      },
+      {
+        "name": "ada id negatif",
+        "input": [
+          [
+            4,
+            -1,
+            2
+          ]
+        ],
+        "expected": null
+      }
+    ],
+    "referenceSolution": "function fetchScore(id) {\n  return new Promise((resolve, reject) => {\n    setTimeout(() => {\n      if (id < 0) reject(new Error('id tidak valid: ' + id));\n      else resolve(id * 10);\n    }, 10);\n  });\n}\n\nasync function totalScore(ids) {\n  try {\n    const scores = await Promise.all(ids.map(fetchScore));\n    return scores.reduce((sum, s) => sum + s, 0);\n  } catch (e) {\n    return null;\n  }\n}",
+    "hints": [
+      "`ids.map(fetchScore)` menghasilkan array Promise; `Promise.all` menunggu semuanya sekaligus.",
+      "Bungkus `await Promise.all(...)` dengan `try/catch`: jika satu Promise reject, `Promise.all` ikut reject dan kamu bisa `return null` di `catch`."
+    ],
+    "explanation": "`Promise.all(ids.map(fetchScore))` menjalankan semua request bersamaan dan menghasilkan array skor dengan urutan yang sama seperti `ids`. Jika salah satu reject, `await` melempar error yang ditangkap `catch`. Kesalahan umum:\n\n- `ids.map(fetchScore).reduce(...)` menjumlahkan **Promise**, bukan angka.\n- `await` di dalam `for` loop memang benar hasilnya, tapi berjalan **berurutan** (lebih lambat).\n- Lupa `try/catch` membuat fungsi reject alih-alih mengembalikan `null`.",
+    "estimatedMinutes": 6,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-objects-002",
+    "track": "javascript",
+    "level": 3,
+    "format": "fill-blank",
+    "topic": "objects",
+    "tags": [
+      "destructuring",
+      "rest",
+      "computed-keys",
+      "immutability"
+    ],
+    "title": "Hapus properti tanpa mutasi",
+    "prompt": "Lengkapi fungsi `omit(obj, key)` agar mengembalikan **objek baru** tanpa properti bernama `key` (nama properti disimpan di variabel), tanpa mengubah `obj`.\n\nContoh: `omit({ a: 1, b: 2 }, 'a')` → `{ b: 2 }`.",
+    "data": {
+      "language": "javascript",
+      "template": "function omit(obj, key) {\n  const { {{blank}}: _removed, {{blank}}rest } = obj;\n  return rest;\n}",
+      "choices": [
+        "[key]",
+        "key",
+        "'key'",
+        "...",
+        "&&",
+        "rest:"
+      ],
+      "entry": "omit"
+    },
+    "answer": {
+      "blanks": [
+        [
+          "[key]"
+        ],
+        [
+          "..."
+        ]
+      ]
+    },
+    "tests": [
+      {
+        "name": "hapus a",
+        "input": [
+          {
+            "a": 1,
+            "b": 2
+          },
+          "a"
+        ],
+        "expected": {
+          "b": 2
+        }
+      },
+      {
+        "name": "key tidak ada",
+        "input": [
+          {
+            "a": 1
+          },
+          "z"
+        ],
+        "expected": {
+          "a": 1
+        }
+      },
+      {
+        "name": "properti bernama key tetap ada",
+        "input": [
+          {
+            "key": 1,
+            "x": 2
+          },
+          "x"
+        ],
+        "expected": {
+          "key": 1
+        }
+      }
+    ],
+    "hints": [
+      "Nama properti ada di dalam variabel `key`, jadi perlu *computed property name*.",
+      "Sisa properti dikumpulkan dengan rest pattern `...rest`."
+    ],
+    "explanation": "`{ [key]: _removed, ...rest } = obj` mengambil properti yang namanya **disimpan di variabel** `key` (computed key) ke variabel `_removed`, lalu `...rest` mengumpulkan semua properti lain ke objek baru. Menulis `key` tanpa kurung siku justru mengambil properti yang bernama harfiah `\"key\"`, sehingga test ketiga gagal. `obj` tidak dimutasi, berbeda dengan `delete obj[key]`.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-recursion-002",
+    "track": "javascript",
+    "level": 3,
+    "format": "parsons",
+    "topic": "recursion",
+    "tags": [
+      "arrays",
+      "nested",
+      "flatten"
+    ],
+    "title": "Ratakan array bersarang",
+    "prompt": "Susun baris-baris berikut menjadi fungsi rekursif `flatten(arr)` yang meratakan array bersarang sedalam apa pun, tanpa memakai `Array.prototype.flat`.\n\nContoh: `flatten([1, [2, [3, [4]]], 5])` → `[1, 2, 3, 4, 5]`.",
+    "data": {
+      "language": "javascript",
+      "entry": "flatten"
+    },
+    "answer": {
+      "lines": [
+        "function flatten(arr) {",
+        "  const result = [];",
+        "  for (const item of arr) {",
+        "    if (Array.isArray(item)) {",
+        "      result.push(...flatten(item));",
+        "    } else {",
+        "      result.push(item);",
+        "    }",
+        "  }",
+        "  return result;",
+        "}"
+      ]
+    },
+    "tests": [
+      {
+        "name": "bersarang dalam",
+        "input": [
+          [
+            1,
+            [
+              2,
+              [
+                3,
+                [
+                  4
+                ]
+              ]
+            ],
+            5
+          ]
+        ],
+        "expected": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      {
+        "name": "array kosong",
+        "input": [
+          []
+        ],
+        "expected": []
+      },
+      {
+        "name": "array kosong bersarang",
+        "input": [
+          [
+            [
+              []
+            ],
+            [
+              1
+            ]
+          ]
+        ],
+        "expected": [
+          1
+        ]
+      },
+      {
+        "name": "sudah rata",
+        "input": [
+          [
+            "a",
+            "b"
+          ]
+        ],
+        "expected": [
+          "a",
+          "b"
+        ]
+      }
+    ],
+    "hints": [
+      "Untuk setiap elemen: jika ia array, ratakan dulu secara rekursif; jika bukan, langsung masukkan.",
+      "Hasil `flatten(item)` adalah array, jadi gunakan spread `...` agar isinya yang di-push, bukan array-nya."
+    ],
+    "explanation": "Setiap pemanggilan menangani satu tingkat: elemen biasa langsung di-push, sedangkan elemen array diselesaikan oleh pemanggilan rekursif yang mengembalikan array rata, lalu di-spread ke `result`. Base case-nya implisit: array tanpa elemen bersarang tidak memicu rekursi lagi. Tanpa `...`, hasilnya tetap bersarang.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]
