@@ -1,0 +1,319 @@
+[
+  {
+    "id": "logic-sliding-window-001",
+    "track": "logic",
+    "level": 4,
+    "format": "code-full",
+    "topic": "sliding-window",
+    "tags": [
+      "sliding-window",
+      "two-pointers",
+      "map",
+      "strings",
+      "interview",
+      "o-n"
+    ],
+    "title": "Substring terpanjang tanpa karakter berulang",
+    "prompt": "Tulis fungsi `longestUniqueSubstring(s)` yang mengembalikan **panjang** substring (bagian berurutan) terpanjang dari `s` yang **tidak** memiliki karakter berulang.\n\nTargetkan **O(n)** dengan teknik *sliding window* (dua pointer `left`/`right`), bukan mencoba semua substring (O(n²) atau lebih).\n\nContoh:\n- `longestUniqueSubstring(\"abcabcbb\")` → `3` (`\"abc\"`)\n- `longestUniqueSubstring(\"pwwkew\")` → `3` (`\"wke\"`; `\"pwke\"` bukan substring karena tidak berurutan)",
+    "data": {
+      "language": "javascript",
+      "starter": "function longestUniqueSubstring(s) {\n  const lastSeen = new Map(); // karakter -> index terakhir\n  let left = 0;\n  let best = 0;\n  // tulis kodemu di sini\n  return best;\n}",
+      "entry": "longestUniqueSubstring"
+    },
+    "tests": [
+      {
+        "name": "contoh dasar",
+        "input": [
+          "abcabcbb"
+        ],
+        "expected": 3
+      },
+      {
+        "name": "string kosong",
+        "input": [
+          ""
+        ],
+        "expected": 0
+      },
+      {
+        "name": "semua karakter sama",
+        "input": [
+          "bbbbb"
+        ],
+        "expected": 1
+      },
+      {
+        "name": "substring bukan subsequence",
+        "input": [
+          "pwwkew"
+        ],
+        "expected": 3
+      },
+      {
+        "name": "duplikat di luar window tidak boleh menggeser left mundur",
+        "input": [
+          "abba"
+        ],
+        "expected": 2
+      },
+      {
+        "name": "semua unik",
+        "input": [
+          "abcdef"
+        ],
+        "expected": 6
+      },
+      {
+        "name": "spasi dan simbol juga karakter",
+        "input": [
+          "a b!a"
+        ],
+        "expected": 4
+      },
+      {
+        "name": "window di akhir",
+        "input": [
+          "dvdf"
+        ],
+        "expected": 3
+      }
+    ],
+    "referenceSolution": "function longestUniqueSubstring(s) {\n  const lastSeen = new Map(); // karakter -> index terakhir\n  let left = 0;\n  let best = 0;\n  for (let right = 0; right < s.length; right++) {\n    const ch = s[right];\n    if (lastSeen.has(ch) && lastSeen.get(ch) >= left) {\n      left = lastSeen.get(ch) + 1;\n    }\n    lastSeen.set(ch, right);\n    best = Math.max(best, right - left + 1);\n  }\n  return best;\n}",
+    "hints": [
+      "Jaga sebuah window `[left, right]` yang selalu berisi karakter unik. Geser `right` satu per satu; kapan `left` harus maju?",
+      "Simpan index terakhir tiap karakter di `lastSeen`. Jika `s[right]` pernah muncul **di dalam window** (`lastSeen.get(ch) >= left`), lompatkan `left = lastSeen.get(ch) + 1`. Lalu `best = Math.max(best, right - left + 1)`."
+    ],
+    "explanation": "Sliding window: pointer `right` maju satu langkah tiap iterasi, pointer `left` hanya pernah maju. Karena masing-masing pointer bergerak paling banyak `n` kali, totalnya **O(n)** waktu.\n\nDengan `Map` berisi index terakhir tiap karakter, `left` bisa **melompat** langsung ke posisi setelah duplikat, tanpa menghapus satu per satu.\n\nJebakan klasik: lupa syarat `lastSeen.get(ch) >= left`. Pada `\"abba\"`, saat `right = 3` (`'a'`), index terakhir `'a'` adalah 0 — sudah di luar window (`left = 2`). Tanpa syarat itu `left` akan **mundur** ke 1 dan hasilnya salah (3, bukan 2). Alternatif yang aman: `left = Math.max(left, lastSeen.get(ch) + 1)`.",
+    "estimatedMinutes": 12,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "logic-intervals-001",
+    "track": "logic",
+    "level": 4,
+    "format": "code-full",
+    "topic": "intervals",
+    "tags": [
+      "intervals",
+      "sorting",
+      "merge",
+      "interview",
+      "o-n-log-n"
+    ],
+    "title": "Gabungkan interval yang tumpang tindih",
+    "prompt": "Tulis fungsi `mergeIntervals(intervals)` yang menerima array interval `[start, end]` (dengan `start <= end`, **belum tentu terurut**) dan mengembalikan array interval baru yang sudah digabung sehingga tidak ada yang tumpang tindih, **terurut naik** berdasarkan `start`.\n\nInterval yang hanya **bersentuhan** juga digabung: `[1, 4]` dan `[4, 5]` → `[1, 5]`.\n\nContoh: `mergeIntervals([[1, 3], [8, 10], [2, 6], [15, 18]])` → `[[1, 6], [8, 10], [15, 18]]`.",
+    "data": {
+      "language": "javascript",
+      "starter": "function mergeIntervals(intervals) {\n  const result = [];\n  // tulis kodemu di sini\n  return result;\n}",
+      "entry": "mergeIntervals"
+    },
+    "tests": [
+      {
+        "name": "contoh dasar (tidak terurut)",
+        "input": [
+          [
+            [
+              1,
+              3
+            ],
+            [
+              8,
+              10
+            ],
+            [
+              2,
+              6
+            ],
+            [
+              15,
+              18
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            6
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            15,
+            18
+          ]
+        ]
+      },
+      {
+        "name": "array kosong",
+        "input": [
+          []
+        ],
+        "expected": []
+      },
+      {
+        "name": "satu interval",
+        "input": [
+          [
+            [
+              5,
+              7
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            5,
+            7
+          ]
+        ]
+      },
+      {
+        "name": "bersentuhan digabung",
+        "input": [
+          [
+            [
+              1,
+              4
+            ],
+            [
+              4,
+              5
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            5
+          ]
+        ]
+      },
+      {
+        "name": "interval di dalam interval lain",
+        "input": [
+          [
+            [
+              1,
+              10
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              4,
+              8
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            10
+          ]
+        ]
+      },
+      {
+        "name": "terurut terbalik",
+        "input": [
+          [
+            [
+              6,
+              8
+            ],
+            [
+              1,
+              9
+            ],
+            [
+              2,
+              4
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            9
+          ]
+        ]
+      },
+      {
+        "name": "tidak ada yang tumpang tindih",
+        "input": [
+          [
+            [
+              3,
+              4
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              5,
+              6
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            5,
+            6
+          ]
+        ]
+      },
+      {
+        "name": "angka negatif dan interval titik",
+        "input": [
+          [
+            [
+              -5,
+              -1
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              -2,
+              0
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            -5,
+            0
+          ]
+        ]
+      }
+    ],
+    "referenceSolution": "function mergeIntervals(intervals) {\n  const result = [];\n  const sorted = [...intervals].sort((a, b) => a[0] - b[0]);\n  for (const [start, end] of sorted) {\n    const last = result[result.length - 1];\n    if (last && start <= last[1]) {\n      last[1] = Math.max(last[1], end);\n    } else {\n      result.push([start, end]);\n    }\n  }\n  return result;\n}",
+    "hints": [
+      "Kalau interval sudah diurutkan berdasarkan `start`, interval yang bisa digabung pasti **bersebelahan**. Urutkan dulu dengan comparator angka.",
+      "Setelah diurutkan, bandingkan setiap interval dengan interval terakhir di `result`: jika `start <= last[1]`, perpanjang `last[1] = Math.max(last[1], end)`; jika tidak, `push` interval baru."
+    ],
+    "explanation": "Setelah diurutkan berdasarkan `start`, cukup satu kali scan: interval saat ini tumpang tindih dengan interval terakhir di `result` jika `start <= last[1]` (pakai `<=` agar yang bersentuhan ikut digabung). Total **O(n log n)** karena sorting, scan-nya O(n).\n\nDua jebakan umum:\n1. `last[1] = end` alih-alih `Math.max(last[1], end)` — salah untuk interval yang berada **di dalam** interval lain, misalnya `[1, 10]` lalu `[2, 3]` akan menyusutkan hasil menjadi `[1, 3]`.\n2. `sort()` tanpa comparator mengurutkan secara **string**, sehingga `[10, 11]` bisa muncul sebelum `[9, 12]`. Selalu gunakan `(a, b) => a[0] - b[0]`. Salin dulu (`[...intervals]`) agar input pemanggil tidak ikut berubah urutannya.",
+    "estimatedMinutes": 12,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

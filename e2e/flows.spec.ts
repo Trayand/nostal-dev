@@ -4,6 +4,8 @@ import { readFileSync } from "node:fs";
 // Core flows end to end: daily session → progress, practice, export/import, settings.
 
 test("daily session records attempts that show up in Progress", async ({ page }) => {
+  // One handler for the whole test: flashcards never open the confirm dialog.
+  page.on("dialog", (d) => d.accept());
   await page.goto("/");
   await page.getByRole("link", { name: /Mulai sesi harian|Start daily session/ }).click();
   await expect(page.getByText(/Soal 1 dari|Question 1 of/)).toBeVisible();
@@ -12,7 +14,6 @@ test("daily session records attempts that show up in Progress", async ({ page })
   for (let i = 0; i < 2; i++) {
     const heading = page.getByRole("heading", { level: 2 });
     await expect(heading).toBeVisible();
-    page.once("dialog", (d) => d.accept());
     const solution = page.getByRole("button", { name: /Lihat solusi|Show solution/ });
     if (await solution.isVisible()) {
       await solution.click();
@@ -80,6 +81,21 @@ test("settings: theme and language persist", async ({ page }) => {
   await expect(page.locator("html")).not.toHaveClass(/dark/);
   await page.getByRole("radio", { name: "English" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Settings" })).toBeVisible();
+  // Settings are written to IndexedDB asynchronously; wait until saved before reloading.
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          new Promise((resolve) => {
+            const open = indexedDB.open("programming-hub");
+            open.onsuccess = () => {
+              const get = open.result.transaction("settings").objectStore("settings").get("main");
+              get.onsuccess = () => resolve(get.result?.lang);
+            };
+          }),
+      ),
+    )
+    .toBe("en");
   await page.reload();
   await expect(page.getByRole("heading", { level: 1, name: "Settings" })).toBeVisible();
   await expect(page.locator("html")).not.toHaveClass(/dark/);

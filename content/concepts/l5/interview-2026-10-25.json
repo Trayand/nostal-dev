@@ -1,0 +1,66 @@
+[
+  {
+    "id": "concepts-rest-002",
+    "track": "concepts",
+    "level": 5,
+    "format": "flashcard",
+    "topic": "rest",
+    "tags": [
+      "api-design",
+      "idempotency",
+      "payments",
+      "retry"
+    ],
+    "title": "Idempotency key untuk API pembayaran",
+    "prompt": "Klien mengirim `POST /payments`, kena timeout, lalu retry. Bagaimana **idempotency key** mencegah kartu ditagih dua kali, dan apa yang harus dijaga di server?",
+    "answer": {
+      "back": "- Klien membuat key unik (mis. UUID) **per operasi**, dikirim di header `Idempotency-Key`; setiap retry memakai key yang **sama**.\n- Server menyimpan key (unique constraint) + hasil respons, dicatat secara atomik bersama efek pembayarannya.\n- Request ulang dengan key yang sudah selesai → kembalikan respons tersimpan, **tanpa** menagih lagi.\n- Key sama yang masih diproses → tolak (mis. `409 Conflict`), jangan diproses paralel.\n- Key sama dengan body berbeda → tolak dengan error.\n- Key punya masa berlaku (Stripe: minimal 24 jam)."
+    },
+    "hints": [
+      "`POST` tidak idempotent secara bawaan; server butuh cara mengenali \"request yang sama\"."
+    ],
+    "explanation": "Timeout tidak memberi tahu klien apakah pembayaran sudah terjadi, jadi retry tanpa key bisa menagih dua kali. Kesalahan umum: membuat key baru di setiap retry (tidak ada gunanya), atau mengecek key lalu menyimpannya dalam dua langkah terpisah — dua request bersamaan bisa lolos pengecekan. Gunakan unique constraint atau lock agar klaim key bersifat atomik.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-distributed-systems-001",
+    "track": "concepts",
+    "level": 5,
+    "format": "flashcard",
+    "topic": "distributed-systems",
+    "tags": [
+      "cap-theorem",
+      "consistency",
+      "availability",
+      "pacelc"
+    ],
+    "title": "CAP theorem saat partisi jaringan",
+    "prompt": "Jelaskan **CAP theorem** dengan benar: pilihan apa yang sebenarnya harus diambil, dan apa beda sistem CP dan AP?",
+    "answer": {
+      "back": "- Saat terjadi **network partition (P)**, sistem harus memilih: **Consistency** (linearizable: setiap baca melihat tulis terbaru) **atau** **Availability** (setiap node yang hidup tetap menjawab).\n- P bukan pilihan di sistem terdistribusi — partisi pasti bisa terjadi.\n- **CP**: sisi minoritas menolak/timeout (mis. etcd, ZooKeeper).\n- **AP**: tetap menjawab meski data bisa basi, lalu rekonsiliasi → *eventual consistency* (mis. Cassandra dengan consistency level rendah).\n- **PACELC**: tanpa partisi pun ada trade-off **latency vs consistency**."
+    },
+    "hints": [
+      "Ungkapan \"pilih 2 dari 3\" itu menyesatkan — huruf mana yang tidak bisa ditawar?"
+    ],
+    "explanation": "Kesalahan umum adalah menganggap CAP sebagai \"pilih 2 dari 3\" dan mengklaim sistem \"CA\"; di jaringan nyata partisi tidak bisa dihindari, jadi trade-off C vs A hanya muncul saat partisi. Perhatikan juga bahwa C di CAP (linearizability) berbeda dengan C di ACID (constraint/invariant terjaga). Banyak database modern bersifat *tunable* (mis. quorum `R + W > N` di Cassandra) sehingga posisinya tergantung konfigurasi.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

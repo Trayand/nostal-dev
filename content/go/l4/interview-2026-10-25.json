@@ -1,0 +1,79 @@
+[
+  {
+    "id": "go-defer-002",
+    "track": "go",
+    "level": 4,
+    "format": "predict-output",
+    "topic": "defer",
+    "tags": [
+      "named-return",
+      "closures",
+      "return-semantics"
+    ],
+    "title": "defer mengubah named return value",
+    "prompt": "Asumsi: Go 1.22. Apa output program berikut? Telusuri baris demi baris kapan nilai return ditetapkan dan kapan fungsi yang di-defer berjalan.",
+    "data": {
+      "language": "go",
+      "code": "package main\n\nimport \"fmt\"\n\nfunc named() (n int) {\n\tdefer func() { n *= 2 }()\n\tn = 1\n\treturn n + 2\n}\n\nfunc unnamed() int {\n\tn := 1\n\tdefer func() { n *= 2 }()\n\treturn n + 2\n}\n\nfunc main() {\n\tfmt.Println(named(), unnamed())\n}"
+    },
+    "answer": {
+      "output": "6 3"
+    },
+    "hints": [
+      "`return expr` bekerja dalam dua langkah: pertama nilai `expr` disalin ke parameter hasil, **lalu** fungsi yang di-defer dijalankan, baru fungsi benar-benar kembali.",
+      "Di `named`, parameter hasilnya adalah variabel `n` itu sendiri, jadi closure defer bisa mengubahnya. Di `unnamed`, closure hanya mengubah variabel lokal `n`, bukan nilai hasil yang sudah disalin."
+    ],
+    "explanation": "Penelusuran:\n\n**`named()`** — hasil bernama `n` (awal `0`).\n1. `defer` mendaftarkan closure yang menangkap variabel `n` (variabel hasil itu sendiri).\n2. `n = 1`.\n3. `return n + 2` → ekspresi dievaluasi menjadi `3` dan **ditulis ke `n`**, jadi `n = 3`.\n4. Closure defer berjalan: `n *= 2` → `n = 6`.\n5. Fungsi kembali dengan nilai `n`, yaitu `6`.\n\n**`unnamed()`** — hasil tanpa nama.\n1. `n := 1` adalah variabel lokal biasa.\n2. `return n + 2` → nilai `3` disalin ke slot hasil (yang tidak punya nama dan tidak bisa diakses closure).\n3. Closure defer mengubah `n` lokal menjadi `2`, tetapi itu tidak memengaruhi slot hasil.\n4. Fungsi kembali dengan `3`.\n\n`fmt.Println` memisahkan argumen dengan spasi, jadi output-nya `6 3`.\n\nKesalahan umum: mengira defer berjalan *sebelum* `return` mengevaluasi ekspresinya (hasil `named` jadi `4`), atau mengira closure di `unnamed` ikut mengubah hasil (`6 6`). Pola defer + named return inilah yang dipakai untuk, misalnya, membungkus error di akhir fungsi: `defer func() { if err != nil { err = fmt.Errorf(\"op: %w\", err) } }()`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics traced by hand; not executed (Go not installed)"
+    }
+  },
+  {
+    "id": "go-mutex-001",
+    "track": "go",
+    "level": 4,
+    "format": "find-bug",
+    "topic": "mutex",
+    "tags": [
+      "rwmutex",
+      "data-race",
+      "maps",
+      "value-receiver",
+      "copylocks"
+    ],
+    "title": "Value receiver menyalin RWMutex",
+    "prompt": "Asumsi: Go 1.22. `Counter` dimaksudkan aman dipakai banyak goroutine: pembaca memakai `RLock` (boleh bersamaan), penulis memakai `Lock` (eksklusif). Namun program ini bisa crash dengan `fatal error: concurrent map writes`, dan kalaupun tidak crash, hasilnya sering kurang dari `100`. Baris mana yang menjadi sumber bug?",
+    "data": {
+      "language": "go",
+      "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"sync\"\n)\n\ntype Counter struct {\n\tmu     sync.RWMutex\n\tcounts map[string]int\n}\n\nfunc (c *Counter) Get(key string) int {\n\tc.mu.RLock()\n\tdefer c.mu.RUnlock()\n\treturn c.counts[key]\n}\n\nfunc (c Counter) Incr(key string) {\n\tc.mu.Lock()\n\tdefer c.mu.Unlock()\n\tc.counts[key]++\n}\n\nfunc main() {\n\tc := &Counter{counts: map[string]int{}}\n\tvar wg sync.WaitGroup\n\tfor i := 0; i < 100; i++ {\n\t\twg.Add(1)\n\t\tgo func() {\n\t\t\tdefer wg.Done()\n\t\t\tc.Incr(\"hits\")\n\t\t}()\n\t}\n\twg.Wait()\n\tfmt.Println(c.Get(\"hits\"))\n}"
+    },
+    "answer": {
+      "line": 19,
+      "fixedLine": "func (c *Counter) Incr(key string) {"
+    },
+    "hints": [
+      "Lihat receiver setiap method. Apa yang terjadi pada field `mu` ketika method dipanggil dengan **value receiver**?",
+      "`c.Incr(...)` dengan receiver `Counter` (bukan `*Counter`) menyalin seluruh struct, termasuk mutex-nya. Setiap goroutine mengunci salinannya sendiri, padahal map-nya tetap sama (map adalah referensi)."
+    ],
+    "explanation": "`Incr` memakai value receiver `(c Counter)`. Saat `c.Incr(\"hits\")` dipanggil lewat pointer, Go otomatis melakukan `(*c).Incr(...)`, yaitu **menyalin** struct `Counter`. Salinan itu berisi:\n- `mu` baru (salinan `RWMutex`), sehingga `Lock()` di setiap goroutine mengunci mutex yang berbeda — tidak ada mutual exclusion sama sekali;\n- `counts` yang menunjuk ke **map yang sama** (map adalah header referensi).\n\nAkibatnya 100 goroutine menulis ke satu map tanpa sinkronisasi: data race. Runtime Go mendeteksi sebagian penulisan bersamaan ke map dan menghentikan program dengan `fatal error: concurrent map writes`; kalau tidak terdeteksi, increment bisa hilang sehingga hasilnya < 100. Perbaikannya: `func (c *Counter) Incr(key string) {` sehingga semua goroutine memakai mutex yang sama.\n\nCatatan Mutex vs RWMutex: `RLock` hanya untuk operasi **baca** (banyak pembaca boleh bersamaan); menulis ke map (`counts[key]++`) wajib memakai `Lock`. Menulis di bawah `RLock` juga tetap race. `RWMutex` baru menguntungkan bila pembacaan jauh lebih sering daripada penulisan; untuk kasus sederhana `sync.Mutex` biasa sudah cukup.\n\nCara mendeteksi: `go vet` (analyzer `copylocks`) melaporkan bahwa `Incr` *passes lock by value*. `go test -race` / `go run -race` juga menemukan race-nya — tetapi di Windows race detector butuh cgo (`CGO_ENABLED=1`) dan compiler C seperti gcc (mis. MinGW-w64) terpasang di PATH.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics traced by hand; line numbers counted; not executed (Go not installed)"
+    }
+  }
+]

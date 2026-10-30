@@ -1,0 +1,93 @@
+[
+  {
+    "id": "go-context-001",
+    "track": "go",
+    "level": 5,
+    "format": "multiple-choice",
+    "topic": "context",
+    "tags": [
+      "context",
+      "timeout",
+      "goroutine-leak",
+      "select",
+      "unbuffered"
+    ],
+    "title": "Timeout context dan goroutine yang bocor",
+    "prompt": "Asumsi: Go 1.22. `slowCall()` selalu butuh sekitar 5 detik dan **tidak** menerima `context`. `handler` dipanggil berkali-kali di server yang berjalan lama. Pernyataan mana yang paling tepat tentang satu pemanggilan `handler`?",
+    "data": {
+      "language": "go",
+      "code": "func fetch(ctx context.Context) (string, error) {\n\tch := make(chan string)\n\tgo func() {\n\t\tch <- slowCall()\n\t}()\n\tselect {\n\tcase v := <-ch:\n\t\treturn v, nil\n\tcase <-ctx.Done():\n\t\treturn \"\", ctx.Err()\n\t}\n}\n\nfunc handler() {\n\tctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)\n\tdefer cancel()\n\t_, err := fetch(ctx)\n\tfmt.Println(err)\n}",
+      "options": [
+        "Setelah ~100 ms mencetak `context deadline exceeded`; goroutine di dalam `fetch` ikut berhenti otomatis karena `cancel()` membatalkan semua goroutine yang dibuat dengan `ctx`",
+        "Setelah ~100 ms mencetak `context deadline exceeded`; ~5 detik kemudian goroutine di dalam `fetch` terblokir **selamanya** di `ch <-` karena tidak ada lagi penerima — goroutine bocor di setiap pemanggilan. Perbaikan minimal: `make(chan string, 1)`",
+        "Mencetak `<nil>` setelah ~5 detik, karena `select` menunggu goroutine selesai sebelum memeriksa `ctx.Done()`",
+        "Setelah ~5 detik program panic `send on closed channel`, karena `defer cancel()` menutup `ch`",
+        "Setelah ~100 ms mencetak `context canceled`, karena `defer cancel()` dijalankan sebelum `fmt.Println`"
+      ]
+    },
+    "answer": {
+      "index": 1
+    },
+    "hints": [
+      "`context` tidak bisa menghentikan goroutine dari luar; goroutine hanya berhenti jika kodenya sendiri memeriksa `ctx.Done()` atau fungsinya selesai.",
+      "Setelah `fetch` mengembalikan error timeout, siapa yang akan menerima dari `ch`? Pengiriman ke unbuffered channel menunggu penerima."
+    ],
+    "explanation": "Urutan kejadian:\n1. `WithTimeout` membuat context yang `Done()`-nya tertutup setelah 100 ms.\n2. `select` menunggu dua case; setelah 100 ms hanya `<-ctx.Done()` yang siap, sehingga `fetch` mengembalikan `\"\", ctx.Err()`. Untuk timeout, `ctx.Err()` adalah `context.DeadlineExceeded`, yang dicetak sebagai `context deadline exceeded` (bukan `context canceled`: `cancel()` yang di-defer baru berjalan setelah `fmt.Println`, dan context yang sudah kedaluwarsa tetap melaporkan error pertamanya).\n3. Goroutine anonim tetap berjalan — `context` hanyalah sinyal, bukan mekanisme untuk membunuh goroutine, dan `slowCall` tidak pernah melihat `ctx`. Setelah ~5 detik ia mencoba `ch <- ...`, tetapi channel unbuffered dan penerimanya (`select` di `fetch`) sudah pergi. Goroutine itu terblokir **selamanya**: goroutine leak. Tidak ada deadlock fatal karena goroutine lain (server) masih hidup, jadi kebocoran ini diam-diam menumpuk di setiap request.\n\nTidak ada yang menutup `ch`, jadi tidak ada panic `send on closed channel`.\n\nPerbaikan:\n- Minimal: `ch := make(chan string, 1)` — pengiriman selalu berhasil ke buffer meski tak ada penerima, goroutine selesai, dan channel dikumpulkan GC.\n- Lebih baik: teruskan `ctx` ke operasi lambat (`slowCall(ctx)`) agar pekerjaannya benar-benar berhenti saat timeout, bukan hanya hasilnya yang dibuang.\n\nDeteksi di test: hitung `runtime.NumGoroutine()` sebelum/sesudah, atau pakai paket `go.uber.org/goleak`.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "Go 1.22 semantics traced by hand; ctx.Err() string checked against context package; not executed (Go not installed)"
+    }
+  },
+  {
+    "id": "go-errors-003",
+    "track": "go",
+    "level": 5,
+    "format": "parsons",
+    "topic": "errors",
+    "tags": [
+      "errors-as",
+      "custom-error",
+      "pointer-receiver",
+      "wrapping"
+    ],
+    "title": "errors.As untuk custom error dengan pointer receiver",
+    "prompt": "Asumsi: Go 1.22. Diberikan tipe error berikut (method `Error` memakai **pointer receiver**):\n\n```go\ntype RateLimitError struct {\n\tRetryAfter time.Duration\n}\n\nfunc (e *RateLimitError) Error() string {\n\treturn \"rate limited, retry after \" + e.RetryAfter.String()\n}\n```\n\nError ini bisa sampai ke pemanggil dalam keadaan dibungkus, mis. `fmt.Errorf(\"call api: %w\", &RateLimitError{RetryAfter: 2 * time.Second})`. Susun baris-baris berikut menjadi fungsi `retryDelay` yang mengembalikan `RetryAfter` jika di dalam rantai error ada `*RateLimitError` dengan `RetryAfter > 0`, dan `fallback` untuk kasus lain (termasuk `err == nil`).",
+    "data": {
+      "language": "go"
+    },
+    "answer": {
+      "lines": [
+        "func retryDelay(err error, fallback time.Duration) time.Duration {",
+        "\tvar rl *RateLimitError",
+        "\tif errors.As(err, &rl) && rl.RetryAfter > 0 {",
+        "\t\treturn rl.RetryAfter",
+        "\t}",
+        "\treturn fallback",
+        "}"
+      ]
+    },
+    "hints": [
+      "`errors.As` butuh target berupa pointer ke variabel yang tipenya mengimplementasikan `error`. Tipe mana yang punya method `Error()` di sini: `RateLimitError` atau `*RateLimitError`?",
+      "Deklarasikan `var rl *RateLimitError`, lalu panggil `errors.As(err, &rl)` (target bertipe `**RateLimitError`). Gabungkan dengan `&&` supaya `rl.RetryAfter` hanya dibaca jika `As` berhasil."
+    ],
+    "explanation": "Kunci soal ini adalah **method set**: karena `Error()` didefinisikan pada `*RateLimitError`, hanya `*RateLimitError` yang mengimplementasikan `error`; nilai `RateLimitError` tidak. Error yang beredar pun bertipe `*RateLimitError`.\n\n- `var rl *RateLimitError` lalu `errors.As(err, &rl)`: `As` menelusuri rantai `Unwrap` (termasuk hasil `%w` dari `fmt.Errorf`), mencari error yang bisa di-assign ke `*RateLimitError`, lalu menyimpannya ke `rl` dan mengembalikan `true`.\n- `&&` bersifat short-circuit: `rl.RetryAfter` hanya dievaluasi jika `As` berhasil. Jika gagal (termasuk `err == nil`, karena `As` langsung mengembalikan `false`), `rl` tetap `nil` dan tidak disentuh, jadi tidak ada nil pointer dereference.\n- `return fallback` harus di luar blok `if` agar menangani semua kasus lain.\n\nKesalahan umum:\n- `var rl RateLimitError; errors.As(err, &rl)` → **panic** saat runtime begitu `err` tidak nil (`errors: *target must be interface or implement error`), karena `RateLimitError` (non-pointer) tidak mengimplementasikan `error`. `go vet` (analyzer `errorsas`) menangkap ini.\n- `errors.As(err, rl)` (tanpa `&`) → panic `errors: target must be a non-nil pointer` (juga saat `err` tidak nil), karena `rl` masih pointer nil.\n- Memakai type assertion `err.(*RateLimitError)` → gagal untuk error yang sudah dibungkus, karena assertion tidak menelusuri `Unwrap`.\n- `errors.Is` membandingkan **nilai** (cocok untuk sentinel seperti `io.EOF`), bukan mencari tipe.",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified",
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25",
+      "note": "errors.As panic messages and nil handling checked against stdlib behavior; order is unique; not executed (Go not installed)"
+    }
+  }
+]

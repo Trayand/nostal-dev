@@ -1,0 +1,200 @@
+[
+  {
+    "id": "ts-type-guards-001",
+    "track": "typescript",
+    "level": 4,
+    "format": "code-full",
+    "topic": "type-guards",
+    "tags": [
+      "type-guards",
+      "type-predicate",
+      "unknown",
+      "validation"
+    ],
+    "title": "Type guard isUser untuk data unknown",
+    "prompt": "Data JSON dari API bertipe `unknown[]`. Lengkapi type guard `isUser(value: unknown): value is User` sehingga `validUserNames` hanya mengambil nama user yang valid.\n\nSebuah nilai dianggap `User` jika:\n- berupa objek biasa: bukan `null` dan bukan array;\n- `name` bertipe `string` dan tidak kosong setelah di-`trim()`;\n- `age` bertipe `number`, bilangan bulat, dan `>= 0`;\n- `email` (opsional) jika ada dan bukan `undefined`, harus bertipe `string` (`null` **tidak** valid).\n\nContoh: `[{ name: \"Ana\", age: 30 }, { name: \"Budi\", age: \"30\" }, null]` → `[\"Ana\"]`.",
+    "data": {
+      "language": "typescript",
+      "starter": "interface User {\n  name: string;\n  age: number;\n  email?: string;\n}\n\nfunction isUser(value: unknown): value is User {\n  // tulis kodemu di sini\n  return false;\n}\n\nfunction validUserNames(items: unknown[]): string[] {\n  return items.filter(isUser).map((u) => u.name);\n}",
+      "entry": "validUserNames"
+    },
+    "tests": [
+      {
+        "name": "campuran valid dan tidak valid",
+        "input": [
+          [
+            {
+              "name": "Ana",
+              "age": 30
+            },
+            {
+              "name": "Budi",
+              "age": "30"
+            },
+            null,
+            "Cici",
+            {
+              "name": "Dedi",
+              "age": 25,
+              "email": "d@x.io"
+            }
+          ]
+        ],
+        "expected": [
+          "Ana",
+          "Dedi"
+        ]
+      },
+      {
+        "name": "email null atau bukan string ditolak",
+        "input": [
+          [
+            {
+              "name": "Eka",
+              "age": 20,
+              "email": null
+            },
+            {
+              "name": "Fajar",
+              "age": 20,
+              "email": 42
+            },
+            {
+              "name": "Gita",
+              "age": 20,
+              "email": ""
+            }
+          ]
+        ],
+        "expected": [
+          "Gita"
+        ]
+      },
+      {
+        "name": "aturan age",
+        "input": [
+          [
+            {
+              "name": "Hana",
+              "age": -1
+            },
+            {
+              "name": "Iwan",
+              "age": 1.5
+            },
+            {
+              "name": "Joko",
+              "age": 0
+            },
+            {
+              "name": "Kiki"
+            }
+          ]
+        ],
+        "expected": [
+          "Joko"
+        ]
+      },
+      {
+        "name": "name kosong atau tidak ada",
+        "input": [
+          [
+            {
+              "name": "",
+              "age": 5
+            },
+            {
+              "name": "   ",
+              "age": 5
+            },
+            {
+              "age": 5
+            },
+            {
+              "name": 7,
+              "age": 5
+            }
+          ]
+        ],
+        "expected": []
+      },
+      {
+        "name": "primitif dan array",
+        "input": [
+          [
+            1,
+            true,
+            [],
+            {},
+            [
+              "Lia",
+              3
+            ]
+          ]
+        ],
+        "expected": []
+      },
+      {
+        "name": "input kosong",
+        "input": [
+          []
+        ],
+        "expected": []
+      }
+    ],
+    "referenceSolution": "interface User {\n  name: string;\n  age: number;\n  email?: string;\n}\n\nfunction isUser(value: unknown): value is User {\n  if (typeof value !== \"object\" || value === null || Array.isArray(value)) return false;\n  const v = value as Record<string, unknown>;\n  if (typeof v.name !== \"string\" || v.name.trim() === \"\") return false;\n  if (typeof v.age !== \"number\" || !Number.isInteger(v.age) || v.age < 0) return false;\n  if (v.email !== undefined && typeof v.email !== \"string\") return false;\n  return true;\n}\n\nfunction validUserNames(items: unknown[]): string[] {\n  return items.filter(isUser).map((u) => u.name);\n}",
+    "hints": [
+      "Ingat `typeof null === \"object\"` dan array juga `\"object\"` — keduanya harus ditolak lebih dulu. Setelah itu baca property lewat `value as Record<string, unknown>`.",
+      "`Number.isInteger(v.age)` sekaligus menolak `1.5`, `NaN`, dan `Infinity`; untuk email cek `v.email !== undefined && typeof v.email !== \"string\"` → `false`."
+    ],
+    "explanation": "Type predicate `value is User` hanya *janji* ke compiler: TypeScript tidak memeriksa isi fungsinya, jadi logikanya harus benar-benar memvalidasi. Jebakan umum: (1) `typeof x === \"object\"` juga true untuk `null` dan array; (2) `typeof age === \"number\"` saja meloloskan `-1`, `1.5`, dan `NaN`; (3) `email?: string` berarti *tidak ada* atau `string` — `null` bukan `undefined`, jadi harus ditolak. Karena `isUser` adalah type predicate, `items.filter(isUser)` memakai overload `filter<S extends T>(pred: (v: T) => v is S): S[]` sehingga hasilnya bertipe `User[]` dan `u.name` aman diakses tanpa cast.",
+    "estimatedMinutes": 6,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-mapped-types-001",
+    "track": "typescript",
+    "level": 4,
+    "format": "multiple-choice",
+    "topic": "mapped-types",
+    "tags": [
+      "mapped-types",
+      "key-remapping",
+      "modifiers"
+    ],
+    "title": "Key remapping membuang method",
+    "prompt": "Dengan `strict: true`, apa hasil tipe `R`?",
+    "data": {
+      "language": "typescript",
+      "code": "interface Model {\n  id: number;\n  name?: string;\n  save(): void;\n  readonly createdAt: Date;\n}\n\ntype DataOnly<T> = {\n  [K in keyof T as T[K] extends Function ? never : K]: T[K];\n};\n\ntype R = DataOnly<Model>;",
+      "options": [
+        "`{ id: number; name?: string; readonly createdAt: Date }`",
+        "`{ id: number; name: string | undefined; createdAt: Date }`",
+        "`{ id: number; name?: string; save: never; readonly createdAt: Date }`",
+        "`{ id: number; readonly createdAt: Date }`"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Klausa `as` yang menghasilkan `never` menghapus *key*-nya, bukan mengubah tipe value menjadi `never`.",
+      "Mapped type atas `keyof T` (homomorfik) tetap mempertahankan modifier `?` dan `readonly`, juga ketika memakai `as`."
+    ],
+    "explanation": "`[K in keyof T as ...]` adalah *key remapping* (TS 4.1+). Untuk `save`, `T[K]` = `() => void` yang assignable ke `Function`, sehingga key di-remap ke `never` dan **dibuang** dari hasil (bukan menjadi `save: never`). Untuk `name`, `T[K]` = `string | undefined`; karena `T[K]` bukan parameter tipe telanjang, kondisinya tidak distributif dan `string | undefined extends Function` bernilai false → key dipertahankan. `Date` juga bukan `Function`. Karena iterasinya atas `keyof T`, mapped type ini homomorfik sehingga modifier `?` dan `readonly` ikut terbawa → `{ id: number; name?: string; readonly createdAt: Date }`. Kesalahan umum: mengira modifier hilang (opsi 2) atau mengira `never` menjadi tipe value (opsi 3).",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

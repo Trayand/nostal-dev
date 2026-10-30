@@ -1,0 +1,199 @@
+[
+  {
+    "id": "sql-window-005",
+    "track": "sql",
+    "level": 5,
+    "format": "code-full",
+    "topic": "window-functions",
+    "tags": [
+      "median",
+      "row-number",
+      "null-handling",
+      "interview"
+    ],
+    "title": "Median gaji per departemen",
+    "prompt": "Tabel `employees(id, name, dept, salary)`. `salary` (dalam juta) bisa `NULL` untuk karyawan yang gajinya belum ditetapkan; **abaikan** baris itu. SQLite tidak punya fungsi `MEDIAN`.\n\nHitung `median_salary` per departemen:\n- jumlah gaji ganjil → nilai tengah setelah diurutkan;\n- jumlah gaji genap → rata-rata dua nilai tengah (bisa pecahan, misalnya `7.5`).\n\nGaji yang sama tetap dihitung masing-masing. Departemen yang semua gajinya `NULL` tidak ditampilkan.\n\nKolom: `dept`, `median_salary`. Urutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE employees (id INTEGER PRIMARY KEY, name TEXT NOT NULL, dept TEXT NOT NULL, salary INTEGER);",
+      "seed": "INSERT INTO employees (name, dept, salary) VALUES ('Andi', 'IT', 10), ('Sari', 'IT', 30), ('Rina', 'IT', 20), ('Bayu', 'IT', NULL), ('Budi', 'HR', 7), ('Joko', 'HR', 8), ('Dewi', 'Finance', 12), ('Tono', 'Finance', 12), ('Wati', 'Finance', 15), ('Putri', 'Finance', 9), ('Lina', 'Marketing', NULL), ('Rudi', 'Sales', 5);"
+    },
+    "tests": [
+      {
+        "name": "ganjil dengan NULL, genap pecahan, nilai kembar",
+        "expected": {
+          "columns": [
+            "dept",
+            "median_salary"
+          ],
+          "rows": [
+            [
+              "IT",
+              20
+            ],
+            [
+              "HR",
+              7.5
+            ],
+            [
+              "Finance",
+              12
+            ],
+            [
+              "Sales",
+              5
+            ]
+          ]
+        }
+      },
+      {
+        "name": "jumlah berubah ganjil/genap",
+        "setup": "INSERT INTO employees (name, dept, salary) VALUES ('Eko', 'IT', 40), ('Tari', 'HR', 8), ('Agus', 'Marketing', NULL);",
+        "expected": {
+          "columns": [
+            "dept",
+            "median_salary"
+          ],
+          "rows": [
+            [
+              "IT",
+              25
+            ],
+            [
+              "HR",
+              8
+            ],
+            [
+              "Finance",
+              12
+            ],
+            [
+              "Sales",
+              5
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "WITH s AS (\n  SELECT dept, salary,\n    ROW_NUMBER() OVER (PARTITION BY dept ORDER BY salary) AS rn,\n    COUNT(*) OVER (PARTITION BY dept) AS cnt\n  FROM employees\n  WHERE salary IS NOT NULL\n)\nSELECT dept, AVG(salary) AS median_salary\nFROM s\nWHERE rn IN ((cnt + 1) / 2, (cnt + 2) / 2)\nGROUP BY dept;",
+    "hints": [
+      "Buang `NULL` dulu, lalu beri setiap gaji nomor urut per departemen dan hitung jumlah gaji per departemen dengan window function.",
+      "Dengan `rn = ROW_NUMBER() OVER (PARTITION BY dept ORDER BY salary)` dan `cnt = COUNT(*) OVER (PARTITION BY dept)`, baris tengah adalah `rn IN ((cnt + 1) / 2, (cnt + 2) / 2)` (pembagian bilangan bulat). Ambil `AVG(salary)` dari baris itu."
+    ],
+    "explanation": "Rumus `(cnt + 1) / 2` dan `(cnt + 2) / 2` dengan pembagian bilangan bulat memberi satu posisi yang sama saat `cnt` ganjil (cnt = 3 → 2 dan 2) dan dua posisi berdampingan saat genap (cnt = 4 → 2 dan 3). `AVG` atas satu atau dua baris itu langsung menjadi median, dan `AVG` selalu menghasilkan REAL sehingga 7.5 tidak terpotong menjadi 7 (berbeda dengan `(a + b) / 2` pada INTEGER).\n\nJebakan:\n- `NULL` harus difilter **sebelum** window function. Jika tidak, `COUNT(*)` ikut menghitung Bayu (cnt = 4) dan `ROW_NUMBER` menaruh `NULL` di urutan pertama (SQLite mengurutkan NULL paling awal), sehingga median IT salah.\n- `ROW_NUMBER` dipakai, bukan `RANK`/`DENSE_RANK`: gaji kembar (Finance 12, 12) tetap harus menempati dua posisi berbeda.\n- Departemen yang semua gajinya `NULL` (Marketing) otomatis hilang karena tidak ada baris tersisa setelah filter.",
+    "estimatedMinutes": 15,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-cohort-001",
+    "track": "sql",
+    "level": 5,
+    "format": "code-full",
+    "topic": "cohort-analysis",
+    "tags": [
+      "retention",
+      "left-join",
+      "dates",
+      "count-distinct",
+      "interview"
+    ],
+    "title": "Retensi kohort bulan berikutnya",
+    "prompt": "Tabel `users(id, signup_date)` dan `activity(id, user_id, activity_date)`. Tanggal berupa teks `'YYYY-MM-DD'`.\n\nKelompokkan user ke **kohort** berdasarkan bulan signup. Untuk setiap kohort hitung:\n- `cohort_size`: jumlah user di kohort itu;\n- `retained_m1`: jumlah user kohort yang punya **minimal satu** aktivitas di **bulan kalender tepat setelah** bulan signup (signup Desember → aktif di Januari tahun berikutnya). Aktivitas di bulan signup sendiri atau dua bulan setelahnya tidak dihitung;\n- `retention_pct`: `100.0 * retained_m1 / cohort_size`, dibulatkan 1 desimal.\n\nKohort tanpa user yang kembali tetap tampil dengan `0`. Kolom: `cohort_month` (`'YYYY-MM'`), `cohort_size`, `retained_m1`, `retention_pct`. Urutkan berdasarkan `cohort_month` naik.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE users (id INTEGER PRIMARY KEY, signup_date TEXT NOT NULL);\nCREATE TABLE activity (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), activity_date TEXT NOT NULL);",
+      "seed": "INSERT INTO users (id, signup_date) VALUES (1, '2026-01-05'), (2, '2026-01-20'), (3, '2026-01-31'), (4, '2026-02-10'), (5, '2026-02-28'), (6, '2026-03-15');\nINSERT INTO activity (user_id, activity_date) VALUES (1, '2026-02-01'), (1, '2026-02-15'), (2, '2026-01-25'), (2, '2026-03-01'), (3, '2026-02-28'), (4, '2026-03-05'), (5, '2026-04-01');"
+    },
+    "tests": [
+      {
+        "name": "aktivitas ganda, bulan signup dan bulan ke-2 diabaikan, kohort nol",
+        "expected": {
+          "columns": [
+            "cohort_month",
+            "cohort_size",
+            "retained_m1",
+            "retention_pct"
+          ],
+          "rows": [
+            [
+              "2026-01",
+              3,
+              2,
+              66.7
+            ],
+            [
+              "2026-02",
+              2,
+              1,
+              50
+            ],
+            [
+              "2026-03",
+              1,
+              0,
+              0
+            ]
+          ]
+        },
+        "ordered": true
+      },
+      {
+        "name": "kohort Desember lintas tahun",
+        "setup": "INSERT INTO users (id, signup_date) VALUES (7, '2025-12-31'), (8, '2025-12-01');\nINSERT INTO activity (user_id, activity_date) VALUES (7, '2026-01-02'), (7, '2026-01-03'), (8, '2025-12-15');",
+        "expected": {
+          "columns": [
+            "cohort_month",
+            "cohort_size",
+            "retained_m1",
+            "retention_pct"
+          ],
+          "rows": [
+            [
+              "2025-12",
+              2,
+              1,
+              50
+            ],
+            [
+              "2026-01",
+              3,
+              2,
+              66.7
+            ],
+            [
+              "2026-02",
+              2,
+              1,
+              50
+            ],
+            [
+              "2026-03",
+              1,
+              0,
+              0
+            ]
+          ]
+        },
+        "ordered": true
+      }
+    ],
+    "referenceSolution": "WITH cohorts AS (\n  SELECT id,\n    strftime('%Y-%m', signup_date) AS cohort_month,\n    strftime('%Y-%m', signup_date, 'start of month', '+1 month') AS next_month\n  FROM users\n),\nretained AS (\n  SELECT DISTINCT c.id\n  FROM cohorts c\n  JOIN activity a\n    ON a.user_id = c.id\n   AND strftime('%Y-%m', a.activity_date) = c.next_month\n)\nSELECT c.cohort_month,\n  COUNT(*) AS cohort_size,\n  COUNT(r.id) AS retained_m1,\n  ROUND(100.0 * COUNT(r.id) / COUNT(*), 1) AS retention_pct\nFROM cohorts c\nLEFT JOIN retained r ON r.id = c.id\nGROUP BY c.cohort_month\nORDER BY c.cohort_month;",
+    "hints": [
+      "Tentukan dulu untuk tiap user bulan kohortnya dan \"bulan berikutnya\". Lalu cari user mana yang aktif di bulan berikutnya itu (satu baris per user, walau aktivitasnya banyak).",
+      "`strftime('%Y-%m', signup_date, 'start of month', '+1 month')` memberi bulan berikutnya, aman untuk Desember dan tanggal 31. Buat CTE `retained` berisi `SELECT DISTINCT` user yang cocok, lalu `users LEFT JOIN retained` dan hitung `COUNT(*)` vs `COUNT(r.id)`."
+    ],
+    "explanation": "Analisis kohort memerlukan tiga hal yang sering salah:\n\n1. **Bulan berikutnya**: menambah 1 pada angka bulan gagal untuk Desember. `+1 month` langsung dari `'2026-01-31'` di SQLite menghasilkan 3 Maret (overflow), jadi geser dulu ke `'start of month'` baru `+1 month`.\n2. **Duplikasi**: user 1 punya dua aktivitas di Februari. Kalau aktivitas di-join langsung lalu `COUNT(*)`, user itu terhitung dua kali dan `cohort_size` ikut membengkak. Karena itu user yang kembali dikumpulkan dulu di CTE dengan `DISTINCT`, baru di-join ke `users`.\n3. **Kohort nol**: `INNER JOIN` ke aktivitas menghilangkan kohort Maret. `LEFT JOIN` + `COUNT(r.id)` (yang mengabaikan NULL) memberi 0.\n\n`100.0 *` memaksa pembagian REAL. Tanpa itu `2 / 3` adalah pembagian bilangan bulat dan hasilnya 0.",
+    "estimatedMinutes": 18,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

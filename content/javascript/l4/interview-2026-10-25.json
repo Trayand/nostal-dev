@@ -1,0 +1,247 @@
+[
+  {
+    "id": "js-generators-001",
+    "track": "javascript",
+    "level": 4,
+    "format": "predict-output",
+    "topic": "generators",
+    "tags": [
+      "generator",
+      "iterator",
+      "yield",
+      "interview"
+    ],
+    "title": "Nilai yang dikirim lewat next() ke generator",
+    "prompt": "Apa output kode berikut? Perhatikan ke mana nilai argumen setiap pemanggilan `next()` masuk.",
+    "data": {
+      "language": "javascript",
+      "code": "function* gen() {\n  const a = yield 1;\n  console.log('a =', a);\n  const b = yield a * 2;\n  console.log('b =', b);\n  return a + b;\n}\n\nconst it = gen();\nconsole.log(it.next(10).value);\nconsole.log(it.next(3).value);\nconst last = it.next(4);\nconsole.log(last.value, last.done);\nconsole.log(it.next(5).value);",
+      "options": [
+        "1\na = 3\n6\nb = 4\n7 true\nundefined",
+        "1\na = 10\n20\nb = 3\n13 true\nundefined",
+        "1\na = 3\n6\nb = 4\n7 false\n5",
+        "1\na = 3\n6\nb = 4\n7 true\n7"
+      ]
+    },
+    "answer": {
+      "output": "1\na = 3\n6\nb = 4\n7 true\nundefined"
+    },
+    "hints": [
+      "Pemanggilan `next()` pertama hanya menjalankan generator sampai `yield` pertama. Belum ada `yield` yang menunggu nilai, jadi argumennya ke mana?",
+      "Argumen `next(x)` menjadi hasil ekspresi `yield` yang **sedang ditunda**. Jadi `10` dibuang, `a = 3`, `b = 4`. Setelah `return`, generator selesai untuk selamanya."
+    ],
+    "explanation": "`it.next(10)` menjalankan body sampai `yield 1` → mencetak `1`. Argumen `10` **dibuang** karena belum ada `yield` yang menunggu nilai. `it.next(3)` melanjutkan dari `yield 1`, sehingga `a = 3`, mencetak `a = 3`, lalu berhenti di `yield a * 2` → `6`. `it.next(4)` membuat `b = 4`, mencetak `b = 4`, lalu `return a + b` menghasilkan `{ value: 7, done: true }` (nilai `return` muncul dengan `done: true`, bukan `false`). Setelah selesai, setiap `next()` berikutnya selalu `{ value: undefined, done: true }` → `undefined`.\n\nKesalahan umum: mengira argumen `next()` pertama mengisi `a`. Nilai yang dikirim selalu 'satu langkah terlambat' dibanding `yield` yang dihasilkan. Perhatikan juga bahwa `for...of` mengabaikan nilai `return` (yang `done: true`).",
+    "estimatedMinutes": 3,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-objects-003",
+    "track": "javascript",
+    "level": 4,
+    "format": "code-full",
+    "topic": "objects",
+    "tags": [
+      "deep-equal",
+      "recursion",
+      "interview"
+    ],
+    "title": "Implementasi deepEqual untuk objek dan array",
+    "prompt": "Implementasikan `deepEqual(a, b)` yang mengembalikan `true` jika dua nilai **sama secara struktur**:\n\n- primitif dibandingkan dengan `Object.is` (jadi `1` dan `'1'` berbeda),\n- dua array sama jika panjangnya sama dan setiap elemennya `deepEqual`,\n- dua objek biasa sama jika punya **himpunan key yang sama** (urutan key tidak penting) dan setiap nilainya `deepEqual`,\n- array **tidak pernah** sama dengan objek biasa, walaupun key-nya cocok (`[1]` vs `{ \"0\": 1 }`),\n- `null` hanya sama dengan `null`.\n\nInput hanya berisi nilai JSON (tanpa siklus, Date, Map, dll).",
+    "data": {
+      "language": "javascript",
+      "starter": "function deepEqual(a, b) {\n  // tulis kodemu di sini\n  return a === b;\n}",
+      "entry": "deepEqual"
+    },
+    "tests": [
+      {
+        "name": "primitif sama",
+        "input": [
+          1,
+          1
+        ],
+        "expected": true
+      },
+      {
+        "name": "number vs string",
+        "input": [
+          1,
+          "1"
+        ],
+        "expected": false
+      },
+      {
+        "name": "objek bersarang, urutan key beda",
+        "input": [
+          {
+            "a": 1,
+            "b": {
+              "c": [
+                1,
+                2
+              ]
+            }
+          },
+          {
+            "b": {
+              "c": [
+                1,
+                2
+              ]
+            },
+            "a": 1
+          }
+        ],
+        "expected": true
+      },
+      {
+        "name": "array bersarang berbeda",
+        "input": [
+          [
+            1,
+            [
+              2,
+              3
+            ]
+          ],
+          [
+            1,
+            [
+              2,
+              4
+            ]
+          ]
+        ],
+        "expected": false
+      },
+      {
+        "name": "panjang array berbeda",
+        "input": [
+          [
+            1,
+            2
+          ],
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "expected": false
+      },
+      {
+        "name": "b punya key tambahan",
+        "input": [
+          {
+            "a": 1
+          },
+          {
+            "a": 1,
+            "b": 2
+          }
+        ],
+        "expected": false
+      },
+      {
+        "name": "a punya key tambahan",
+        "input": [
+          {
+            "a": 1,
+            "b": 2
+          },
+          {
+            "a": 1
+          }
+        ],
+        "expected": false
+      },
+      {
+        "name": "array vs objek dengan key sama",
+        "input": [
+          [
+            1,
+            2
+          ],
+          {
+            "0": 1,
+            "1": 2
+          }
+        ],
+        "expected": false
+      },
+      {
+        "name": "array kosong vs objek kosong",
+        "input": [
+          [],
+          {}
+        ],
+        "expected": false
+      },
+      {
+        "name": "null vs objek kosong",
+        "input": [
+          null,
+          {}
+        ],
+        "expected": false
+      },
+      {
+        "name": "objek kosong vs null",
+        "input": [
+          {},
+          null
+        ],
+        "expected": false
+      },
+      {
+        "name": "null vs null",
+        "input": [
+          null,
+          null
+        ],
+        "expected": true
+      },
+      {
+        "name": "nilai null vs key hilang",
+        "input": [
+          {
+            "a": null
+          },
+          {
+            "b": null
+          }
+        ],
+        "expected": false
+      },
+      {
+        "name": "struktur kosong bersarang",
+        "input": [
+          {
+            "a": [],
+            "b": {}
+          },
+          {
+            "a": [],
+            "b": {}
+          }
+        ],
+        "expected": true
+      }
+    ],
+    "referenceSolution": "function deepEqual(a, b) {\n  if (Object.is(a, b)) return true;\n  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) {\n    return false;\n  }\n  if (Array.isArray(a) !== Array.isArray(b)) return false;\n  const keysA = Object.keys(a);\n  const keysB = Object.keys(b);\n  if (keysA.length !== keysB.length) return false;\n  for (const key of keysA) {\n    if (!Object.prototype.hasOwnProperty.call(b, key)) return false;\n    if (!deepEqual(a[key], b[key])) return false;\n  }\n  return true;\n}",
+    "hints": [
+      "Tangani dulu kasus dasar: nilai identik → `true`; jika salah satu bukan objek (ingat `typeof null === 'object'`) → `false`. Baru setelah itu bandingkan isinya secara rekursif.",
+      "Untuk dua objek: cek `Array.isArray(a) === Array.isArray(b)`, lalu bandingkan **jumlah** key `Object.keys`, dan untuk setiap key di `a` pastikan key itu juga ada di `b` serta `deepEqual(a[k], b[k])`."
+    ],
+    "explanation": "Kuncinya ada di kasus-kasus jebakan:\n\n1. **`typeof null === 'object'`** — tanpa cek `null` eksplisit, `Object.keys(null)` melempar `TypeError`.\n2. **Jumlah key** — kalau hanya meloop key milik `a`, maka `{ a: 1 }` dianggap sama dengan `{ a: 1, b: 2 }`. Membandingkan panjang `Object.keys` (plus `hasOwnProperty` untuk memastikan key benar-benar ada) menutup celah ini.\n3. **Array vs objek** — `Object.keys([1, 2])` adalah `['0', '1']`, persis sama dengan `{ '0': 1, '1': 2 }`, jadi perlu cek `Array.isArray` di kedua sisi.\n\n`Object.is` dipakai untuk primitif agar `NaN` sama dengan `NaN` (berbeda dengan `===`). Jangan memakai `JSON.stringify(a) === JSON.stringify(b)`: hasilnya bergantung pada urutan key, sehingga objek yang sama dengan urutan key berbeda dianggap tidak sama.",
+    "estimatedMinutes": 10,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

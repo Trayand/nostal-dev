@@ -1,0 +1,252 @@
+[
+  {
+    "id": "sql-window-004",
+    "track": "sql",
+    "level": 4,
+    "format": "code-full",
+    "topic": "window-functions",
+    "tags": [
+      "lag",
+      "month-over-month",
+      "aggregates",
+      "dates"
+    ],
+    "title": "Perubahan pendapatan bulan ke bulan",
+    "prompt": "Tabel `orders(id, order_date, amount, status)`. `order_date` berupa teks `'YYYY-MM-DD'`, `status` bernilai `'paid'` atau `'cancelled'`.\n\nHitung pendapatan per bulan (hanya pesanan `'paid'`) dan selisihnya dengan **bulan sebelumnya yang muncul di hasil**. Bulan yang tidak punya pesanan `'paid'` sama sekali **tidak** ditampilkan. Baris pertama punya `change` bernilai `NULL`.\n\nKolom: `month` (format `'YYYY-MM'`), `revenue`, `change`. Urutkan berdasarkan `month` naik.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE orders (id INTEGER PRIMARY KEY, order_date TEXT NOT NULL, amount INTEGER NOT NULL, status TEXT NOT NULL);",
+      "seed": "INSERT INTO orders (order_date, amount, status) VALUES ('2026-01-05', 100, 'paid'), ('2026-01-20', 50, 'paid'), ('2026-01-25', 999, 'cancelled'), ('2026-02-03', 120, 'paid'), ('2026-03-10', 90, 'paid'), ('2026-03-15', 30, 'paid');"
+    },
+    "tests": [
+      {
+        "name": "beberapa pesanan per bulan, cancelled diabaikan",
+        "expected": {
+          "columns": [
+            "month",
+            "revenue",
+            "change"
+          ],
+          "rows": [
+            [
+              "2026-01",
+              150,
+              null
+            ],
+            [
+              "2026-02",
+              120,
+              -30
+            ],
+            [
+              "2026-03",
+              120,
+              0
+            ]
+          ]
+        },
+        "ordered": true
+      },
+      {
+        "name": "bulan yang hanya berisi cancelled tidak muncul, lintas tahun",
+        "setup": "INSERT INTO orders (order_date, amount, status) VALUES ('2026-04-01', 500, 'cancelled'), ('2026-05-02', 200, 'paid'), ('2025-12-31', 40, 'paid');",
+        "expected": {
+          "columns": [
+            "month",
+            "revenue",
+            "change"
+          ],
+          "rows": [
+            [
+              "2025-12",
+              40,
+              null
+            ],
+            [
+              "2026-01",
+              150,
+              110
+            ],
+            [
+              "2026-02",
+              120,
+              -30
+            ],
+            [
+              "2026-03",
+              120,
+              0
+            ],
+            [
+              "2026-05",
+              200,
+              80
+            ]
+          ]
+        },
+        "ordered": true
+      },
+      {
+        "name": "tabel kosong",
+        "setup": "DELETE FROM orders;",
+        "expected": {
+          "columns": [
+            "month",
+            "revenue",
+            "change"
+          ],
+          "rows": []
+        },
+        "ordered": true
+      }
+    ],
+    "referenceSolution": "WITH monthly AS (\n  SELECT strftime('%Y-%m', order_date) AS month, SUM(amount) AS revenue\n  FROM orders\n  WHERE status = 'paid'\n  GROUP BY month\n)\nSELECT month, revenue,\n  revenue - LAG(revenue) OVER (ORDER BY month) AS change\nFROM monthly\nORDER BY month;",
+    "hints": [
+      "Kerjakan dua tahap: agregasi dulu menjadi satu baris per bulan (di CTE), baru bandingkan antarbaris bulan.",
+      "Di CTE: `strftime('%Y-%m', order_date)` + `SUM(amount)` dengan `WHERE status = 'paid'`. Di query luar: `revenue - LAG(revenue) OVER (ORDER BY month)`."
+    ],
+    "explanation": "`LAG(x) OVER (ORDER BY ...)` mengambil nilai dari baris sebelumnya, jadi barisnya harus sudah berupa **satu baris per bulan**. Kalau `LAG` dipakai pada tabel `orders` mentah, baris sebelumnya adalah *pesanan* sebelumnya, bukan bulan sebelumnya. Karena itu agregasi dilakukan dulu di CTE, lalu window function dihitung di atas hasil agregasi.\n\nFilter `status = 'paid'` harus ada di `WHERE` sebelum `GROUP BY`. Alternatif `SUM(CASE WHEN status = 'paid' ...)` tetap membuat baris untuk bulan yang hanya berisi pesanan cancelled (revenue 0), dan baris itu ikut menggeser `LAG`. Baris pertama tidak punya pendahulu sehingga `LAG` menghasilkan `NULL`, dan `revenue - NULL` juga `NULL`. Format `'YYYY-MM'` bisa diurutkan sebagai teks, jadi pergantian tahun (2025-12 lalu 2026-01) tetap benar.",
+    "estimatedMinutes": 8,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "sql-cte-002",
+    "track": "sql",
+    "level": 4,
+    "format": "code-full",
+    "topic": "cte",
+    "tags": [
+      "recursive-cte",
+      "hierarchy",
+      "tree",
+      "null-handling"
+    ],
+    "title": "Kedalaman dan path pohon kategori",
+    "prompt": "Tabel `categories(id, name, parent_id)`. Kategori akar punya `parent_id` bernilai `NULL`. Kedalaman pohon **tidak dibatasi**.\n\nTampilkan setiap kategori beserta `depth` (akar = 0, anaknya = 1, dst.) dan `path` berupa nama dari akar sampai kategori itu, dipisah `' > '` (contoh: `'Elektronik > Komputer > Laptop'`).\n\nKolom: `name`, `depth`, `path`. Urutan bebas.",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE categories (id INTEGER PRIMARY KEY, name TEXT NOT NULL, parent_id INTEGER REFERENCES categories(id));",
+      "seed": "INSERT INTO categories (id, name, parent_id) VALUES (1, 'Elektronik', NULL), (2, 'Komputer', 1), (3, 'Laptop', 2), (4, 'Ponsel', 1), (5, 'Fashion', NULL), (6, 'Sepatu', 5);"
+    },
+    "tests": [
+      {
+        "name": "dua pohon, kedalaman sampai 2",
+        "expected": {
+          "columns": [
+            "name",
+            "depth",
+            "path"
+          ],
+          "rows": [
+            [
+              "Elektronik",
+              0,
+              "Elektronik"
+            ],
+            [
+              "Komputer",
+              1,
+              "Elektronik > Komputer"
+            ],
+            [
+              "Laptop",
+              2,
+              "Elektronik > Komputer > Laptop"
+            ],
+            [
+              "Ponsel",
+              1,
+              "Elektronik > Ponsel"
+            ],
+            [
+              "Fashion",
+              0,
+              "Fashion"
+            ],
+            [
+              "Sepatu",
+              1,
+              "Fashion > Sepatu"
+            ]
+          ]
+        }
+      },
+      {
+        "name": "rantai lebih dalam dan akar tanpa anak",
+        "setup": "INSERT INTO categories (id, name, parent_id) VALUES (7, 'Gaming', 3), (8, 'Aksesoris', 7), (9, 'Buku', NULL);",
+        "expected": {
+          "columns": [
+            "name",
+            "depth",
+            "path"
+          ],
+          "rows": [
+            [
+              "Elektronik",
+              0,
+              "Elektronik"
+            ],
+            [
+              "Komputer",
+              1,
+              "Elektronik > Komputer"
+            ],
+            [
+              "Laptop",
+              2,
+              "Elektronik > Komputer > Laptop"
+            ],
+            [
+              "Gaming",
+              3,
+              "Elektronik > Komputer > Laptop > Gaming"
+            ],
+            [
+              "Aksesoris",
+              4,
+              "Elektronik > Komputer > Laptop > Gaming > Aksesoris"
+            ],
+            [
+              "Ponsel",
+              1,
+              "Elektronik > Ponsel"
+            ],
+            [
+              "Fashion",
+              0,
+              "Fashion"
+            ],
+            [
+              "Sepatu",
+              1,
+              "Fashion > Sepatu"
+            ],
+            [
+              "Buku",
+              0,
+              "Buku"
+            ]
+          ]
+        }
+      }
+    ],
+    "referenceSolution": "WITH RECURSIVE tree (id, name, depth, path) AS (\n  SELECT id, name, 0, name\n  FROM categories\n  WHERE parent_id IS NULL\n  UNION ALL\n  SELECT c.id, c.name, t.depth + 1, t.path || ' > ' || c.name\n  FROM categories c\n  JOIN tree t ON c.parent_id = t.id\n)\nSELECT name, depth, path\nFROM tree;",
+    "hints": [
+      "Kedalaman tidak dibatasi, jadi self-join dengan jumlah tetap tidak cukup. Gunakan `WITH RECURSIVE`: bagian awal (anchor) berisi akar, bagian rekursif menambahkan anak dari baris yang sudah ditemukan.",
+      "Anchor: `SELECT id, name, 0, name FROM categories WHERE parent_id IS NULL`. Bagian rekursif: `JOIN tree t ON c.parent_id = t.id` dengan `t.depth + 1` dan `t.path || ' > ' || c.name`, digabung dengan `UNION ALL`."
+    ],
+    "explanation": "CTE rekursif bekerja bertahap: anchor menghasilkan level 0 (akar), lalu bagian rekursif dijalankan berulang pada baris yang baru ditemukan sampai tidak ada anak lagi. `depth` dan `path` dibawa dari induk ke anak, sehingga setiap level cukup menambah 1 dan menyambung nama.\n\nKesalahan umum:\n- `WHERE parent_id = NULL` selalu bernilai *unknown*, jadi anchor kosong dan seluruh hasil kosong. Gunakan `IS NULL`.\n- Self-join manual (`c1 JOIN c2 JOIN c3`) hanya mendukung kedalaman tetap, sehingga gagal pada rantai Gaming → Aksesoris.\n- Join terbalik (`t.parent_id = c.id`) berjalan ke atas, bukan ke bawah.\n\n`UNION ALL` cukup di sini karena pohon tidak punya siklus. Pada data yang bisa bersiklus, `UNION` atau batas `depth` mencegah rekursi tanpa akhir.",
+    "estimatedMinutes": 10,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

@@ -1,0 +1,287 @@
+[
+  {
+    "id": "ts-discriminated-unions-002",
+    "track": "typescript",
+    "level": 5,
+    "format": "code-full",
+    "topic": "discriminated-unions",
+    "tags": [
+      "discriminated-unions",
+      "reducer",
+      "undo-redo",
+      "exhaustive-check",
+      "interview"
+    ],
+    "title": "Reducer editor dengan undo/redo",
+    "prompt": "Implementasikan `reducer` untuk editor teks dengan riwayat undo/redo. `Action` adalah discriminated union berdasarkan `type`:\n\n- `insert` → tambahkan `text` di akhir teks.\n- `delete` → hapus `count` karakter terakhir (jika `count` melebihi panjang teks, hapus semuanya).\n- `undo` → kembali ke teks sebelumnya; `redo` → maju lagi.\n\nAturan riwayat:\n1. Setiap edit (`insert`/`delete`) yang **benar-benar mengubah teks** menyimpan teks lama ke `past` dan mengosongkan `future`.\n2. Edit yang tidak mengubah apa pun (`insert` string kosong, `delete` dengan `count <= 0`, atau `delete` pada teks kosong) adalah no-op: state tidak berubah sama sekali.\n3. `undo` saat `past` kosong dan `redo` saat `future` kosong juga no-op.\n\n`runEditor` (sudah jadi) menjalankan semua action dari state kosong dan mengembalikan `{ text, canUndo, canRedo }`. Jangan mutasi state lama — kembalikan objek baru. Gunakan `assertNever` di cabang `default`.",
+    "data": {
+      "language": "typescript",
+      "starter": "type Action =\n  | { type: \"insert\"; text: string }\n  | { type: \"delete\"; count: number }\n  | { type: \"undo\" }\n  | { type: \"redo\" };\n\ninterface EditorState {\n  past: string[];\n  present: string;\n  future: string[];\n}\n\nfunction assertNever(x: never): never {\n  throw new Error(\"Action tidak dikenal: \" + JSON.stringify(x));\n}\n\nfunction reducer(state: EditorState, action: Action): EditorState {\n  // tulis kodemu di sini\n  return state;\n}\n\nfunction runEditor(actions: Action[]): { text: string; canUndo: boolean; canRedo: boolean } {\n  let state: EditorState = { past: [], present: \"\", future: [] };\n  for (const action of actions) state = reducer(state, action);\n  return { text: state.present, canUndo: state.past.length > 0, canRedo: state.future.length > 0 };\n}",
+      "entry": "runEditor"
+    },
+    "tests": [
+      {
+        "name": "insert lalu delete",
+        "input": [
+          [
+            {
+              "type": "insert",
+              "text": "Halo"
+            },
+            {
+              "type": "insert",
+              "text": " dunia"
+            },
+            {
+              "type": "delete",
+              "count": 6
+            }
+          ]
+        ],
+        "expected": {
+          "text": "Halo",
+          "canUndo": true,
+          "canRedo": false
+        }
+      },
+      {
+        "name": "undo dua kali lalu redo",
+        "input": [
+          [
+            {
+              "type": "insert",
+              "text": "a"
+            },
+            {
+              "type": "insert",
+              "text": "b"
+            },
+            {
+              "type": "undo"
+            },
+            {
+              "type": "undo"
+            },
+            {
+              "type": "redo"
+            }
+          ]
+        ],
+        "expected": {
+          "text": "a",
+          "canUndo": true,
+          "canRedo": true
+        }
+      },
+      {
+        "name": "edit baru mengosongkan future",
+        "input": [
+          [
+            {
+              "type": "insert",
+              "text": "a"
+            },
+            {
+              "type": "insert",
+              "text": "b"
+            },
+            {
+              "type": "undo"
+            },
+            {
+              "type": "insert",
+              "text": "c"
+            },
+            {
+              "type": "redo"
+            }
+          ]
+        ],
+        "expected": {
+          "text": "ac",
+          "canUndo": true,
+          "canRedo": false
+        }
+      },
+      {
+        "name": "undo/redo tanpa riwayat",
+        "input": [
+          [
+            {
+              "type": "undo"
+            },
+            {
+              "type": "redo"
+            },
+            {
+              "type": "insert",
+              "text": "x"
+            },
+            {
+              "type": "undo"
+            },
+            {
+              "type": "undo"
+            }
+          ]
+        ],
+        "expected": {
+          "text": "",
+          "canUndo": false,
+          "canRedo": true
+        }
+      },
+      {
+        "name": "edit no-op tidak masuk riwayat",
+        "input": [
+          [
+            {
+              "type": "insert",
+              "text": ""
+            },
+            {
+              "type": "delete",
+              "count": 3
+            },
+            {
+              "type": "insert",
+              "text": "ab"
+            },
+            {
+              "type": "delete",
+              "count": 0
+            },
+            {
+              "type": "delete",
+              "count": 5
+            },
+            {
+              "type": "undo"
+            },
+            {
+              "type": "undo"
+            }
+          ]
+        ],
+        "expected": {
+          "text": "",
+          "canUndo": false,
+          "canRedo": true
+        }
+      },
+      {
+        "name": "delete melebihi panjang lalu undo",
+        "input": [
+          [
+            {
+              "type": "insert",
+              "text": "ab"
+            },
+            {
+              "type": "delete",
+              "count": 5
+            },
+            {
+              "type": "undo"
+            }
+          ]
+        ],
+        "expected": {
+          "text": "ab",
+          "canUndo": true,
+          "canRedo": true
+        }
+      },
+      {
+        "name": "count negatif adalah no-op",
+        "input": [
+          [
+            {
+              "type": "insert",
+              "text": "abc"
+            },
+            {
+              "type": "delete",
+              "count": -2
+            },
+            {
+              "type": "undo"
+            }
+          ]
+        ],
+        "expected": {
+          "text": "",
+          "canUndo": false,
+          "canRedo": true
+        }
+      },
+      {
+        "name": "tanpa action",
+        "input": [
+          []
+        ],
+        "expected": {
+          "text": "",
+          "canUndo": false,
+          "canRedo": false
+        }
+      }
+    ],
+    "referenceSolution": "type Action =\n  | { type: \"insert\"; text: string }\n  | { type: \"delete\"; count: number }\n  | { type: \"undo\" }\n  | { type: \"redo\" };\n\ninterface EditorState {\n  past: string[];\n  present: string;\n  future: string[];\n}\n\nfunction assertNever(x: never): never {\n  throw new Error(\"Action tidak dikenal: \" + JSON.stringify(x));\n}\n\nfunction commit(state: EditorState, next: string): EditorState {\n  if (next === state.present) return state;\n  return { past: [...state.past, state.present], present: next, future: [] };\n}\n\nfunction reducer(state: EditorState, action: Action): EditorState {\n  switch (action.type) {\n    case \"insert\":\n      return commit(state, state.present + action.text);\n    case \"delete\": {\n      if (action.count <= 0) return state;\n      const keep = Math.max(0, state.present.length - action.count);\n      return commit(state, state.present.slice(0, keep));\n    }\n    case \"undo\": {\n      if (state.past.length === 0) return state;\n      const previous = state.past[state.past.length - 1];\n      return { past: state.past.slice(0, -1), present: previous, future: [state.present, ...state.future] };\n    }\n    case \"redo\": {\n      if (state.future.length === 0) return state;\n      const [next, ...rest] = state.future;\n      return { past: [...state.past, state.present], present: next, future: rest };\n    }\n    default:\n      return assertNever(action);\n  }\n}\n\nfunction runEditor(actions: Action[]): { text: string; canUndo: boolean; canRedo: boolean } {\n  let state: EditorState = { past: [], present: \"\", future: [] };\n  for (const action of actions) state = reducer(state, action);\n  return { text: state.present, canUndo: state.past.length > 0, canRedo: state.future.length > 0 };\n}",
+    "hints": [
+      "Buat helper `commit(state, nextText)` yang mengembalikan `state` apa adanya jika `nextText === state.present`, selain itu `{ past: [...past, present], present: nextText, future: [] }`.",
+      "`delete`: tolak `count <= 0` lebih dulu (ingat `slice(0, length - (-2))` tidak menghapus apa pun), lalu `slice(0, Math.max(0, length - count))`. `undo`: ambil elemen terakhir `past`, taruh `present` di **depan** `future`; `redo` kebalikannya."
+    ],
+    "explanation": "Discriminated union membuat `switch (action.type)` mempersempit `action` di setiap `case` (misalnya `action.text` hanya ada di `insert`), dan `assertNever(action)` di `default` memaksa compiler error jika suatu hari ada varian `Action` baru yang lupa ditangani — karena di titik itu `action` seharusnya `never`.\n\nBagian yang sering salah adalah riwayatnya: (1) edit yang tidak mengubah teks tidak boleh mendorong entri ke `past`, kalau tidak user harus menekan undo \"kosong\"; membandingkan teks baru dengan `present` di satu helper `commit` menangani `insert \"\"`, `delete` pada teks kosong, sekaligus menjaga `future`. (2) `count` negatif harus ditolak eksplisit: `length - (-2)` membuat `slice` mengembalikan teks utuh, tetapi tanpa helper `commit` banyak implementasi tetap mencatatnya. (3) Edit baru wajib mengosongkan `future` — itulah sebabnya `redo` setelah `insert \"c\"` tidak melakukan apa-apa. Undo/redo adalah O(n) karena menyalin array; itu harga dari state yang immutable, dan cukup baik untuk reducer gaya Redux.",
+    "estimatedMinutes": 12,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "ts-variance-001",
+    "track": "typescript",
+    "level": 5,
+    "format": "multiple-choice",
+    "topic": "variance",
+    "tags": [
+      "variance",
+      "strict-function-types",
+      "method-bivariance",
+      "interview"
+    ],
+    "title": "Method bivariance vs property function",
+    "prompt": "Dengan `strict: true` (termasuk `strictFunctionTypes`), baris bertanda mana yang menghasilkan **compile error**?",
+    "data": {
+      "language": "typescript",
+      "code": "interface Animal { name: string }\ninterface Dog extends Animal { bark(): void }\n\ninterface MethodHandler { handle(a: Animal): void }\ninterface PropHandler { handle: (a: Animal) => void }\n\ndeclare const dogs: Dog[];\nconst onDog = (d: Dog) => d.bark();\nconst onAnimal = (a: Animal) => console.log(a.name);\n\nconst animals: Animal[] = dogs;              // (A)\nconst h1: MethodHandler = { handle: onDog }; // (B)\nconst h2: PropHandler = { handle: onDog };   // (C)\nconst f: (d: Dog) => void = onAnimal;        // (D)",
+      "options": [
+        "Hanya (C)",
+        "(B) dan (C)",
+        "(A) dan (C)",
+        "Hanya (D)",
+        "Tidak ada — semua baris lolos"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "`strictFunctionTypes` membuat parameter fungsi dicek secara kontravarian — tetapi pengecualiannya adalah parameter yang dideklarasikan dengan sintaks **method**.",
+      "Yang menentukan adalah bentuk deklarasi di tipe *target*: `handle(a: Animal): void` (method, bivarian) vs `handle: (a: Animal) => void` (property, kontravarian)."
+    ],
+    "explanation": "(A) lolos: array di TypeScript diperlakukan **kovarian** (`Dog[]` → `Animal[]`), meski ini tidak sound (`animals.push(cat)` akan lolos). (B) lolos: target `handle(a: Animal): void` dideklarasikan sebagai method, dan parameter method tetap dicek **bivarian** walau `strictFunctionTypes` aktif — pengecualian yang sengaja dibuat agar tipe seperti `Array<T>` tetap kovarian. (C) **error**: target berupa property bertipe function, jadi parameternya dicek kontravarian; `onDog` butuh `Dog`, padahal `PropHandler` boleh dipanggil dengan `Animal` apa pun yang tidak punya `bark` → `Type '(d: Dog) => void' is not assignable to type '(a: Animal) => void'`. (D) lolos: fungsi yang menerima `Animal` aman dipakai di tempat yang hanya akan memberi `Dog` (kontravarian yang benar). Pelajaran: untuk callback yang ingin dicek ketat, tulis sebagai property (`handle: (a: Animal) => void`), bukan method.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

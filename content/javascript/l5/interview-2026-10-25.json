@@ -1,0 +1,423 @@
+[
+  {
+    "id": "js-async-001",
+    "track": "javascript",
+    "level": 5,
+    "format": "code-full",
+    "topic": "async",
+    "tags": [
+      "promise-pool",
+      "concurrency",
+      "async-await",
+      "interview"
+    ],
+    "title": "Promise pool dengan batas konkurensi",
+    "prompt": "Implementasikan `promisePool(tasks, limit)`:\n\n- `tasks` adalah array fungsi tanpa argumen yang masing-masing mengembalikan Promise (task **belum** berjalan sampai fungsinya dipanggil),\n- paling banyak `limit` task boleh berjalan **bersamaan**,\n- begitu satu task selesai, task berikutnya (urutan index) **langsung** dimulai — jangan menunggu satu 'batch' selesai semua,\n- resolve ke array hasil dengan **urutan sesuai index input**, bukan urutan selesai,\n- `tasks` kosong → `[]`. Anggap tidak ada task yang reject.\n\nFungsi `check(ticks, limit)` adalah helper test (jangan diubah). Setiap task menunggu sejumlah microtask (`ticks[i]`), lalu mengembalikan `'t' + i`. Helper melaporkan `maxActive` (jumlah task bersamaan terbanyak) dan `startedDuringSlow` (berapa task lain yang dimulai selagi task paling lambat masih berjalan).",
+    "data": {
+      "language": "javascript",
+      "starter": "async function promisePool(tasks, limit) {\n  // tulis kodemu di sini\n  const results = [];\n  for (const task of tasks) {\n    results.push(await task());\n  }\n  return results;\n}\n\n// Helper untuk test: jangan diubah\nasync function check(ticks, limit) {\n  let active = 0;\n  let maxActive = 0;\n  let slowRunning = false;\n  let startedDuringSlow = 0;\n  const slow = ticks.indexOf(Math.max(...ticks));\n  const tasks = ticks.map((t, i) => async () => {\n    if (slowRunning) startedDuringSlow++;\n    if (i === slow) slowRunning = true;\n    active++;\n    maxActive = Math.max(maxActive, active);\n    for (let k = 0; k < t; k++) await Promise.resolve();\n    active--;\n    if (i === slow) slowRunning = false;\n    return 't' + i;\n  });\n  const results = await promisePool(tasks, limit);\n  return { results, maxActive, startedDuringSlow };\n}",
+      "entry": "check"
+    },
+    "tests": [
+      {
+        "name": "hasil mengikuti urutan input",
+        "input": [
+          [
+            30,
+            1,
+            3
+          ],
+          2
+        ],
+        "expected": {
+          "results": [
+            "t0",
+            "t1",
+            "t2"
+          ],
+          "maxActive": 2,
+          "startedDuringSlow": 2
+        }
+      },
+      {
+        "name": "slot kosong langsung diisi (bukan per batch)",
+        "input": [
+          [
+            1,
+            50,
+            1,
+            1,
+            1
+          ],
+          2
+        ],
+        "expected": {
+          "results": [
+            "t0",
+            "t1",
+            "t2",
+            "t3",
+            "t4"
+          ],
+          "maxActive": 2,
+          "startedDuringSlow": 3
+        }
+      },
+      {
+        "name": "limit 3",
+        "input": [
+          [
+            10,
+            10,
+            10,
+            1,
+            1
+          ],
+          3
+        ],
+        "expected": {
+          "results": [
+            "t0",
+            "t1",
+            "t2",
+            "t3",
+            "t4"
+          ],
+          "maxActive": 3,
+          "startedDuringSlow": 2
+        }
+      },
+      {
+        "name": "limit lebih besar dari jumlah task",
+        "input": [
+          [
+            2,
+            2
+          ],
+          5
+        ],
+        "expected": {
+          "results": [
+            "t0",
+            "t1"
+          ],
+          "maxActive": 2,
+          "startedDuringSlow": 1
+        }
+      },
+      {
+        "name": "limit 1 berarti berurutan",
+        "input": [
+          [
+            3,
+            1,
+            2
+          ],
+          1
+        ],
+        "expected": {
+          "results": [
+            "t0",
+            "t1",
+            "t2"
+          ],
+          "maxActive": 1,
+          "startedDuringSlow": 0
+        }
+      },
+      {
+        "name": "tanpa task",
+        "input": [
+          [],
+          3
+        ],
+        "expected": {
+          "results": [],
+          "maxActive": 0,
+          "startedDuringSlow": 0
+        }
+      }
+    ],
+    "referenceSolution": "async function promisePool(tasks, limit) {\n  const results = new Array(tasks.length);\n  let next = 0;\n\n  async function worker() {\n    while (next < tasks.length) {\n      const i = next++;\n      results[i] = await tasks[i]();\n    }\n  }\n\n  const workers = [];\n  for (let w = 0; w < Math.min(limit, tasks.length); w++) {\n    workers.push(worker());\n  }\n  await Promise.all(workers);\n  return results;\n}\n\n// Helper untuk test: jangan diubah\nasync function check(ticks, limit) {\n  let active = 0;\n  let maxActive = 0;\n  let slowRunning = false;\n  let startedDuringSlow = 0;\n  const slow = ticks.indexOf(Math.max(...ticks));\n  const tasks = ticks.map((t, i) => async () => {\n    if (slowRunning) startedDuringSlow++;\n    if (i === slow) slowRunning = true;\n    active++;\n    maxActive = Math.max(maxActive, active);\n    for (let k = 0; k < t; k++) await Promise.resolve();\n    active--;\n    if (i === slow) slowRunning = false;\n    return 't' + i;\n  });\n  const results = await promisePool(tasks, limit);\n  return { results, maxActive, startedDuringSlow };\n}",
+    "hints": [
+      "Bayangkan `limit` buah 'worker' yang berjalan paralel. Masing-masing berulang kali mengambil index task berikutnya yang belum diambil, menjalankannya, lalu mengambil lagi.",
+      "Simpan penghitung `next` bersama di closure. Di dalam `async function worker()`, lakukan `while (next < tasks.length) { const i = next++; results[i] = await tasks[i](); }`. Jalankan `Math.min(limit, tasks.length)` worker, lalu `await Promise.all(workers)`."
+    ],
+    "explanation": "Pola **worker pool**: buat `limit` worker async yang berbagi satu penghitung `next`. Karena JavaScript single-threaded, `const i = next++` bersifat atomik, sehingga dua worker tidak pernah mengambil index yang sama. Setiap worker langsung mengambil task baru begitu task-nya selesai, jadi slot tidak pernah menganggur selama masih ada task.\n\nHasil disimpan di `results[i]` (bukan `push`) agar urutannya mengikuti index input walaupun task selesai acak.\n\nKesalahan umum:\n- **Memanggil semua task di awal** (`tasks.map(t => t())`) — semua langsung berjalan, batas `limit` tidak berlaku.\n- **Batching** (`Promise.all` per potongan berukuran `limit`) — `maxActive` memang tidak melewati `limit`, tetapi satu task lambat membuat seluruh batch berikutnya menunggu; test kedua (`startedDuringSlow: 3`) menangkap ini.\n- Memakai `results.push` sehingga urutannya mengikuti urutan selesai.",
+    "estimatedMinutes": 15,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "js-closures-003",
+    "track": "javascript",
+    "level": 5,
+    "format": "code-full",
+    "topic": "closures",
+    "tags": [
+      "curry",
+      "higher-order-function",
+      "partial-application",
+      "interview"
+    ],
+    "title": "Implementasi curry yang partial-nya bisa dipakai ulang",
+    "prompt": "Implementasikan `curry(fn)`:\n\n- mengembalikan fungsi yang mengumpulkan argumen sampai jumlahnya mencapai `fn.length`, lalu memanggil `fn` dengan semua argumen itu,\n- setiap pemanggilan boleh memberi **satu atau beberapa** argumen sekaligus (`f(1)(2, 3)`, `f(1, 2)(3)`, `f(1, 2, 3)`),\n- pemanggilan tanpa argumen (`f()`) tidak menambah apa pun dan mengembalikan fungsi yang masih menunggu,\n- fungsi parsial harus bisa **dipakai ulang**: setelah `const p = f(1)`, `p(2)(3)` dan `p(4, 5)` tidak saling memengaruhi.\n\nFungsi `runCurry(arity, prefix, branches)` adalah helper test (jangan diubah): ia membuat fungsi parsial dari `prefix`, lalu menjalankan setiap `branch` dari parsial yang **sama** itu.",
+    "data": {
+      "language": "javascript",
+      "starter": "function curry(fn) {\n  // tulis kodemu di sini\n  return (...args) => fn(...args);\n}\n\n// Helper untuk test: jangan diubah\nfunction runCurry(arity, prefix, branches) {\n  const fns = {\n    1: (a) => [a],\n    2: (a, b) => [a, b],\n    3: (a, b, c) => [a, b, c],\n    4: (a, b, c, d) => [a, b, c, d],\n  };\n  let partial = curry(fns[arity]);\n  for (const group of prefix) partial = partial(...group);\n  return branches.map((groups) => {\n    let f = partial;\n    for (const group of groups) f = f(...group);\n    return f;\n  });\n}",
+      "entry": "runCurry"
+    },
+    "tests": [
+      {
+        "name": "satu argumen per pemanggilan",
+        "input": [
+          3,
+          [],
+          [
+            [
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ]
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            2,
+            3
+          ]
+        ]
+      },
+      {
+        "name": "jumlah argumen per pemanggilan bervariasi",
+        "input": [
+          4,
+          [],
+          [
+            [
+              [
+                1,
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            [
+              [
+                1
+              ],
+              [
+                2,
+                3,
+                4
+              ]
+            ],
+            [
+              [
+                1,
+                2,
+                3,
+                4
+              ]
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            2,
+            3,
+            4
+          ],
+          [
+            1,
+            2,
+            3,
+            4
+          ],
+          [
+            1,
+            2,
+            3,
+            4
+          ]
+        ]
+      },
+      {
+        "name": "partial dipakai ulang tanpa saling memengaruhi",
+        "input": [
+          3,
+          [
+            [
+              1
+            ]
+          ],
+          [
+            [
+              [
+                2
+              ],
+              [
+                3
+              ]
+            ],
+            [
+              [
+                4,
+                5
+              ]
+            ],
+            [
+              [
+                2
+              ],
+              [
+                9
+              ]
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            2,
+            3
+          ],
+          [
+            1,
+            4,
+            5
+          ],
+          [
+            1,
+            2,
+            9
+          ]
+        ]
+      },
+      {
+        "name": "partial dua tingkat dipakai ulang",
+        "input": [
+          4,
+          [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            [
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            [
+              [
+                5,
+                6
+              ]
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            2,
+            3,
+            4
+          ],
+          [
+            1,
+            2,
+            5,
+            6
+          ]
+        ]
+      },
+      {
+        "name": "pemanggilan kosong diabaikan",
+        "input": [
+          2,
+          [
+            [],
+            [
+              5
+            ]
+          ],
+          [
+            [
+              [],
+              [
+                6
+              ]
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            5,
+            6
+          ]
+        ]
+      },
+      {
+        "name": "fungsi satu argumen",
+        "input": [
+          1,
+          [],
+          [
+            [
+              [
+                7
+              ]
+            ],
+            [
+              [
+                8
+              ]
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            7
+          ],
+          [
+            8
+          ]
+        ]
+      }
+    ],
+    "referenceSolution": "function curry(fn) {\n  function collect(prev) {\n    return (...args) => {\n      const all = prev.concat(args);\n      return all.length >= fn.length ? fn(...all) : collect(all);\n    };\n  }\n  return collect([]);\n}\n\n// Helper untuk test: jangan diubah\nfunction runCurry(arity, prefix, branches) {\n  const fns = {\n    1: (a) => [a],\n    2: (a, b) => [a, b],\n    3: (a, b, c) => [a, b, c],\n    4: (a, b, c, d) => [a, b, c, d],\n  };\n  let partial = curry(fns[arity]);\n  for (const group of prefix) partial = partial(...group);\n  return branches.map((groups) => {\n    let f = partial;\n    for (const group of groups) f = f(...group);\n    return f;\n  });\n}",
+    "hints": [
+      "`fn.length` memberi tahu berapa argumen yang dibutuhkan. Buat fungsi pembantu yang 'mengingat' argumen yang sudah terkumpul lewat closure, lalu mengembalikan fungsi baru selama argumennya belum cukup.",
+      "Jangan memakai satu array bersama yang di-`push`. Setiap pemanggilan harus membuat array **baru**: `const all = prev.concat(args)`, lalu `all.length >= fn.length ? fn(...all) : collect(all)`."
+    ],
+    "explanation": "Solusinya adalah fungsi rekursif `collect(prev)` yang menutup (closure) array argumen sebelumnya. Setiap pemanggilan menggabungkan argumen baru ke salinan **baru** (`prev.concat(args)`), sehingga setiap fungsi parsial punya 'snapshot' argumennya sendiri dan bisa dipakai ulang berkali-kali.\n\nKesalahan paling umum di interview: menyimpan argumen di satu array di scope `curry` lalu `args.push(...)`. Kode seperti itu lolos untuk pemakaian sekali jalan `f(1)(2)(3)`, tetapi rusak saat parsial dipakai ulang: setelah `p(2)(3)`, array bersama sudah berisi `[1, 2, 3]`, sehingga `p(4, 5)` memanggil `fn(1, 2, 3, 4, 5)` (atau bahkan error karena hasilnya bukan fungsi). Test 'partial dipakai ulang' menangkap bug ini.\n\nCatatan: `fn.length` tidak menghitung parameter dengan nilai default atau rest parameter (`(...args) => {}` punya `length` 0), jadi curry berbasis `fn.length` hanya cocok untuk fungsi dengan parameter biasa.",
+    "estimatedMinutes": 10,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]

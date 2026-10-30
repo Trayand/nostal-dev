@@ -1,0 +1,77 @@
+[
+  {
+    "id": "concepts-databases-005",
+    "track": "concepts",
+    "level": 4,
+    "format": "flashcard",
+    "topic": "databases",
+    "tags": [
+      "sql",
+      "concurrency",
+      "locking",
+      "transactions"
+    ],
+    "title": "Optimistic vs pessimistic locking",
+    "prompt": "Dua user mengedit saldo/stok yang sama bersamaan. Apa beda **pessimistic locking** dan **optimistic locking**, dan kapan memakai masing-masing?",
+    "answer": {
+      "back": "- **Pessimistic** — kunci baris saat dibaca (`SELECT ... FOR UPDATE`); transaksi lain menunggu sampai commit. Cocok bila konflik **sering**. Risiko: antrean lock, deadlock.\n- **Optimistic** — tanpa lock; simpan kolom `version` dan cek saat update:\n```sql\nUPDATE products SET stock = ?, version = version + 1\nWHERE id = ? AND version = ?;\n-- 0 baris ter-update => sudah diubah orang lain: baca ulang & retry\n```\nCocok bila konflik **jarang** (banyak baca, sedikit tulis bentrok)."
+    },
+    "hints": [
+      "Satu pendekatan mengunci di awal, satu lagi baru mendeteksi konflik di akhir."
+    ],
+    "explanation": "Pessimistic locking mencegah konflik dengan memblokir, sehingga throughput turun bila lock dipegang lama. Optimistic locking tidak memblokir, tapi aplikasi **wajib** memeriksa jumlah baris ter-update dan menangani retry — kesalahan umum adalah lupa mengecek hasil `0 rows`, sehingga update yang hilang (*lost update*) tidak terdeteksi. ORM seperti JPA/Hibernate (`@Version`) menyediakan optimistic locking bawaan.",
+    "estimatedMinutes": 2,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  },
+  {
+    "id": "concepts-databases-006",
+    "track": "concepts",
+    "level": 4,
+    "format": "multiple-choice",
+    "topic": "databases",
+    "tags": [
+      "sql",
+      "performance",
+      "n-plus-one",
+      "orm"
+    ],
+    "title": "Masalah query N+1",
+    "prompt": "Kode berikut menampilkan 100 post beserta author-nya. Berapa query yang dijalankan, dan apa perbaikan yang paling tepat?",
+    "data": {
+      "language": "javascript",
+      "code": "const posts = await db.query('SELECT * FROM posts LIMIT 100');\nfor (const post of posts) {\n  post.author = await db.query(\n    'SELECT * FROM users WHERE id = ?', [post.author_id]\n  );\n}",
+      "options": [
+        "101 query; ambil semua author sekaligus dengan `JOIN` atau `WHERE id IN (...)`",
+        "101 query; jalankan query di dalam loop secara paralel dengan `Promise.all`",
+        "2 query; driver database otomatis menggabungkan query di dalam loop",
+        "100 query; tambahkan index pada `users.id` agar tiap query cepat"
+      ]
+    },
+    "answer": {
+      "index": 0
+    },
+    "hints": [
+      "Hitung: satu query untuk daftar post, lalu satu lagi untuk setiap post.",
+      "Masalahnya jumlah round-trip ke database, bukan kecepatan tiap query."
+    ],
+    "explanation": "Ini pola **N+1**: 1 query untuk daftar + N query (satu per baris). Biaya utamanya adalah round-trip jaringan dan overhead per query, jadi solusinya mengurangi **jumlah** query: `JOIN`, atau batch `SELECT * FROM users WHERE id IN (...)` (eager loading di ORM, DataLoader di GraphQL). `Promise.all` tetap mengirim 101 query dan bisa menghabiskan connection pool; `users.id` biasanya primary key sehingga sudah ter-index.",
+    "estimatedMinutes": 1,
+    "source": {
+      "model": "claude-opus-5-5",
+      "date": "2026-10-25"
+    },
+    "reviewed": {
+      "by": "claude-opus-5-5 (self-review)",
+      "date": "2026-10-25"
+    },
+    "status": "verified"
+  }
+]
