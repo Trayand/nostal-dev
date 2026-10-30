@@ -31,7 +31,8 @@ const srsCard = z.object({
 });
 
 const exportFile = z.object({
-  app: z.literal("programming-hub"),
+  // "programming-hub" = backups made before the rename; they import the same way.
+  app: z.enum(["nostal-dev", "programming-hub"]).transform(() => "nostal-dev" as const),
   schemaVersion: z.literal(1),
   exportedAt: z.string(),
   attempts: z.array(attempt),

@@ -2,7 +2,7 @@
 // Content (questions) is written in a single language — see profile.json `lang`.
 
 const id = {
-  appName: "Programming Hub",
+  appName: "nostal-dev",
   "tab.today": "Hari ini",
   "tab.practice": "Latihan",
   "tab.cards": "Kartu",
@@ -160,7 +160,7 @@ const id = {
 export type I18nKey = keyof typeof id;
 
 const en: Record<I18nKey, string> = {
-  appName: "Programming Hub",
+  appName: "nostal-dev",
   "tab.today": "Today",
   "tab.practice": "Practice",
   "tab.cards": "Cards",

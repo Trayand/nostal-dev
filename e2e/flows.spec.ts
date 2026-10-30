@@ -57,7 +57,7 @@ test("export then import progress (replace)", async ({ page }) => {
   ]);
   const path = await download.path();
   const backup = JSON.parse(readFileSync(path, "utf8"));
-  expect(backup.app).toBe("programming-hub");
+  expect(backup.app).toBe("nostal-dev");
   expect(backup.attempts).toHaveLength(1);
 
   // Reset, then restore from the file.

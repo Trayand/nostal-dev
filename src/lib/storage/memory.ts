@@ -39,7 +39,7 @@ export class MemoryAdapter implements StorageAdapter {
 
   async exportAll(): Promise<ExportFile> {
     return {
-      app: "programming-hub",
+      app: "nostal-dev",
       schemaVersion: 1,
       exportedAt: new Date().toISOString(),
       ...(await this.getProgress()),

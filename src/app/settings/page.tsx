@@ -52,7 +52,7 @@ export default function SettingsPage() {
 
   const exportData = async () => {
     const data = await getStorage().exportAll();
-    downloadBlob(JSON.stringify(data, null, 2), `programming-hub-backup-${localDate()}.json`, "application/json");
+    downloadBlob(JSON.stringify(data, null, 2), `nostal-dev-backup-${localDate()}.json`, "application/json");
   };
 
   const importData = async (file: File) => {

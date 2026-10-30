@@ -66,6 +66,11 @@ describe.each(adapters)("%s", (_name, make) => {
 });
 
 describe("parseExportFile", () => {
+  it("accepts backups made under the old app name", async () => {
+    const legacy = { ...(await new MemoryAdapter().exportAll()), app: "programming-hub" };
+    expect(parseExportFile(legacy).app).toBe("nostal-dev");
+  });
+
   it("rejects files from other apps", () => {
     expect(() => parseExportFile({ app: "something-else" })).toThrow();
   });

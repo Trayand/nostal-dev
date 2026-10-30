@@ -1,6 +1,6 @@
 # Architecture
 
-Programming Hub is a **static site** (Next.js `output: "export"`). There is no server code at
+nostal-dev is a **static site** (Next.js `output: "export"`). There is no server code at
 runtime: the browser downloads HTML/JS/JSON once, the service worker caches everything, and all
 state lives in IndexedDB on the device.
 

@@ -3,7 +3,7 @@ description: Second-pass factual review of non-executable questions; report and 
 argument-hint: [track] [--all]
 ---
 
-Review Programming Hub content that cannot be verified by running code. Arguments: `$ARGUMENTS`
+Review nostal-dev content that cannot be verified by running code. Arguments: `$ARGUMENTS`
 (optional track id; `--all` to re-review items that already have a `reviewed` stamp).
 
 1. Run `npm run content:review -- [--track <track>] [--all]`. It writes

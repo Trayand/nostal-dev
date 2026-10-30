@@ -1,7 +1,7 @@
-# Manual Programming Hub
+# Manual nostal-dev
 
 Panduan praktis untuk pemilik aplikasi: menjalankan, memakai, menambah soal, merawat.
-Semua perintah dijalankan dari folder proyek (`pro_hub/`).
+Semua perintah dijalankan dari folder proyek (`nostal-dev/`).
 
 **Daftar isi**
 1. [Menjalankan di komputer](#1-menjalankan-di-komputer)
@@ -338,7 +338,7 @@ memilih level mana pun di layar Latihan.
 
 Progres hanya ada di perangkat itu (belum ada sinkronisasi di fase 1).
 
-- **Ekspor:** Setelan → **Ekspor progres (JSON)** → file `programming-hub-backup-<tanggal>.json`.
+- **Ekspor:** Setelan → **Ekspor progres (JSON)** → file `nostal-dev-backup-<tanggal>.json`.
   Simpan di Google Drive / laptop.
 - **Impor:** Setelan → pilih mode → **Impor progres** → pilih file.
   - **Gabungkan**: riwayat digabung, data lain diambil yang paling baru. Cocok untuk memindahkan

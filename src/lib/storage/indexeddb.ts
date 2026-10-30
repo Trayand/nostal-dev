@@ -13,6 +13,7 @@ interface HubDB extends DBSchema {
   drafts: { key: string; value: CodeDraft };
 }
 
+// Kept from the app's first name (Programming Hub): renaming would orphan saved progress.
 const DB_NAME = "programming-hub";
 const DB_VERSION = 1;
 const STORES = ["attempts", "srs", "trackStates", "settings", "drafts"] as const;
@@ -71,7 +72,7 @@ export class IndexedDbAdapter implements StorageAdapter {
   async exportAll(): Promise<ExportFile> {
     const db = await this.dbPromise;
     return {
-      app: "programming-hub",
+      app: "nostal-dev",
       schemaVersion: 1,
       exportedAt: new Date().toISOString(),
       ...(await this.getProgress()),

@@ -61,7 +61,7 @@ export interface ProgressSnapshot {
 }
 
 export interface ExportFile extends ProgressSnapshot {
-  app: "programming-hub";
+  app: "nostal-dev";
   schemaVersion: 1;
   exportedAt: string;
   settings: Settings | null;

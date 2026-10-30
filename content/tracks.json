@@ -40,5 +40,33 @@
     "description": "Flashcard spaced repetition: async, closure, HTTP, REST, Git, database, kompleksitas.",
     "language": "text",
     "icon": "🧠"
+  },
+  {
+    "id": "git",
+    "title": "Git",
+    "description": "Perintah dan alur kerja Git: commit, branch, merge vs rebase, reset vs revert, konflik, remote.",
+    "language": "text",
+    "icon": "🌿"
+  },
+  {
+    "id": "http",
+    "title": "HTTP & Web",
+    "description": "Cara kerja web: method, status code, header, cookie, caching, CORS, HTTPS, REST.",
+    "language": "text",
+    "icon": "🌐"
+  },
+  {
+    "id": "react",
+    "title": "React",
+    "description": "Komponen, props, state, hooks, rendering, effect, dan pola umum (logika dalam JavaScript).",
+    "language": "javascript",
+    "icon": "⚛️"
+  },
+  {
+    "id": "system-design",
+    "title": "System Design",
+    "description": "Merancang sistem skala besar: caching, queue, sharding, replikasi, load balancing, trade-off.",
+    "language": "text",
+    "icon": "🏗️"
   }
 ]

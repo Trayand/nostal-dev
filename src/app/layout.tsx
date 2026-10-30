@@ -6,14 +6,14 @@ import { BASE_PATH } from "@/lib/base-path";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Programming Hub",
+  title: "nostal-dev",
   description: "Latihan pemrograman harian — offline, mobile-first.",
   manifest: `${BASE_PATH}/manifest.webmanifest`,
   icons: {
     icon: `${BASE_PATH}/icon.svg`,
     apple: `${BASE_PATH}/icons/apple-touch-icon.png`,
   },
-  appleWebApp: { capable: true, title: "Prog Hub", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "nostal-dev", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

@@ -1,6 +1,6 @@
 {
-  "name": "Programming Hub",
-  "short_name": "Prog Hub",
+  "name": "nostal-dev",
+  "short_name": "nostal-dev",
   "description": "Latihan pemrograman harian — offline, mobile-first.",
   "id": "./",
   "start_url": "./",

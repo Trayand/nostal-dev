@@ -1,5 +1,5 @@
 {
-  "name": "programming-hub",
+  "name": "nostal-dev",
   "version": "0.1.0",
   "private": true,
   "description": "Mobile-first offline PWA for programming practice (single user, no backend).",

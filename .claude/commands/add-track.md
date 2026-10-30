@@ -3,7 +3,7 @@ description: Scaffold a new learning track (folders, config, docs)
 argument-hint: <track-id> ["Title"] [language]
 ---
 
-Add a new track to Programming Hub. Arguments: `$ARGUMENTS`
+Add a new track to nostal-dev. Arguments: `$ARGUMENTS`
 (`<track-id>` kebab-case, optional title, optional language: javascript | typescript | sql | go | text).
 
 1. Check `content/tracks.json`; stop if the id already exists.

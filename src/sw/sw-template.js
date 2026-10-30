@@ -1,4 +1,4 @@
-/* Programming Hub service worker (plain JS, no library).
+/* nostal-dev service worker (plain JS, no library).
  * scripts/gen-sw.ts copies this file to out/sw.js after `next build` and
  * replaces the two placeholders below with the list of every built file and
  * a content hash. A new hash = a new cache = the app updates.

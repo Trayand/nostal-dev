@@ -1,4 +1,4 @@
-# Programming Hub
+# nostal-dev
 
 Mobile-first, offline PWA for daily programming practice — for a developer getting back into
 shape. Indonesian explanations, English code. No backend, no account, no API costs.

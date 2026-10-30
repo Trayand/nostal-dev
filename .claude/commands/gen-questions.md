@@ -3,7 +3,7 @@ description: Generate new verified questions for a track/level (draft → valida
 argument-hint: <track> <level> <count> [topic]
 ---
 
-Generate questions for Programming Hub. Arguments: `$ARGUMENTS`
+Generate questions for nostal-dev. Arguments: `$ARGUMENTS`
 (format: `<track> <level> <count> [topic]`, e.g. `javascript 2 10 closures`).
 
 ## 1. Read context first

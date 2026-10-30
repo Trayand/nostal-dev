@@ -1,4 +1,4 @@
-# Programming Hub — guide for Claude
+# nostal-dev — guide for Claude
 
 Mobile-first, offline PWA for daily programming practice. Single user, static site,
 **no backend, no accounts, no runtime LLM/API calls** (Phase 1). The owner reads this
