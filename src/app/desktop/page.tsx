@@ -6,6 +6,9 @@ import { Page } from "@/components/Page";
 import { Button, Card, Chip, CodeBlock, Markdown } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 import { loadIndex, loadQuestions, type BundledQuestion } from "@/lib/content/loader";
+import { recordOutcome } from "@/lib/engine/record";
+import { profile } from "@/lib/profile";
+import { getStorage } from "@/lib/storage";
 import { downloadBlob, createZip } from "@/lib/zip";
 
 type DesktopQ = Extract<BundledQuestion, { format: "desktop" }>;
@@ -14,13 +17,20 @@ export default function DesktopPage() {
   const { t } = useApp();
   const [items, setItems] = useState<DesktopQ[] | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadIndex()
       .then((index) => loadQuestions(index.questions.filter((q) => q.format === "desktop").map((q) => q.id)))
       .then((qs) => setItems(qs as DesktopQ[]))
       .catch(() => setItems([]));
+    getStorage().getAttempts().then((as) => setDoneIds(new Set(as.filter((a) => a.correct).map((a) => a.questionId))));
   }, []);
+
+  const markDone = async (q: DesktopQ) => {
+    await recordOutcome(getStorage(), q, { correct: true, hintsUsed: 0, revealed: false, durationMs: 0 }, { thresholds: profile.levelThresholds });
+    setDoneIds((s) => new Set(s).add(q.id));
+  };
 
   const download = (q: DesktopQ) => {
     const readme = `# ${q.title}\n\n${q.prompt}\n\nRun:\n\n    ${q.data.command}\n`;
@@ -50,6 +60,7 @@ export default function DesktopPage() {
                     <Chip>{q.track}</Chip>
                     <Chip>{t(`level.${q.level}` as "level.1")}</Chip>
                     <Chip>~{q.estimatedMinutes} {t("common.minutesShort")}</Chip>
+                    {doneIds.has(q.id) && <Chip className="text-ok">{t("desktop.done")}</Chip>}
                   </span>
                 </span>
               </button>
@@ -69,6 +80,7 @@ export default function DesktopPage() {
                   <Button variant="primary" onClick={() => download(q)}>
                     <Icon name="download" className="h-5 w-5" /> {t("desktop.download")}
                   </Button>
+                  {!doneIds.has(q.id) && <Button onClick={() => markDone(q)}>{t("desktop.markDone")}</Button>}
                   {q.html.hints.length > 0 && (
                     <details>
                       <summary className="min-h-11 cursor-pointer py-2 text-sm text-muted">💡 {t("q.hint")}</summary>
