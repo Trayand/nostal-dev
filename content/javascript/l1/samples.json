@@ -1,0 +1,193 @@
+[
+  {
+    "id": "js-types-001",
+    "track": "javascript",
+    "level": 1,
+    "format": "multiple-choice",
+    "topic": "types",
+    "tags": ["typeof", "quirks"],
+    "title": "Hasil typeof null",
+    "prompt": "Apa hasil dari ekspresi berikut?\n\n```js\ntypeof null\n```",
+    "data": {
+      "options": ["`\"null\"`", "`\"object\"`", "`\"undefined\"`", "`\"number\"`"]
+    },
+    "answer": { "index": 1 },
+    "hints": [
+      "Ini salah satu \"bug\" historis JavaScript yang tidak pernah diperbaiki.",
+      "Hasilnya sama dengan `typeof {}`."
+    ],
+    "explanation": "`typeof null` menghasilkan `\"object\"`. Ini bug dari versi pertama JavaScript yang dipertahankan demi kompatibilitas. Untuk mengecek null, pakai `value === null`.",
+    "estimatedMinutes": 1,
+    "source": { "model": "claude-opus-5-5", "date": "2026-10-25" },
+    "status": "verified"
+  },
+  {
+    "id": "js-references-001",
+    "track": "javascript",
+    "level": 1,
+    "format": "predict-output",
+    "topic": "references",
+    "tags": ["arrays", "mutation"],
+    "title": "Array disalin atau direferensikan?",
+    "prompt": "Apa output kode berikut?",
+    "data": {
+      "language": "javascript",
+      "code": "const a = [1, 2, 3];\nconst b = a;\nb.push(4);\nconsole.log(a.length);",
+      "options": ["3", "4", "undefined", "TypeError"]
+    },
+    "answer": { "output": "4" },
+    "hints": [
+      "Apakah `const b = a` membuat array baru?",
+      "`a` dan `b` menunjuk ke objek yang sama di memori."
+    ],
+    "explanation": "Assignment `const b = a` hanya menyalin **referensi**, bukan isi array. `b.push(4)` mengubah array yang sama, jadi `a.length` menjadi 4. Untuk menyalin: `const b = [...a]`.",
+    "estimatedMinutes": 1,
+    "source": { "model": "claude-opus-5-5", "date": "2026-10-25" },
+    "status": "verified"
+  },
+  {
+    "id": "js-loops-001",
+    "track": "javascript",
+    "level": 1,
+    "format": "find-bug",
+    "topic": "loops",
+    "tags": ["off-by-one", "arrays"],
+    "title": "Penjumlahan array menghasilkan NaN",
+    "prompt": "Fungsi ini seharusnya menjumlahkan semua angka di array, tapi `sumArray([1, 2, 3])` menghasilkan `NaN`. Baris mana yang salah?",
+    "data": {
+      "language": "javascript",
+      "code": "function sumArray(arr) {\n  let total = 0;\n  for (let i = 0; i <= arr.length; i++) {\n    total += arr[i];\n  }\n  return total;\n}"
+    },
+    "answer": { "line": 3, "fixedLine": "  for (let i = 0; i < arr.length; i++) {" },
+    "hints": [
+      "Berapa nilai `arr[arr.length]`?",
+      "Index terakhir array adalah `arr.length - 1`."
+    ],
+    "explanation": "Kondisi `i <= arr.length` membuat loop berjalan satu kali terlalu banyak. `arr[3]` adalah `undefined`, dan `6 + undefined` = `NaN`. Gunakan `i < arr.length`.",
+    "estimatedMinutes": 2,
+    "source": { "model": "claude-opus-5-5", "date": "2026-10-25" },
+    "status": "verified"
+  },
+  {
+    "id": "js-array-methods-001",
+    "track": "javascript",
+    "level": 1,
+    "format": "fill-blank",
+    "topic": "array-methods",
+    "tags": ["map"],
+    "title": "Gandakan setiap angka",
+    "prompt": "Lengkapi fungsi agar mengembalikan array baru berisi setiap angka dikali 2. Contoh: `double([1, 2, 3])` → `[2, 4, 6]`.",
+    "data": {
+      "language": "javascript",
+      "template": "function double(nums) {\n  return nums.{{blank}}((n) => n * {{blank}});\n}",
+      "choices": ["map", "filter", "forEach", "reduce", "2", "n"],
+      "entry": "double"
+    },
+    "answer": { "blanks": [["map"], ["2"]] },
+    "tests": [
+      { "input": [[1, 2, 3]], "expected": [2, 4, 6] },
+      { "input": [[]], "expected": [] }
+    ],
+    "hints": [
+      "Method mana yang mengembalikan array baru dengan panjang yang sama?",
+      "`forEach` selalu mengembalikan `undefined`."
+    ],
+    "explanation": "`map` memanggil callback untuk setiap elemen dan mengumpulkan hasilnya ke array baru. `filter` memilih elemen, `forEach` tidak mengembalikan apa pun, `reduce` menggabungkan jadi satu nilai.",
+    "estimatedMinutes": 2,
+    "source": { "model": "claude-opus-5-5", "date": "2026-10-25" },
+    "status": "verified"
+  },
+  {
+    "id": "js-strings-001",
+    "track": "javascript",
+    "level": 1,
+    "format": "parsons",
+    "topic": "strings",
+    "tags": ["loops", "for-of"],
+    "title": "Hitung huruf vokal",
+    "prompt": "Susun baris-baris berikut menjadi fungsi `countVowels(str)` yang menghitung jumlah huruf vokal (a, i, u, e, o), tanpa membedakan huruf besar/kecil.",
+    "data": { "language": "javascript", "entry": "countVowels" },
+    "answer": {
+      "lines": [
+        "function countVowels(str) {",
+        "  let count = 0;",
+        "  for (const ch of str.toLowerCase()) {",
+        "    if ('aiueo'.includes(ch)) count++;",
+        "  }",
+        "  return count;",
+        "}"
+      ]
+    },
+    "tests": [
+      { "input": ["Halo Dunia"], "expected": 5 },
+      { "input": ["xyz"], "expected": 0 }
+    ],
+    "hints": [
+      "Variabel penghitung harus dibuat sebelum loop.",
+      "`return` diletakkan setelah loop selesai."
+    ],
+    "explanation": "Pola umum: inisialisasi penghitung → loop setiap karakter → tambah jika memenuhi syarat → kembalikan hasil setelah loop. `toLowerCase()` membuat `'A'` juga terhitung.",
+    "estimatedMinutes": 2,
+    "source": { "model": "claude-opus-5-5", "date": "2026-10-25" },
+    "status": "verified"
+  },
+  {
+    "id": "js-operators-001",
+    "track": "javascript",
+    "level": 1,
+    "format": "code-short",
+    "topic": "operators",
+    "tags": ["modulo"],
+    "title": "Cek bilangan genap",
+    "prompt": "Tulis fungsi `isEven(n)` yang mengembalikan `true` jika `n` genap dan `false` jika ganjil. `n` bisa negatif.",
+    "data": {
+      "language": "javascript",
+      "starter": "function isEven(n) {\n  // tulis kodemu di sini\n}",
+      "entry": "isEven"
+    },
+    "tests": [
+      { "input": [4], "expected": true },
+      { "input": [7], "expected": false },
+      { "input": [0], "expected": true },
+      { "input": [-3], "expected": false }
+    ],
+    "referenceSolution": "function isEven(n) {\n  return n % 2 === 0;\n}",
+    "hints": [
+      "Operator `%` memberi sisa pembagian.",
+      "Bilangan genap: sisa bagi 2 adalah 0. Hati-hati, `-3 % 2` adalah `-1`, bukan `1`."
+    ],
+    "explanation": "`n % 2 === 0` benar untuk semua bilangan genap, termasuk negatif dan nol. Jangan cek `n % 2 === 1` untuk ganjil, karena gagal untuk bilangan negatif (`-3 % 2 === -1`).",
+    "estimatedMinutes": 2,
+    "source": { "model": "claude-opus-5-5", "date": "2026-10-25" },
+    "status": "verified"
+  },
+  {
+    "id": "js-loops-002",
+    "track": "javascript",
+    "level": 1,
+    "format": "code-full",
+    "topic": "loops",
+    "tags": ["fizzbuzz", "conditionals"],
+    "title": "FizzBuzz versi array",
+    "prompt": "Tulis fungsi `fizzBuzz(n)` yang mengembalikan **array string** dari 1 sampai `n`:\n\n- kelipatan 3 → `\"Fizz\"`\n- kelipatan 5 → `\"Buzz\"`\n- kelipatan 3 dan 5 → `\"FizzBuzz\"`\n- selain itu → angkanya sebagai string\n\nContoh: `fizzBuzz(5)` → `[\"1\", \"2\", \"Fizz\", \"4\", \"Buzz\"]`",
+    "data": {
+      "language": "javascript",
+      "starter": "function fizzBuzz(n) {\n  const result = [];\n  // tulis kodemu di sini\n  return result;\n}",
+      "entry": "fizzBuzz"
+    },
+    "tests": [
+      { "name": "n = 5", "input": [5], "expected": ["1", "2", "Fizz", "4", "Buzz"] },
+      { "name": "n = 15", "input": [15], "expected": ["1", "2", "Fizz", "4", "Buzz", "Fizz", "7", "8", "Fizz", "Buzz", "11", "Fizz", "13", "14", "FizzBuzz"] },
+      { "name": "n = 0", "input": [0], "expected": [] }
+    ],
+    "referenceSolution": "function fizzBuzz(n) {\n  const result = [];\n  for (let i = 1; i <= n; i++) {\n    if (i % 15 === 0) result.push(\"FizzBuzz\");\n    else if (i % 3 === 0) result.push(\"Fizz\");\n    else if (i % 5 === 0) result.push(\"Buzz\");\n    else result.push(String(i));\n  }\n  return result;\n}",
+    "hints": [
+      "Loop dari 1 sampai `n` (inklusif).",
+      "Cek kelipatan 15 lebih dulu, kalau tidak `\"Fizz\"` akan menang."
+    ],
+    "explanation": "Urutan pengecekan penting: kelipatan 15 harus dicek sebelum 3 dan 5. `String(i)` mengubah angka menjadi string agar sesuai dengan tipe yang diminta.",
+    "estimatedMinutes": 5,
+    "source": { "model": "claude-opus-5-5", "date": "2026-10-25" },
+    "status": "verified"
+  }
+]

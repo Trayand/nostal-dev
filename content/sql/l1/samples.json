@@ -1,0 +1,30 @@
+[
+  {
+    "id": "sql-select-001",
+    "track": "sql",
+    "level": 1,
+    "format": "code-short",
+    "topic": "select-where",
+    "tags": ["where", "order-by"],
+    "title": "Karyawan departemen IT",
+    "prompt": "Tabel `employees(id, name, dept, salary)`.\n\nTampilkan kolom `name` semua karyawan di departemen `'IT'`, diurutkan berdasarkan nama (A→Z).",
+    "data": {
+      "language": "sql",
+      "starter": "-- tulis query di sini\n",
+      "schema": "CREATE TABLE employees (id INTEGER PRIMARY KEY, name TEXT NOT NULL, dept TEXT NOT NULL, salary INTEGER NOT NULL);",
+      "seed": "INSERT INTO employees (name, dept, salary) VALUES ('Sari', 'IT', 12000000), ('Budi', 'HR', 8000000), ('Andi', 'IT', 15000000), ('Dewi', 'Finance', 11000000), ('Rina', 'IT', 9000000);"
+    },
+    "tests": [
+      { "expected": { "columns": ["name"], "rows": [["Andi"], ["Rina"], ["Sari"]] }, "ordered": true }
+    ],
+    "referenceSolution": "SELECT name FROM employees WHERE dept = 'IT' ORDER BY name;",
+    "hints": [
+      "Gunakan `WHERE dept = 'IT'`.",
+      "Urutkan dengan `ORDER BY name`."
+    ],
+    "explanation": "`WHERE` memfilter baris, `ORDER BY` mengurutkan hasil (default ASC). String di SQL memakai tanda kutip tunggal.",
+    "estimatedMinutes": 2,
+    "source": { "model": "claude-opus-5-5", "date": "2026-10-25" },
+    "status": "verified"
+  }
+]

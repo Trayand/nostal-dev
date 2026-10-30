@@ -1,0 +1,54 @@
+[
+  {
+    "id": "ts-enums-001",
+    "track": "typescript",
+    "level": 1,
+    "format": "predict-output",
+    "topic": "enums",
+    "tags": ["enum", "reverse-mapping"],
+    "title": "Numeric enum dan reverse mapping",
+    "prompt": "Apa output kode TypeScript berikut?",
+    "data": {
+      "language": "typescript",
+      "code": "enum Color { Red, Green, Blue }\nconsole.log(Color.Green, Color[2]);",
+      "options": ["1 Blue", "Green Blue", "1 2", "undefined Blue"]
+    },
+    "answer": { "output": "1 Blue" },
+    "hints": [
+      "Numeric enum mulai dari 0 jika tidak diberi nilai.",
+      "Numeric enum juga punya mapping balik: angka → nama."
+    ],
+    "explanation": "`Red = 0, Green = 1, Blue = 2`. Numeric enum dikompilasi menjadi objek dua arah, jadi `Color[2]` menghasilkan nama `\"Blue\"`. String enum **tidak** punya reverse mapping.",
+    "estimatedMinutes": 1,
+    "source": { "model": "claude-opus-5-5", "date": "2026-10-25" },
+    "status": "verified"
+  },
+  {
+    "id": "ts-functions-001",
+    "track": "typescript",
+    "level": 1,
+    "format": "code-short",
+    "topic": "functions",
+    "tags": ["template-literal", "annotations"],
+    "title": "Fungsi sapaan bertipe",
+    "prompt": "Tulis fungsi `greet(name: string): string` yang mengembalikan `\"Halo, <name>!\"`. Contoh: `greet(\"Rina\")` → `\"Halo, Rina!\"`.",
+    "data": {
+      "language": "typescript",
+      "starter": "function greet(name: string): string {\n  return \"\";\n}",
+      "entry": "greet"
+    },
+    "tests": [
+      { "input": ["Rina"], "expected": "Halo, Rina!" },
+      { "input": ["Budi"], "expected": "Halo, Budi!" }
+    ],
+    "referenceSolution": "function greet(name: string): string {\n  return `Halo, ${name}!`;\n}",
+    "hints": [
+      "Template literal memakai backtick dan `${...}` untuk menyisipkan nilai.",
+      "Jangan lupa tanda seru di akhir."
+    ],
+    "explanation": "Anotasi `name: string` dan return type `: string` hanya ada saat kompilasi. Template literal menyisipkan nilai variabel ke dalam string.",
+    "estimatedMinutes": 1,
+    "source": { "model": "claude-opus-5-5", "date": "2026-10-25" },
+    "status": "verified"
+  }
+]

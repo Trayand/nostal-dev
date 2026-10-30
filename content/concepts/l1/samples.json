@@ -1,0 +1,20 @@
+[
+  {
+    "id": "concepts-closures-001",
+    "track": "concepts",
+    "level": 1,
+    "format": "flashcard",
+    "topic": "closures",
+    "tags": ["javascript", "scope"],
+    "title": "Apa itu closure?",
+    "prompt": "Apa itu **closure**?",
+    "answer": {
+      "back": "Fungsi yang **mengingat variabel dari scope tempat ia dibuat**, bahkan setelah scope itu selesai dijalankan.\n\n```js\nfunction counter() {\n  let n = 0;\n  return () => ++n;\n}\nconst next = counter();\nnext(); // 1\nnext(); // 2\n```\n\nDipakai untuk: data privat, factory function, callback yang butuh konteks."
+    },
+    "hints": ["Pikirkan fungsi yang dikembalikan oleh fungsi lain."],
+    "explanation": "Closure terbentuk setiap kali fungsi dibuat: ia membawa referensi ke lingkungan leksikalnya. Itulah kenapa `next()` di atas masih bisa mengakses `n`.",
+    "estimatedMinutes": 1,
+    "source": { "model": "claude-opus-5-5", "date": "2026-10-25" },
+    "status": "verified"
+  }
+]
